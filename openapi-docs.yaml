@@ -1,0 +1,1194 @@
+openapi: 3.0.0
+info:
+  description: |
+    This is the OpenAPI documentation for the TakeNote REST API. You can find
+    out more at [https://app.swaggerhub.com/apis/vladpirlog/takenote-express/1.0.0]
+    (https://app.swaggerhub.com/apis/vladpirlog/takenote-express/1.0.0).
+  version: "1.0.0"
+  title: TakeNote REST API
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: avi.pirlog@gmail.com
+  license:
+    name: MIT License
+    url: "https://opensource.org/licenses/MIT"
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://virtserver.swaggerhub.com/vladpirlog/takenote-express/1.0.0
+  - description: When running locally on port 8000
+    url: "http://localhost:8000/"
+tags:
+  - name: auth
+    description: Everything related to the users and authentication
+  - name: notes
+    description: Everything related to the users' notes
+  - name: collaborators
+    description: Other users with the ability to read (and write to) some user's note
+  - name: attachments
+    description: Images, alongside a title and a description, attached to a note
+  - name: tokens
+    description: A string id with an expiration time, which grant a user the ability to reset password or confirm the email
+paths:
+  /status:
+    get:
+      summary: Get server status
+      responses:
+        "200":
+          description: Server is ok
+          content:
+            text/plain:
+              example: "OK"
+  /auth/me:
+    get:
+      tags:
+        - auth
+      summary: Get authenticated user
+      operationId: getMe
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user
+        "404":
+          description: User not found
+        "200":
+          description: Authenticated user fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  user:
+                    type: object
+                    properties:
+                      userID:
+                        $ref: "#/components/schemas/User/properties/_id"
+                      username:
+                        $ref: "#/components/schemas/User/properties/username"
+                      email:
+                        $ref: "#/components/schemas/User/properties/email"
+  /auth/login:
+    post:
+      tags:
+        - auth
+      summary: Login
+      operationId: login
+      responses:
+        "401":
+          description: User already authenticated or credentials invalid
+        "422":
+          description: Input data missing or invalid
+        "200":
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  userID:
+                    $ref: "#/components/schemas/User/properties/_id"
+      requestBody:
+        $ref: "#/components/requestBodies/Login"
+  /auth/logout:
+    post:
+      tags:
+        - auth
+      summary: Logout
+      operationId: logout
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user
+        "200":
+          description: User logged out
+  /auth/register:
+    post:
+      tags:
+        - auth
+      summary: Register
+      operationId: register
+      responses:
+        "401":
+          description: User already authenticated
+        "422":
+          description: Input data missing or invalid
+        "409":
+          description: User already exists
+        "429":
+          description: Email threshold has been reached
+        "400":
+          description: Couldn't create user
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  userID:
+                    $ref: "#/components/schemas/User/properties/_id"
+      requestBody:
+        $ref: "#/components/requestBodies/Register"
+  /auth/confirm:
+    post:
+      tags:
+        - auth
+        - tokens
+      summary: Confirm email address
+      operationId: confirm
+      parameters:
+        - name: token
+          in: query
+          description: The token to be used for confirmation
+          required: true
+          schema:
+            $ref: "#/components/schemas/Token/properties/token"
+      responses:
+        "422":
+          description: Input data missing from query
+        "400":
+          description: Couldn't confirm email address
+        "200":
+          description: Email address confirmed
+        "202":
+          description: A new confirmation token was sent to the user's email address
+  /auth/request_confirmation:
+    post:
+      tags:
+        - auth
+        - tokens
+      summary: Request a new confirmation token
+      operationId: requestConfirmationToken
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "429":
+          description: Email threshold has been reached
+        "400":
+          description: Couldn't issue new confirmation token
+        "200":
+          description: Confirmation token sent to the user's email address
+  /auth/reset_password:
+    post:
+      tags:
+        - auth
+        - tokens
+      summary: Request pw reset token
+      operationId: resetPassword
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user or wrong credentials
+        "422":
+          description: Input data missing or invalid
+        "429":
+          description: Email threshold has been reached
+        "400":
+          description: Couldn't issue new reset token
+        "200":
+          description: Reset token sent
+      requestBody:
+        $ref: "#/components/requestBodies/OldPassword"
+  /auth/rpassword:
+    post:
+      tags:
+        - auth
+        - tokens
+      summary: Submit reset token
+      operationId: submitResetToken
+      security:
+        - api_key: []
+      parameters:
+        - name: token
+          in: query
+          description: The token to be checked against the user's ResetToken
+          required: true
+          schema:
+            $ref: "#/components/schemas/Token/properties/token"
+      responses:
+        "401":
+          description: No authenticated user or token expired
+        "422":
+          description: Input data missing or invalid
+        "400":
+          description: Couldn't change password
+        "200":
+          description: Password changed
+      requestBody:
+        $ref: "#/components/requestBodies/NewPassword"
+  /auth/forgot_password:
+    post:
+      tags:
+        - auth
+        - tokens
+      summary: Request pw forgot token
+      operationId: requestForgotToken
+      responses:
+        "401":
+          description: User already authenticated
+        "422":
+          description: Input data missing or invalid
+        "429":
+          description: Email threshold has been reached
+        "400":
+          description: Couldn't issue new forgot token
+        "200":
+          description: Forgot token sent
+      requestBody:
+        $ref: "#/components/requestBodies/ForgotPassword"
+  /auth/fpassword:
+    post:
+      tags:
+        - auth
+        - tokens
+      summary: Submit forgot token
+      operationId: submitForgotToken
+      parameters:
+        - name: token
+          in: query
+          description: The token to be checked against the user's ForgotToken
+          required: true
+          schema:
+            $ref: "#/components/schemas/Token/properties/token"
+      responses:
+        "401":
+          description: User already authenticated or token expired
+        "422":
+          description: Input data missing or invalid
+        "400":
+          description: Couldn't change password
+        "200":
+          description: Password changed
+      requestBody:
+        $ref: "#/components/requestBodies/NewPassword"
+  /auth/check_token:
+    get:
+      tags:
+        - auth
+        - tokens
+      summary: Check token
+      operationId: checkToken
+      parameters:
+        - name: token
+          in: query
+          description: The token to be checked
+          required: true
+          schema:
+            $ref: "#/components/schemas/Token/properties/token"
+      responses:
+        "422":
+          description: Input data missing from query
+        "404":
+          description: Couldn't validate token
+        "401":
+          description: Reset token expired
+        "200":
+          description: Reset token valid (not expired)
+  /auth/delete:
+    post:
+      tags:
+        - auth
+      summary: Delete account
+      operationId: deleteMe
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user or wrong credentials
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing or invalid
+        "400":
+          description: Couldn't delete account
+        "200":
+          description: Account is being deleted
+      requestBody:
+        $ref: "#/components/requestBodies/OldPassword"
+  /auth/recover:
+    post:
+      tags:
+        - auth
+      summary: Recover account
+      operationId: recoverMe
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "400":
+          description: Couldn't recover account
+        "200":
+          description: Account is now active
+  /notes:
+    get:
+      tags:
+        - notes
+      summary: User's notes
+      operationId: allNotes
+      security:
+        - api_key: []
+      parameters:
+        - name: collaborations
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: Specifies whether the notes where the user is collaborating should be included
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing or invalid
+        "200":
+          description: Notes fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                  - message
+                  - notes
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  notes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Note"
+                  collaboratingNotes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Note"
+    post:
+      tags:
+        - notes
+      summary: Add note
+      operationId: addNote
+      security:
+        - api_key: []
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "400":
+          description: Couldn't create note
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  note:
+                    $ref: "#/components/schemas/Note"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateNote"
+  "/notes/{noteID}":
+    get:
+      tags:
+        - notes
+      summary: One user's note
+      operationId: oneNote
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to return
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Couldn't get note
+        "200":
+          description: Note fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  note:
+                    $ref: "#/components/schemas/Note"
+    put:
+      tags:
+        - notes
+      summary: Update note
+      operationId: updateNote
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to update
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Couldn't update note
+        "200":
+          description: Note updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  note:
+                    $ref: "#/components/schemas/Note"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateNote"
+    delete:
+      tags:
+        - notes
+      summary: Delete note
+      operationId: deleteNote
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to delete
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Couldn't delete note
+        "200":
+          description: Note deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+  "/notes/{noteID}/share":
+    get:
+      tags:
+        - notes
+      summary: Get sharing URL for a note
+      operationId: shareLink
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to share
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+        - name: active
+          in: query
+          description: Set the sharing URL active or not
+          required: false
+          schema:
+            type: boolean
+        - name: get_new
+          in: query
+          description: Create a new URL instead of retrieving the old one
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path or invalid queries
+        "400":
+          description: Couldn't get note
+        "200":
+          description: Link fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  shareURL:
+                    type: string
+                    description: URL path to the shared note
+  "/notes/{noteID}/share/collaborators":
+    post:
+      tags:
+        - notes
+        - collaborators
+      summary: Add note collaborator
+      operationId: addCollaborator
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to add collab to
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from body or path
+        "400":
+          description: Couldn't add collaborator
+        "200":
+          description: Collaborator added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  permission:
+                    $ref: "#/components/schemas/Permission"
+      requestBody:
+        $ref: "#/components/requestBodies/AddCollaborator"
+  "/notes/{noteID}/share/collaborators/{permissionID}":
+    delete:
+      tags:
+        - notes
+        - collaborators
+      summary: Delete note collaborator
+      operationId: deleteCollaborator
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to delete collab from
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+        - name: permissionID
+          in: path
+          description: ID of the permission to delete
+          required: true
+          schema:
+            $ref: "#/components/schemas/Permission/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Couldn't delete collaborator
+        "200":
+          description: Collaborator deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+  "/notes/{noteID}/tags":
+    post:
+      tags:
+        - notes
+      summary: Add tags
+      operationId: addTags
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of a note to add tags to
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+        - name: tags
+          in: query
+          description: Tags to add to the note, separated with commas
+          schema:
+            type: string
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path or query
+        "400":
+          description: Couldn't add tags or tags invalid
+        "200":
+          description: Tags added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  tags:
+                    $ref: "#/components/schemas/Note/properties/tags"
+    delete:
+      tags:
+        - notes
+      summary: Delete tags
+      operationId: deleteTags
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of a note to delete tags from
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+        - name: tags
+          in: query
+          description: Tags to delete from the note, separated with commas
+          schema:
+            type: string
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path or query
+        "400":
+          description: Couldn't delete tags or tags invalid
+        "200":
+          description: Tags deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+  "/notes/{noteID}/attachments":
+    post:
+      tags:
+        - notes
+        - attachments
+      summary: Add attachment
+      operationId: addAttachment
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to add attachment to
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Multiple files uploaded or couldn't add attachment
+        "415":
+          description: File has unaccepted type
+        "413":
+          description: File too large
+        "200":
+          description: Attachment added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  attachment:
+                    $ref: "#/components/schemas/Attachment"
+      requestBody:
+        $ref: "#/components/requestBodies/AddAttachment"
+  "/notes/{noteID}/attachments/{attachmentID}":
+    put:
+      tags:
+        - notes
+        - attachments
+      summary: Update attachment
+      operationId: updateAttachment
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to update attachment from
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+        - name: attachmentID
+          in: path
+          description: ID of attachment to update
+          required: true
+          schema:
+            $ref: "#/components/schemas/Attachment/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Couldn't edit attachment
+        "200":
+          description: Attachment edited
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+                  attachment:
+                    $ref: "#/components/schemas/Attachment"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateAttachment"
+    delete:
+      tags:
+        - notes
+        - attachments
+      summary: Delete attachment
+      operationId: deleteAttachment
+      security:
+        - api_key: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to delete attachment from
+          required: true
+          schema:
+            $ref: "#/components/schemas/Note/properties/_id"
+        - name: attachmentID
+          in: path
+          description: ID of attachment to delete
+          required: true
+          schema:
+            $ref: "#/components/schemas/Attachment/properties/_id"
+      responses:
+        "401":
+          description: No authenticated user
+        "403":
+          description: User has incompatible state
+        "422":
+          description: Input data missing from path
+        "400":
+          description: Couldn't delete attachment
+        "200":
+          description: Attachment deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    description: HTTP status code
+                  message:
+                    type: string
+externalDocs:
+  description: Find out more about Swagger
+  url: "http://swagger.io"
+components:
+  schemas:
+    Permission:
+      type: object
+      properties:
+        _id:
+          type: string
+        subject:
+          $ref: "#/components/schemas/User/properties/_id"
+        level:
+          type: number
+          format: int32
+          enum:
+            - 0
+            - 1
+    Attachment:
+      type: object
+      properties:
+        _id:
+          type: string
+        url:
+          type: string
+          description: A valid URL of a photo
+        title:
+          type: string
+        description:
+          type: string
+    Tag:
+      type: string
+    Token:
+      type: object
+      properties:
+        _id:
+          type: string
+        token:
+          type: string
+        exp:
+          type: number
+          format: int64
+    User:
+      type: object
+      required:
+        - _id
+        - username
+        - password
+        - email
+        - salt
+        - state
+        - role
+        - createdAt
+        - updatedAt
+      properties:
+        _id:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        salt:
+          type: string
+        state:
+          type: string
+          enum:
+            - unconfirmed
+            - active
+            - deleting
+            - deleted
+        confirmationToken:
+          $ref: "#/components/schemas/Token"
+        role:
+          type: number
+          format: int32
+          enum:
+            - -1
+            - 0
+            - 1
+            - 2
+        resetToken:
+          $ref: "#/components/schemas/Token"
+        forgotToken:
+          $ref: "#/components/schemas/Token"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      xml:
+        name: User
+    Note:
+      type: object
+      required:
+        - name
+        - photoUrls
+      properties:
+        _id:
+          type: string
+        title:
+          type: string
+        content:
+          type: string
+        owner:
+          $ref: "#/components/schemas/User/properties/_id"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/Permission"
+        attachments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Attachment"
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tag"
+        shared:
+          type: boolean
+        shareCode:
+          type: string
+        archived:
+          type: boolean
+        color:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      xml:
+        name: Note
+  requestBodies:
+    Login:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                description: The user's email or username
+              password:
+                type: string
+                format: password
+                description: The user's password
+      description: The user's credentials required for authentication
+      required: true
+    Register:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - username
+              - email
+              - password
+              - confirm_new_password
+            properties:
+              username:
+                type: string
+                description: The chosen username
+              email:
+                type: string
+                description: The user's email
+              password:
+                type: string
+                format: password
+                description: The user's password
+              confirm_password:
+                type: string
+                format: password
+                description: The user's password entered again
+      description: The user's info required for registration
+    OldPassword:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - old_password
+            properties:
+              old_password:
+                type: string
+                format: password
+                description: The user's password
+      description: The user's old password required for changing it to a new one
+    ForgotPassword:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                description: The user's email or username
+      description: The user's current username or email address required for resetting the password when forgotten
+      required: true
+    NewPassword:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - new_password
+              - confirm_new_password
+            properties:
+              new_password:
+                type: string
+                format: password
+                description: The user's password
+              confirm_new_password:
+                type: string
+                format: password
+                description: The user's password again
+      description: The user's old password required for changing it to a new one
+    AddOrUpdateNote:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            properties:
+              title:
+                $ref: "#/components/schemas/Note/properties/title"
+              content:
+                $ref: "#/components/schemas/Note/properties/content"
+              archived:
+                $ref: "#/components/schemas/Note/properties/archived"
+              color:
+                $ref: "#/components/schemas/Note/properties/color"
+    AddCollaborator:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - user
+              - type
+            properties:
+              user:
+                type: string
+                description: Username, email or id of the user to make collab
+              type:
+                type: string
+                enum:
+                  - r
+                  - rw
+    AddAttachment:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - photo
+            properties:
+              photo:
+                type: string
+                format: binary
+                description: Image to be added as attachment
+              title:
+                $ref: "#/components/schemas/Attachment/properties/title"
+              description:
+                $ref: "#/components/schemas/Attachment/properties/description"
+    UpdateAttachment:
+      content:
+        multipart/formdata:
+          schema:
+            type: object
+            required:
+              - url
+            properties:
+              url:
+                type: string
+                description: URL of the attachment image
+              title:
+                $ref: "#/components/schemas/Attachment/properties/title"
+              description:
+                $ref: "#/components/schemas/Attachment/properties/description"
+  securitySchemes:
+    api_key:
+      type: apiKey
+      description: JWT signed token used for authentication
+      name: api_key
+      in: cookie
