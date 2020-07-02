@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import createResponse from '../utils/createResponse.util'
-import noteQuery from '../queries/note.query'
+import noteTagsQuery from '../queries/note.tags.query'
 import parseStringToArray from '../utils/parseStringToArray.util'
 
 const addTags = async (req: Request, res: Response) => {
@@ -13,7 +13,7 @@ const addTags = async (req: Request, res: Response) => {
             typeof tags[0] !== 'string'
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
-        const newNote = await noteQuery.addTags(
+        const newNote = await noteTagsQuery.addTags(
             id,
             res.locals.user.userID,
             tags
@@ -42,7 +42,7 @@ const deleteTags = async (req: Request, res: Response) => {
             typeof tags[0] !== 'string'
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
-        const newNote = await noteQuery.deleteTags(
+        const newNote = await noteTagsQuery.deleteTags(
             id,
             res.locals.user.userID,
             tags
