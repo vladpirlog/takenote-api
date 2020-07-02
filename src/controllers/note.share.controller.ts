@@ -1,7 +1,8 @@
 import { Request, Response } from 'express'
 import createResponse from '../utils/createResponse.util'
 import randomString from '../utils/randomString.util'
-import noteQuery from '../queries/note.query'
+import noteShareQuery from '../queries/note.share.query'
+import noteCrudQuery from '../queries/note.crud.query'
 import { IPermissionSchema, PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
 import constants from '../config/constants'
@@ -9,7 +10,7 @@ import constants from '../config/constants'
 const getNote = async (req: Request, res: Response) => {
     try {
         const { code } = req.params
-        const note = await noteQuery.getOneByShareCode(code)
+        const note = await noteCrudQuery.getOneByShareCode(code)
         if (!note || !note.share.active) { return createResponse(res, 400, 'Couldn\'t get note.') }
 
         return createResponse(res, 200, 'Note fetched.', { note })
@@ -28,19 +29,19 @@ const getShareLink = async (
         const { id } = req.params
         const { active, get_new: getNew } = req.query
 
-        const note = await noteQuery.getOneOwnByID(id, res.locals.user.userID)
+        const note = await noteCrudQuery.getOneOwnByID(id, res.locals.user.userID)
         if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
 
         if (getNew !== 'true' && note.share.code) {
             if (active === 'true' && !note.share.active) {
-                await noteQuery.updateOneOwnOrCollabByID(
+                await noteCrudQuery.updateOneOwnOrCollabByID(
                     id,
                     res.locals.user.userID,
                     { share: { active: true, code: note.share.code } },
                     false
                 )
             } else if (active === 'false' && note.share.active) {
-                await noteQuery.updateOneOwnOrCollabByID(
+                await noteCrudQuery.updateOneOwnOrCollabByID(
                     id,
                     res.locals.user.userID,
                     { share: { active: false, code: note.share.code } },
@@ -53,7 +54,7 @@ const getShareLink = async (
             })
         }
 
-        const newNote = await noteQuery.updateOneOwnOrCollabByID(
+        const newNote = await noteCrudQuery.updateOneOwnOrCollabByID(
             id,
             res.locals.user.userID,
             {
@@ -103,7 +104,7 @@ const addCollaborator = async (
             )
         }
 
-        const newNote = await noteQuery.addPermission(
+        const newNote = await noteShareQuery.addPermission(
             id,
             res.locals.user.userID,
             { subject: collabUser.id, level: permissionLevel }
@@ -127,7 +128,7 @@ const deleteCollaborator = async (
     try {
         const { id, permissionID } = req.params
 
-        const newNote = await noteQuery.deletePermission(
+        const newNote = await noteShareQuery.deletePermission(
             id,
             res.locals.user.userID,
             permissionID

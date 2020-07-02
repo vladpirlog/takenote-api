@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import createResponse from '../utils/createResponse.util'
-import noteQuery from '../queries/note.query'
+import noteQuery from '../queries/note.crud.query'
 import { INoteBody } from '../models/Note'
 
 const getOneNote = async (req: Request, res: Response) => {

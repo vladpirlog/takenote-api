@@ -2,7 +2,7 @@ import { Request, Response } from 'express'
 import createResponse from '../utils/createResponse.util'
 import uploadFile from '../utils/uploadFile.util'
 import { UploadedFile } from 'express-fileupload'
-import noteQuery from '../queries/note.query'
+import noteAttachmentsQuery from '../queries/note.attachments.query'
 
 const addAttachment = async (
     req: Request,
@@ -18,7 +18,7 @@ const addAttachment = async (
             res.locals.user.userID
         )
 
-        const newNote = await noteQuery.addAttachment(
+        const newNote = await noteAttachmentsQuery.addAttachment(
             id,
             res.locals.user.userID,
             { title, description, url }
@@ -44,7 +44,7 @@ const editAttachment = async (
         const { title, description } = req.body
         const { id, attachmentID } = req.params
 
-        const newNote = await noteQuery.editAttachment(
+        const newNote = await noteAttachmentsQuery.editAttachment(
             id,
             res.locals.user.userID,
             { _id: attachmentID, title, description }
@@ -68,7 +68,7 @@ const deleteAttachment = async (
     try {
         const { id, attachmentID } = req.params
 
-        const newNote = await noteQuery.deleteAttachment(
+        const newNote = await noteAttachmentsQuery.deleteAttachment(
             id,
             res.locals.user.userID,
             attachmentID
