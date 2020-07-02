@@ -44,7 +44,7 @@ const login = async (req: Request, res: Response) => {
                     httpOnly: true,
                     sameSite: 'lax'
                     // secure: true,
-                    // add secure flag
+                    // TODO: add secure flag
                 })
                 return createResponse(res, 200, 'Authentication successful.', {
                     userID: user.id
@@ -105,7 +105,7 @@ const deleteUser = async (req: Request, res: Response) => {
             )
             if (!newUser) return createResponse(res, 400)
 
-            await sendEmailUtil.sendDeletingNotice(newUser)
+            await sendEmailUtil.sendNotice(newUser, 'delete')
 
             res.clearCookie('access_token')
             const token = authJWT.generate({
@@ -120,7 +120,7 @@ const deleteUser = async (req: Request, res: Response) => {
                 httpOnly: true,
                 sameSite: 'lax'
                 // secure: true,
-                // add secure flag
+                // TODO: add secure flag
             })
             return createResponse(res, 200, 'Account is being deleted.')
         }
@@ -138,7 +138,7 @@ const recoverUser = async (req: Request, res: Response) => {
         )
         if (!newUser) return createResponse(res, 400)
 
-        await sendEmailUtil.sendRecoverNotice(newUser)
+        await sendEmailUtil.sendNotice(newUser, 'recover')
 
         res.clearCookie('access_token')
         const token = authJWT.generate({
@@ -151,7 +151,7 @@ const recoverUser = async (req: Request, res: Response) => {
             httpOnly: true,
             sameSite: 'lax'
             // secure: true,
-            // add secure flag
+            // TODO: add secure flag
         })
         return createResponse(res, 200, 'Account is now active.')
     } catch (err) {
