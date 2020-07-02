@@ -17,13 +17,12 @@ const validateToken = (
             )
             if (!user) { return createResponse(res, 401, "Couldn't validate token.") }
 
-            const expirationTime = [
-                user.resetToken,
-                user.forgotToken,
-                user.confirmationToken
-            ].filter(t => t.token === token)[0]?.exp
-
-            if (!expirationTime) { return createResponse(res, 401, "Couldn't validate token.") }
+            let expirationTime: number
+            if (user.resetToken?.token === token) {
+                expirationTime = user.resetToken.exp
+            } else if (user.forgotToken?.token === token) {
+                expirationTime = user.forgotToken.exp
+            } else expirationTime = user.confirmationToken.exp
 
             if (getUnixTime() <= expirationTime) {
                 return isFinalMiddleware
