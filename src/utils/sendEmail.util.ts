@@ -12,6 +12,11 @@ const sendToken = async (
     user: IUserSchema,
     type: 'reset' | 'forgot' | 'confirmation'
 ) => {
+    let info: {token: string, pathname: string}
+    if (type === 'reset') info = { token: user.resetToken.token, pathname: '/rpassword' }
+    else if (type === 'forgot') info = { token: user.forgotToken.token, pathname: '/fpassword' }
+    else info = { token: user.confirmationToken.token, pathname: '/confirm' }
+
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         secure: false,
@@ -24,58 +29,34 @@ const sendToken = async (
         }
     })
 
-    if (type === 'reset') {
-        const completeURL = url.format({
-            query: {
-                token: user.resetToken.token
-            },
-            protocol: 'http', // TODO: change to https
-            host: constants.domain.baseDomain,
-            pathname: '/rpassword'
-        })
+    const completeURL = url.format({
+        query: {
+            token: info.token
+        },
+        protocol: 'http', // TODO: change to https
+        host: constants.domain.baseDomain,
+        pathname: info.pathname
+    })
 
-        await transporter.sendMail({
-            from: `"TakeNote" ${constants.email.user}`,
-            to: user.email,
-            subject: `TakeNote Account Password Reset - ${user.username}`,
-            text: `Go to this URL to reset your password: ${completeURL}`,
-            html: `<h3>Click the button below to reset your TakeNote password</h3><button><a href=${completeURL} target="_blank">Reset Password</a></button><p>Button not working? Go to this URL: ${completeURL}</p>`
-        })
-    } else if (type === 'forgot') {
-        const completeURL = url.format({
-            query: {
-                token: user.forgotToken.token
-            },
-            protocol: 'http', // TODO: change to https
-            host: constants.domain.baseDomain,
-            pathname: '/fpassword'
-        })
+    const emailSubject: string = type === 'confirmation'
+        ? `TakeNote Account Confirmation - ${user.username}`
+        : `TakeNote Account Password Reset - ${user.username}`
 
-        await transporter.sendMail({
-            from: `"TakeNote" ${constants.email.user}`,
-            to: user.email,
-            subject: `TakeNote Account Password Reset - ${user.username}`,
-            text: `Go to this URL to reset your password: ${completeURL}`,
-            html: `<h3>Click the button below to reset your TakeNote password</h3><button><a href=${completeURL} target="_blank">Reset Password</a></button><p>Button not working? Go to this URL: ${completeURL}</p>`
-        })
-    } else {
-        const completeURL = url.format({
-            query: {
-                token: user.confirmationToken.token
-            },
-            protocol: 'http', // TODO: change to https
-            host: constants.domain.baseDomain,
-            pathname: '/confirm'
-        })
-        await transporter.sendMail({
-            from: `"TakeNote" ${constants.email.user}`,
-            to: user.email,
-            subject: `TakeNote Account Confirmation - ${user.username}`,
-            text: `Go to this URL to confirm your account: ${completeURL}`,
-            html: `<h3>Click the button below to confirm your TakeNote account</h3><button><a href=${completeURL} target="_blank">Confirm</a></button><p>Button not working? Go to this URL: ${completeURL}</p>`
-            // TODO: create better template
-        })
-    }
+    const emailText: string = type === 'confirmation'
+        ? `Go to this URL to confirm your account: ${completeURL}`
+        : `Go to this URL to reset your password: ${completeURL}`
+
+    const emailHTML : string = type === 'confirmation'
+        ? `<h3>Click the button below to confirm your TakeNote account</h3><button><a href=${completeURL} target="_blank">Confirm</a></button><p>Button not working? Go to this URL: ${completeURL}</p>`
+        : `<h3>Click the button below to reset your TakeNote password</h3><button><a href=${completeURL} target="_blank">Reset Password</a></button><p>Button not working? Go to this URL: ${completeURL}</p>`
+
+    await transporter.sendMail({
+        from: `"TakeNote" ${constants.email.user}`,
+        to: user.email,
+        subject: emailSubject,
+        text: emailText,
+        html: emailHTML
+    })
 }
 
 const sendDeletingNotice = async (user: IUserSchema) => {
