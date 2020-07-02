@@ -1,7 +1,5 @@
 # Misc files and dirs
 .vscode/
-old_src/
-test.py
 
 # Logs
 logs
