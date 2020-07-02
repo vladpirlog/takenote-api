@@ -2,6 +2,7 @@ import { IUserSchema } from '../models/User'
 import nodemailer from 'nodemailer'
 import constants from '../config/constants'
 import url from 'url'
+import Mail from 'nodemailer/lib/mailer'
 
 /**
  * Async sends an email to a given user, informing it about a certain type of token
@@ -59,7 +60,25 @@ const sendToken = async (
     })
 }
 
-const sendDeletingNotice = async (user: IUserSchema) => {
+/**
+ * Async sends an email to a given user, informing it about account deletion or recovery
+ * @param user object of type IUserSchema, containing user info
+ * @param type the type of notice to send
+ */
+const sendNotice = async (user: IUserSchema, type: 'delete' | 'recover') => {
+    const mailOptions: Mail.Options = {
+        from: `"TakeNote" ${constants.email.user}`,
+        to: user.email,
+        subject: type === 'delete'
+            ? `TakeNote Account Account Deletion - ${user.username}`
+            : `TakeNote Account Account Recovery - ${user.username}`,
+        text: type === 'delete'
+            ? 'Your account is scheduled for deletion. You can abort this process in the next 7 days.'
+            : 'Your account has been recovered, alongside all the data associated with it.',
+        html: type === 'delete'
+            ? 'Your account is scheduled for deletion. You can abort this process in the next 7 days.'
+            : 'Your account has been recovered, alongside all the data associated with it.'
+    }
     const transporter = nodemailer.createTransport({
         service: 'gmail',
         secure: false,
@@ -71,36 +90,7 @@ const sendDeletingNotice = async (user: IUserSchema) => {
             rejectUnauthorized: false
         }
     })
-
-    await transporter.sendMail({
-        from: `"TakeNote" ${constants.email.user}`,
-        to: user.email,
-        subject: `TakeNote Account Account Deletion - ${user.username}`,
-        text: 'Your account is scheduled for deletion. You can abort this process in the next 7 days.',
-        html: 'Your account is scheduled for deletion. You can abort this process in the next 7 days.'
-    })
+    await transporter.sendMail(mailOptions)
 }
 
-const sendRecoverNotice = async (user: IUserSchema) => {
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        secure: false,
-        auth: {
-            user: constants.email.user,
-            pass: constants.email.pass
-        },
-        tls: {
-            rejectUnauthorized: false
-        }
-    })
-
-    await transporter.sendMail({
-        from: `"TakeNote" ${constants.email.user}`,
-        to: user.email,
-        subject: `TakeNote Account Account Recovery - ${user.username}`,
-        text: 'Your account has been recovered, alongside all the data associated with it.',
-        html: 'Your account has been recovered, alongside all the data associated with it.'
-    })
-}
-
-export default { sendToken, sendDeletingNotice, sendRecoverNotice }
+export default { sendToken, sendNotice }
