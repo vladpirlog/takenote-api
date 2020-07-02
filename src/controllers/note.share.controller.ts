@@ -23,7 +23,6 @@ const getNote = async (req: Request, res: Response) => {
 const getShareLink = async (
     req: Request,
     res: Response
-
 ) => {
     try {
         const { id } = req.params
@@ -124,7 +123,6 @@ const addCollaborator = async (
 const deleteCollaborator = async (
     req: Request,
     res: Response
-
 ) => {
     try {
         const { id, permissionID } = req.params

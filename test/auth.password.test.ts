@@ -54,7 +54,6 @@ describe('test pw reset and pw forgotten flows', () => {
             .query({ token: info.forgotToken.token })
             .then((res) => {
                 expect(res.status).toBe(200)
-
                 return done()
             })
     }, 20000)

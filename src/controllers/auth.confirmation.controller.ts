@@ -34,7 +34,7 @@ const confirm = async (req: Request, res: Response) => {
                     httpOnly: true,
                     sameSite: 'lax'
                     // secure: true,
-                    // add secure flag
+                    // TODO: add secure flag
                 })
             }
             return createResponse(res, 200, 'Email address confirmed.')
