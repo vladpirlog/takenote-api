@@ -7,8 +7,8 @@ const getOneNote = async (req: Request, res: Response) => {
     try {
         const { id } = req.params
         const note = await noteQuery.getOneOwnByID(id, res.locals.user.userID)
-        if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
-        return createResponse(res, 200, 'Note fetched.', { note })
+        return note ? createResponse(res, 200, 'Note fetched.', { note })
+            : createResponse(res, 400, 'Couldn\'t get note.')
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }
@@ -36,16 +36,16 @@ const getAllNotes = async (req: Request, res: Response) => {
 const addNote = async (req: Request, res: Response) => {
     try {
         const { title, content, color } = req.body
-        const newSavedNote = await noteQuery.createNewNote({
+        const newNote = await noteQuery.createNewNote({
             title,
             content,
             color,
             owner: res.locals.user.userID
         })
-        if (!newSavedNote) { return createResponse(res, 400, 'Couldn\'t create note.') }
-        return createResponse(res, 201, 'Note created.', {
-            note: newSavedNote
-        })
+        return newNote
+            ? createResponse(res, 201, 'Note created.', {
+                note: newNote
+            }) : createResponse(res, 400, 'Couldn\'t create note.')
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }
@@ -95,12 +95,10 @@ const editNote = async (req: Request, res: Response) => {
             newProps,
             true
         )
-        if (newNote) {
-            return createResponse(res, 200, 'Note updated.', {
+        return newNote
+            ? createResponse(res, 200, 'Note updated.', {
                 note: newNote
-            })
-        }
-        return createResponse(res, 400, 'Couldn\'t update note.')
+            }) : createResponse(res, 400, 'Couldn\'t update note.')
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }
@@ -111,8 +109,8 @@ const deleteNote = async (req: Request, res: Response) => {
         const { id } = req.params
 
         const note = await noteQuery.deleteOneOwn(id, res.locals.user.userID)
-        if (!note) return createResponse(res, 400, 'Couldn\'t delete note.')
-        return createResponse(res, 200, 'Note deleted.')
+        return note ? createResponse(res, 200, 'Note deleted.')
+            : createResponse(res, 400, 'Couldn\'t delete note.')
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }

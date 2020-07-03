@@ -18,16 +18,12 @@ const addTags = async (req: Request, res: Response) => {
             res.locals.user.userID,
             tags
         )
-
-        if (!newNote) return createResponse(res, 400, 'Couldn\'t add tags.')
-
-        return createResponse(res, 200, 'Tags added.', {
-            tags: newNote.tags
-        })
+        return newNote
+            ? createResponse(res, 200, 'Tags added.', {
+                tags: newNote.tags
+            }) : createResponse(res, 400, 'Couldn\'t add tags.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -47,13 +43,11 @@ const deleteTags = async (req: Request, res: Response) => {
             res.locals.user.userID,
             tags
         )
-        if (!newNote) return createResponse(res, 400, 'Couldn\'t delete tags.')
-
-        return createResponse(res, 200, 'Tags deleted.')
+        return newNote
+            ? createResponse(res, 200, 'Tags deleted.')
+            : createResponse(res, 400, 'Couldn\'t delete tags.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 

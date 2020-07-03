@@ -15,8 +15,6 @@ export default async function getLoggedUser (
         if (req.cookies.access_token) { res.locals.user = await authJWT.verify(req.cookies.access_token) } else res.locals.user = null
         return next()
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }

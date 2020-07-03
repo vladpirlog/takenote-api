@@ -13,8 +13,6 @@ export default async function checkUniqueUser (
         if (user) return createResponse(res, 409, 'User already exists.')
         return next()
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }

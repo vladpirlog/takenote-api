@@ -4,9 +4,8 @@ import getUnixTime from '../utils/getUnixTime.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
 import { IUserSchema } from '../models/User'
-import constants from '../config/constants'
-import authJWT from '../utils/authJWT.util'
 import { State } from '../interfaces/state.enum'
+import setAuthCookie from '../utils/setAuthCookie.util'
 
 const confirm = async (req: Request, res: Response) => {
     try {
@@ -22,20 +21,7 @@ const confirm = async (req: Request, res: Response) => {
             if (res.locals.user) {
                 // only refresh the cookie if the user is authenticated while confirming the email address
                 res.clearCookie('access_token')
-                const token = authJWT.generate({
-                    userID: newUser.id,
-                    role: newUser.role,
-                    state: newUser.state
-                })
-                res.cookie('access_token', token, {
-                    expires: new Date(
-                        Date.now() + constants.authentication.expires
-                    ),
-                    httpOnly: true,
-                    sameSite: 'lax'
-                    // secure: true,
-                    // TODO: add secure flag
-                })
+                res = setAuthCookie(res, newUser)
             }
             return createResponse(res, 200, 'Email address confirmed.')
         } else {
@@ -44,9 +30,7 @@ const confirm = async (req: Request, res: Response) => {
                 'confirmation'
             )
             if (!newUser) return createResponse(res, 400)
-
             await sendEmailUtil.sendToken(newUser, 'confirmation')
-
             return createResponse(
                 res,
                 202,
@@ -54,9 +38,7 @@ const confirm = async (req: Request, res: Response) => {
             )
         }
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -79,9 +61,7 @@ const requestConfirmationToken = async (
             "Confirmation token sent to the user's email address."
         )
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
