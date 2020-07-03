@@ -25,9 +25,7 @@ const requestResetToken = async (
         }
         return createResponse(res, 401, 'Wrong credentials.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -44,9 +42,7 @@ const requestForgotToken = async (
         await sendEmailUtil.sendToken(user, 'forgot')
         return createResponse(res, 200, 'Forgot token sent.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -62,12 +58,10 @@ const submitResetToken = async (
             newPassword,
             token as IUserSchema['resetToken']['token']
         )
-        if (!newUser) return createResponse(res, 400)
-        return createResponse(res, 200, 'Password changed.')
+        return newUser ? createResponse(res, 200, 'Password changed.')
+            : createResponse(res, 400)
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -84,12 +78,10 @@ const submitForgotToken = async (
             newPassword,
             token as IUserSchema['forgotToken']['token']
         )
-        if (!newUser) return createResponse(res, 400)
-        return createResponse(res, 200, 'Password changed.')
+        return newUser ? createResponse(res, 200, 'Password changed.')
+            : createResponse(res, 400)
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 

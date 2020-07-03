@@ -124,7 +124,8 @@ const setNewToken = async (
 ) => {
     let updateQuery: MongooseUpdateQuery<IUserSchema>
     if (type === 'reset') updateQuery = { resetToken: getNewToken('reset') }
-    else if (type === 'forgot') { updateQuery = { forgotToken: getNewToken('forgot') } } else updateQuery = { confirmationToken: getNewToken('confirmation') }
+    else if (type === 'forgot') updateQuery = { forgotToken: getNewToken('forgot') }
+    else updateQuery = { confirmationToken: getNewToken('confirmation') }
 
     const newUser = await User.findOneAndUpdate(
         {

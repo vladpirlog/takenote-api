@@ -3,7 +3,7 @@ import createResponse from '../utils/createResponse.util'
 import randomString from '../utils/randomString.util'
 import noteShareQuery from '../queries/note.share.query'
 import noteCrudQuery from '../queries/note.crud.query'
-import { IPermissionSchema, PermissionLevel } from '../models/Permission'
+import { PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
 import constants from '../config/constants'
 
@@ -11,13 +11,12 @@ const getNote = async (req: Request, res: Response) => {
     try {
         const { code } = req.params
         const note = await noteCrudQuery.getOneByShareCode(code)
-        if (!note || !note.share.active) { return createResponse(res, 400, 'Couldn\'t get note.') }
 
-        return createResponse(res, 200, 'Note fetched.', { note })
+        return note && note.share.active
+            ? createResponse(res, 200, 'Note fetched.', { note })
+            : createResponse(res, 400, 'Couldn\'t get note.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -33,18 +32,15 @@ const getShareLink = async (
         if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
 
         if (getNew !== 'true' && note.share.code) {
-            if (active === 'true' && !note.share.active) {
+            const newActiveState = active === 'true' && !note.share.active
+                ? true : active === 'false' && note.share.active
+                    ? false : null
+
+            if (newActiveState !== null) {
                 await noteCrudQuery.updateOneOwnOrCollabByID(
                     id,
                     res.locals.user.userID,
-                    { share: { active: true, code: note.share.code } },
-                    false
-                )
-            } else if (active === 'false' && note.share.active) {
-                await noteCrudQuery.updateOneOwnOrCollabByID(
-                    id,
-                    res.locals.user.userID,
-                    { share: { active: false, code: note.share.code } },
+                    { share: { active: newActiveState, code: note.share.code } },
                     false
                 )
             }
@@ -59,27 +55,21 @@ const getShareLink = async (
             res.locals.user.userID,
             {
                 share: {
-                    active:
-            active === 'true'
-                ? true
-                : active === 'false'
-                    ? false
-                    : note.share.active,
+                    active: active === 'true' ? true
+                        : active === 'false' ? false : note.share.active,
                     code: randomString(constants.sharing.codeLength)
                 }
             },
             false
         )
 
-        if (!newNote) return createResponse(res, 400, 'Couldn\'t update note.')
-
-        return createResponse(res, 200, 'Link fetched.', {
-            shareURL: newNote.getShareURL()
-        })
+        return newNote
+            ? createResponse(res, 200, 'Link fetched.', {
+                shareURL: newNote.getShareURL()
+            })
+            : createResponse(res, 400, 'Couldn\'t update note.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -93,10 +83,10 @@ const addCollaborator = async (
         const collabUser = await userQuery.getByUsernameEmailOrId(user)
         if (!collabUser) { return createResponse(res, 400, 'Couldn\'t add collaborator.') }
 
-        let permissionLevel: IPermissionSchema['level']
-        if (type === 'r') permissionLevel = PermissionLevel.read
-        else if (type === 'rw') permissionLevel = PermissionLevel.readWrite
-        else {
+        const permissionLevel = type === 'r'
+            ? PermissionLevel.read : type === 'rw'
+                ? PermissionLevel.readWrite : null
+        if (permissionLevel === null) {
             return createResponse(
                 res,
                 400,
@@ -109,15 +99,14 @@ const addCollaborator = async (
             res.locals.user.userID,
             { subject: collabUser.id, level: permissionLevel }
         )
-        if (!newNote) { return createResponse(res, 400, 'Couldn\'t add collaborator.') }
 
-        return createResponse(res, 200, 'Collaborator added.', {
-            permission: newNote.permissions[newNote.permissions.length - 1]
-        })
+        return newNote
+            ? createResponse(res, 200, 'Collaborator added.', {
+                permission: newNote.permissions[newNote.permissions.length - 1]
+            })
+            : createResponse(res, 400, 'Couldn\'t add collaborator.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -133,12 +122,11 @@ const deleteCollaborator = async (
             res.locals.user.userID,
             permissionID
         )
-        if (!newNote) { return createResponse(res, 400, 'Couldn\'t delete collaborator.') }
-        return createResponse(res, 200, 'Collaborator deleted.')
+        return newNote
+            ? createResponse(res, 200, 'Collaborator deleted.')
+            : createResponse(res, 400, 'Couldn\'t delete collaborator.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 

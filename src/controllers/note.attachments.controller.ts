@@ -24,15 +24,12 @@ const addAttachment = async (
             { title, description, url }
         )
 
-        if (!newNote) { return createResponse(res, 400, 'Couldn\'t add attachment.') }
-
-        return createResponse(res, 200, 'Attachment added.', {
-            attachment: newNote.attachments[newNote.attachments.length - 1]
-        })
+        return newNote
+            ? createResponse(res, 200, 'Attachment added.', {
+                attachment: newNote.attachments[newNote.attachments.length - 1]
+            }) : createResponse(res, 400, 'Couldn\'t add attachment.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -50,14 +47,12 @@ const editAttachment = async (
             { _id: attachmentID, title, description }
         )
 
-        if (!newNote) { return createResponse(res, 400, 'Couldn\'t edit attachment.') }
-        return createResponse(res, 200, 'Attachment edited.', {
-            attachment: newNote.attachments.filter(a => a.id === attachmentID)[0]
-        })
+        return newNote
+            ? createResponse(res, 200, 'Attachment edited.', {
+                attachment: newNote.attachments.filter(a => a.id === attachmentID)[0]
+            }) : createResponse(res, 400, 'Couldn\'t edit attachment.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 
@@ -73,12 +68,11 @@ const deleteAttachment = async (
             res.locals.user.userID,
             attachmentID
         )
-        if (!newNote) { return createResponse(res, 400, 'Couldn\'t delete attachment.') }
-        return createResponse(res, 200, 'Attachment deleted.')
+        return newNote
+            ? createResponse(res, 200, 'Attachment deleted.')
+            : createResponse(res, 400, 'Couldn\'t delete attachment.')
     } catch (err) {
-        return createResponse(res, 500, err.message, {
-            error: err
-        })
+        return createResponse(res, 500, err.message, { error: err })
     }
 }
 

@@ -21,8 +21,9 @@ const close = (): Promise<void> => {
     return new Promise((resolve, reject) => {
         redisClient.quit((err, ok) => {
             if (err) return reject(err)
-            if (ok === 'OK') return resolve()
-            return reject(new Error('Failed to close the redis client.'))
+            return ok === 'OK'
+                ? resolve()
+                : reject(new Error('Failed to close the redis client.'))
         })
     })
 }
@@ -32,8 +33,9 @@ const close = (): Promise<void> => {
  */
 const getClient = (): Promise<RedisClient> => {
     return new Promise((resolve, reject) => {
-        if (redisClient) return resolve(redisClient)
-        return reject(new Error('Redis client is undefined.'))
+        return redisClient
+            ? resolve(redisClient)
+            : reject(new Error('Redis client is undefined.'))
     })
 }
 
