@@ -1,5 +1,5 @@
 export interface IRateLimiting {
-    requests: {
+    request: {
         counter: number;
         unixTime: number;
     };

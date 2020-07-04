@@ -27,8 +27,8 @@ export default {
         codeLength: 20
     },
     rateLimiting: {
-        requestsPerMin: 100,
-        emailsPerMin: 8
+        request: 100, // # of requests per minute from an IP addr
+        email: 8 // # of emails per minute sent to an IP addr
     },
     email: {
         user: process.env.EMAIL_USER || '',

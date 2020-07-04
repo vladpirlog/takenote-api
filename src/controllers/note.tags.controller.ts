@@ -13,7 +13,7 @@ const addTags = async (req: Request, res: Response) => {
             typeof tags[0] !== 'string'
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
-        const newNote = await noteTagsQuery.addTags(
+        const newNote = await noteTagsQuery.add(
             id,
             res.locals.user.userID,
             tags
@@ -38,7 +38,7 @@ const deleteTags = async (req: Request, res: Response) => {
             typeof tags[0] !== 'string'
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
-        const newNote = await noteTagsQuery.deleteTags(
+        const newNote = await noteTagsQuery.delete(
             id,
             res.locals.user.userID,
             tags

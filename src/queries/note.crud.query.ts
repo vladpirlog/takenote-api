@@ -6,24 +6,22 @@ import { PermissionLevel } from '../models/Permission'
  * Fetches all the notes belonging to the user.
  * @param userID id of the user
  */
-const getAllOwn = async (
+const getAllOwn = (
     userID: IUserSchema['_id']
-): Promise<INoteSchema[]> => {
-    return await Note.find({ owner: userID }).exec()
+) => {
+    return Note.find({ owner: userID }).exec()
 }
 
 /**
  * Fetches all the notes where the user is a collaborator.
  * @param userID id of the user
  */
-const getAllCollab = async (
+const getAllCollab = (
     userID: INoteSchema['permissions'][0]['subject']
-): Promise<INoteSchema[]> => {
-    return await Note.find({
+) => {
+    return Note.find({
         'permissions.subject': userID
-    })
-        .select('-permissions')
-        .exec()
+    }).select('-permissions').exec()
 }
 
 /**
@@ -31,12 +29,11 @@ const getAllCollab = async (
  * @param noteID id of the note
  * @param userID id of the note's owner
  */
-const getOneOwnByID = async (
+const getOneOwnByID = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id']
-): Promise<INoteSchema | null> => {
-    const notes = await Note.findOne({ _id: noteID, owner: userID }).exec()
-    return notes
+) => {
+    return Note.findOne({ _id: noteID, owner: userID }).exec()
 }
 
 /**
@@ -44,28 +41,26 @@ const getOneOwnByID = async (
  * The note does not include the permissions array.
  * @param code share code of the note
  */
-const getOneByShareCode = async (
+const getOneByShareCode = (
     code: INoteSchema['share']['code']
-): Promise<INoteSchema | null> => {
-    const note = await Note.findOne({ 'share.code': code })
-        .select('-permissions')
-        .exec()
-    return note
+) => {
+    return Note.findOne({ 'share.code': code })
+        .select('-permissions').exec()
 }
 
 /**
  * Creates a new note with the specified properties.
  * @param props object containing the note properties and the owner
  */
-const createNewNote = async (props: {
+const createNewNote = (props: {
   title?: INoteSchema['title'];
   content?: INoteSchema['content'];
   archived?: INoteSchema['archived'];
   color?: INoteSchema['color'];
   owner: INoteSchema['owner'];
-}): Promise<INoteSchema | null> => {
+}) => {
     const newNote = new Note(props)
-    return await newNote.save()
+    return newNote.save()
 }
 
 /**
@@ -73,15 +68,14 @@ const createNewNote = async (props: {
  * @param noteID id of the note
  * @param userID id of the note's owner
  */
-const deleteOneOwn = async (
+const deleteOneOwn = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id']
-): Promise<INoteSchema | null> => {
-    const notes = await Note.findOneAndDelete({
+) => {
+    return Note.findOneAndDelete({
         _id: noteID,
         owner: userID
     }).exec()
-    return notes
 }
 
 /**
@@ -92,44 +86,34 @@ const deleteOneOwn = async (
  * @param props object containing the new note properties
  * @param allowForCollab allow collaborating notes to be updated
  */
-const updateOneOwnOrCollabByID = async (
+const updateOneByID = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
     props: INoteBody,
     allowForCollab: boolean
-): Promise<INoteSchema | null> => {
+) => {
     if (allowForCollab) {
-        const newNote = await Note.findOneAndUpdate(
+        return Note.findOneAndUpdate(
             {
                 _id: noteID,
-                $or: [
-                    { owner: userID },
-                    {
-                        permissions: {
-                            $elemMatch: {
-                                subject: userID,
-                                level: PermissionLevel.readWrite
-                            }
+                $or: [{ owner: userID }, {
+                    permissions: {
+                        $elemMatch: {
+                            subject: userID,
+                            level: PermissionLevel.readWrite
                         }
                     }
-                ]
+                }]
             },
             props,
             { new: true }
-        )
-            .select('-permissions')
-            .exec()
-        return newNote
+        ).select('-permissions').exec()
     }
-    const newNote = await Note.findOneAndUpdate(
-        {
-            _id: noteID,
-            owner: userID
-        },
+    return Note.findOneAndUpdate(
+        { _id: noteID, owner: userID },
         props,
         { new: true }
     ).exec()
-    return newNote
 }
 
 export default {
@@ -139,5 +123,5 @@ export default {
     getOneByShareCode,
     createNewNote,
     deleteOneOwn,
-    updateOneOwnOrCollabByID
+    updateOneByID
 }
