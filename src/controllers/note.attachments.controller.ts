@@ -12,16 +12,16 @@ const addAttachment = async (
         const { title, description } = req.body
         const { id } = req.params
 
-        if (!req.files || !req.files.photo) { return createResponse(res, 400, 'File not found.') }
+        if (!req.files || !req.files.photo) {
+            return createResponse(res, 400, 'File not found.')
+        }
         const url = await uploadFile(
             req.files.photo as UploadedFile,
             res.locals.user.userID
         )
 
         const newNote = await noteAttachmentsQuery.addAttachment(
-            id,
-            res.locals.user.userID,
-            { url, title, description }
+            id, res.locals.user.userID, { url, title, description }
         )
 
         return newNote

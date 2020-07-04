@@ -17,16 +17,15 @@ export default function checkAttachmentInfo (
         if (Array.isArray(file)) {
             file.forEach((f) => fs.unlinkSync(f.tempFilePath))
             return createResponse(res, 400, 'Multiple files uploaded.')
-        } else {
-            if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
-                fs.unlinkSync(file.tempFilePath)
-                return createResponse(res, 415, 'File is not jpeg or png.')
-            }
+        }
+        if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
+            fs.unlinkSync(file.tempFilePath)
+            return createResponse(res, 415, 'File is not jpeg or png.')
+        }
 
-            if (file.size > 8000000) {
-                fs.unlinkSync(file.tempFilePath)
-                return createResponse(res, 413, 'File is larger than 8 MB.')
-            }
+        if (file.size > 8000000) {
+            fs.unlinkSync(file.tempFilePath)
+            return createResponse(res, 413, 'File is larger than 8 MB.')
         }
         return next()
     } catch (err) {
