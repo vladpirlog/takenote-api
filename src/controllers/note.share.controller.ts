@@ -6,7 +6,7 @@ import noteCrudQuery from '../queries/note.crud.query'
 import { PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
 import constants from '../config/constants'
-import { INoteSchema } from '../models/Note'
+import stringToBoolean from '../utils/stringToBoolean.util'
 
 const getNote = async (req: Request, res: Response) => {
     try {
@@ -21,20 +21,6 @@ const getNote = async (req: Request, res: Response) => {
     }
 }
 
-const updateShareField = (
-    res: Response,
-    note: INoteSchema,
-    newActive: INoteSchema['share']['active'],
-    newCode: INoteSchema['share']['code']
-) => {
-    return noteCrudQuery.updateOneByID(
-        note.id,
-        res.locals.user.userID,
-        { share: { active: newActive, code: newCode } },
-        false
-    )
-}
-
 const getShareLink = async (
     req: Request,
     res: Response
@@ -42,33 +28,22 @@ const getShareLink = async (
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
-
         const note = await noteCrudQuery.getOneOwnByID(id, res.locals.user.userID)
         if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
 
-        if (getNew !== 'true' && note.share.code) {
-            const newActiveState = active === 'true' && !note.share.active
-                ? true : active === 'false' && note.share.active
-                    ? false : null
+        const newActiveState = stringToBoolean(active as string)
+        const newShareCode = getNew !== 'true' && note.share.code
+            ? note.share.code
+            : randomString(constants.sharing.codeLength)
 
-            if (newActiveState !== null) {
-                await updateShareField(res, note, newActiveState, note.share.code)
-            }
-
-            return createResponse(res, 200, 'Link fetched.', {
-                shareURL: note.getShareURL()
-            })
-        }
-
-        const newActiveState = active === 'true' ? true
-            : active === 'false' ? false : note.share.active
-        const newNote = await updateShareField(
-            res,
-            note,
-            newActiveState,
-            randomString(constants.sharing.codeLength)
-        )
-
+        const newNote = await noteCrudQuery.updateOneByID(
+            note.id, res.locals.user.userID, {
+                share: {
+                    active: newActiveState === null
+                        ? note.share.active : newActiveState,
+                    code: newShareCode
+                }
+            }, false)
         return newNote ? createResponse(res, 200, 'Link fetched.', {
             shareURL: newNote.getShareURL()
         }) : createResponse(res, 400, 'Couldn\'t update note.')
