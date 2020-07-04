@@ -31,7 +31,9 @@ const addAttachment = (
  * @param newAttachment object of type Attachment
  */
 const editAttachment = (
-    noteID: INoteSchema['_id'], userID: IUserSchema['_id'], attachment: {
+    noteID: INoteSchema['_id'],
+    userID: IUserSchema['_id'],
+    attachment: {
         _id: INoteSchema['attachments'][0]['_id'],
         title: INoteSchema['attachments'][0]['title'],
         description: INoteSchema['attachments'][0]['description']

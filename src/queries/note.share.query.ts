@@ -18,16 +18,12 @@ const addPermission = (
 ) => {
     Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
-        {
-            $pull: { permissions: { subject: permission.subject } }
-        },
+        { $pull: { permissions: { subject: permission.subject } } },
         { new: true }
     ).exec()
     return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
-        {
-            $push: { permissions: new Permission({ ...permission }) }
-        },
+        { $push: { permissions: new Permission({ ...permission }) } },
         { new: true }
     ).exec()
 }
@@ -45,9 +41,7 @@ const deletePermission = (
 ) => {
     return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
-        {
-            $pull: { permissions: { _id: permissionID } }
-        },
+        { $pull: { permissions: { _id: permissionID } } },
         { new: true }
     ).exec()
 }
