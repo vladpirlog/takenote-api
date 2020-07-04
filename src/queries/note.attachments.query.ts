@@ -11,7 +11,11 @@ import Attachment from '../models/Attachment'
 const addAttachment = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
-    attachment: INoteSchema['attachments'][0]
+    attachment: {
+        url: INoteSchema['attachments'][0]['url'],
+        title: INoteSchema['attachments'][0]['title'],
+        description: INoteSchema['attachments'][0]['description'],
+    }
 ) => {
     return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },

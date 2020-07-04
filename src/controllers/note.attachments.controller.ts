@@ -21,7 +21,7 @@ const addAttachment = async (
         const newNote = await noteAttachmentsQuery.addAttachment(
             id,
             res.locals.user.userID,
-            { title, description, url }
+            { url, title, description }
         )
 
         return newNote
