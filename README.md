@@ -2,8 +2,9 @@
 
 The REST API of a note-taking application. Create notes, add photo attachments and share them for the world to see.
 
-[![Build](https://img.shields.io/github/workflow/status/vladpirlog/takenote-api/Node.js%20CI)](https://github.com/features/actions)
-[![Dependencies](https://img.shields.io/david/vladpirlog/takenote-api)](https://github.com/vladpirlog/takenote-api)
+[![Build](https://img.shields.io/github/workflow/status/vladpirlog/takenote-api/Node.js%20CI)](https://github.com/vladpirlog/takenote-api/actions)
+[![Quality](https://img.shields.io/scrutinizer/quality/g/vladpirlog/takenote-api)](https://scrutinizer-ci.com/)
+[![Dependencies](https://img.shields.io/david/vladpirlog/takenote-api)](package.json)
 [![Standard](https://img.shields.io/badge/code%20style-standard-brightgreen?style=flat)](https://www.npmjs.com/package/eslint)
 [![Language](https://img.shields.io/github/languages/top/vladpirlog/takenote-api)](https://github.com/vladpirlog/takenote-api)
 [![License](https://img.shields.io/github/license/vladpirlog/takenote-api)](LICENSE)
