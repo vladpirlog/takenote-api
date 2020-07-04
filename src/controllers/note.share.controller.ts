@@ -6,6 +6,7 @@ import noteCrudQuery from '../queries/note.crud.query'
 import { PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
 import constants from '../config/constants'
+import { INoteSchema } from '../models/Note'
 
 const getNote = async (req: Request, res: Response) => {
     try {
@@ -18,6 +19,20 @@ const getNote = async (req: Request, res: Response) => {
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }
+}
+
+const updateShareField = (
+    res: Response,
+    note: INoteSchema,
+    newActive: INoteSchema['share']['active'],
+    newCode: INoteSchema['share']['code']
+) => {
+    return noteCrudQuery.updateOneByID(
+        note.id,
+        res.locals.user.userID,
+        { share: { active: newActive, code: newCode } },
+        false
+    )
 }
 
 const getShareLink = async (
@@ -37,12 +52,7 @@ const getShareLink = async (
                     ? false : null
 
             if (newActiveState !== null) {
-                await noteCrudQuery.updateOneOwnOrCollabByID(
-                    id,
-                    res.locals.user.userID,
-                    { share: { active: newActiveState, code: note.share.code } },
-                    false
-                )
+                await updateShareField(res, note, newActiveState, note.share.code)
             }
 
             return createResponse(res, 200, 'Link fetched.', {
@@ -50,24 +60,18 @@ const getShareLink = async (
             })
         }
 
-        const newNote = await noteCrudQuery.updateOneOwnOrCollabByID(
-            id,
-            res.locals.user.userID,
-            {
-                share: {
-                    active: active === 'true' ? true
-                        : active === 'false' ? false : note.share.active,
-                    code: randomString(constants.sharing.codeLength)
-                }
-            },
-            false
+        const newActiveState = active === 'true' ? true
+            : active === 'false' ? false : note.share.active
+        const newNote = await updateShareField(
+            res,
+            note,
+            newActiveState,
+            randomString(constants.sharing.codeLength)
         )
 
-        return newNote
-            ? createResponse(res, 200, 'Link fetched.', {
-                shareURL: newNote.getShareURL()
-            })
-            : createResponse(res, 400, 'Couldn\'t update note.')
+        return newNote ? createResponse(res, 200, 'Link fetched.', {
+            shareURL: newNote.getShareURL()
+        }) : createResponse(res, 400, 'Couldn\'t update note.')
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }
@@ -87,24 +91,17 @@ const addCollaborator = async (
             ? PermissionLevel.read : type === 'rw'
                 ? PermissionLevel.readWrite : null
         if (permissionLevel === null) {
-            return createResponse(
-                res,
-                400,
-                "Invalid type. Should be 'r' or 'rw'."
-            )
+            return createResponse(res, 400, "Invalid type. Should be 'r' or 'rw'.")
         }
-
         const newNote = await noteShareQuery.addPermission(
             id,
             res.locals.user.userID,
             { subject: collabUser.id, level: permissionLevel }
         )
-
         return newNote
             ? createResponse(res, 200, 'Collaborator added.', {
                 permission: newNote.permissions[newNote.permissions.length - 1]
-            })
-            : createResponse(res, 400, 'Couldn\'t add collaborator.')
+            }) : createResponse(res, 400, 'Couldn\'t add collaborator.')
     } catch (err) {
         return createResponse(res, 500, err.message, { error: err })
     }

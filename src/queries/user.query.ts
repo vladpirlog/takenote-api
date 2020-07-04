@@ -7,24 +7,22 @@ import { MongooseUpdateQuery } from 'mongoose'
  * Searches for and returns a user using its id.
  * @param userID id of a user
  */
-const getById = async (
+const getById = (
     userID: IUserSchema['_id']
-): Promise<IUserSchema | null> => {
-    const user = await User.findById(userID).exec()
-    return user
+) => {
+    return User.findById(userID).exec()
 }
 
 /**
  * Searches for and returns a user using its username, email or id.
  * @param identifier username, email or id of a user
  */
-const getByUsernameEmailOrId = async (
+const getByUsernameEmailOrId = (
     identifier: IUserSchema['email'] | IUserSchema['username'] | IUserSchema['_id']
-): Promise<IUserSchema | null> => {
-    const user = await User.findOne({
+) => {
+    return User.findOne({
         $or: [{ username: identifier }, { email: identifier }, { _id: identifier }]
     }).exec()
-    return user
 }
 
 /**
@@ -32,14 +30,13 @@ const getByUsernameEmailOrId = async (
  * @param username username of a user
  * @param email email of a user
  */
-const getByUsernameOrEmail = async (
+const getByUsernameOrEmail = (
     username: IUserSchema['username'] | IUserSchema['email'],
     email?: IUserSchema['email']
-): Promise<IUserSchema | null> => {
-    const user = await User.findOne({
+) => {
+    return User.findOne({
         $or: [{ username: username }, { email: email || username }]
     }).exec()
-    return user
 }
 
 /**
@@ -47,7 +44,7 @@ const getByUsernameOrEmail = async (
  * @param token token belonging to a user
  * @param type the type of token given as argument
  */
-const getByToken = async (
+const getByToken = (
     token:
         | IUserSchema['resetToken']['token']
         | IUserSchema['forgotToken']['token']
@@ -57,19 +54,19 @@ const getByToken = async (
     if (!token) return null
 
     if (type === 'reset') {
-        return await User.findOne({
+        return User.findOne({
             'resetToken.token': token
         }).exec()
     } else if (type === 'forgot') {
-        return await User.findOne({
+        return User.findOne({
             'forgotToken.token': token
         }).exec()
     } else if (type === 'confirmation') {
-        return await User.findOne({
+        return User.findOne({
             'confirmationToken.token': token
         }).exec()
     } else {
-        return await User.findOne({
+        return User.findOne({
             $or: [
                 { 'resetToken.token': token },
                 { 'forgotToken.token': token },
@@ -83,14 +80,14 @@ const getByToken = async (
  * Creates a new user with the properties given as argument.
  * @param props object representing basic user info to be added to the database
  */
-const createNewUser = async (props: {
+const createNewUser = (props: {
     username: IUserSchema['username'];
     email: IUserSchema['email'];
     password: IUserSchema['password'];
     confirmationToken: IUserSchema['confirmationToken'];
 }) => {
     const newUser = new User(props)
-    return await newUser.save()
+    return newUser.save()
 }
 
 /**
@@ -98,16 +95,15 @@ const createNewUser = async (props: {
  * @param userID id of a user
  * @param state the state to be set for that user
  */
-const setUserState = async (
+const setUserState = (
     userID: IUserSchema['_id'],
     state: IUserSchema['state']
 ) => {
-    const newUser = await User.findByIdAndUpdate(
+    return User.findByIdAndUpdate(
         userID,
         { $unset: { confirmationToken: '' }, state: state },
         { new: true }
     ).exec()
-    return newUser
 }
 
 /**
@@ -115,7 +111,7 @@ const setUserState = async (
  * @param identifier email, username or id of a user
  * @param type the type of token to be added to that user
  */
-const setNewToken = async (
+const setNewToken = (
     identifier:
         | IUserSchema['email']
         | IUserSchema['username']
@@ -127,7 +123,7 @@ const setNewToken = async (
     else if (type === 'forgot') updateQuery = { forgotToken: getNewToken('forgot') }
     else updateQuery = { confirmationToken: getNewToken('confirmation') }
 
-    const newUser = await User.findOneAndUpdate(
+    return User.findOneAndUpdate(
         {
             $or: [
                 { username: identifier },
@@ -138,7 +134,6 @@ const setNewToken = async (
         updateQuery,
         { new: true }
     ).exec()
-    return newUser
 }
 
 /**
@@ -147,37 +142,28 @@ const setNewToken = async (
  * @param newPassword the new password to be hashed and salted
  * @param token a reset or forgot token, used to identify the user
  */
-const setNewPassword = async (
+const setNewPassword = (
     identifier: IUserSchema['_id'] | null,
     newPassword: string,
     token:
         | IUserSchema['resetToken']['token']
         | IUserSchema['forgotToken']['token']
 ) => {
-    if (identifier) {
-        const newSalt = bcrypt.genSaltSync(12)
-        const hash = bcrypt.hashSync(newPassword, newSalt)
-        const newUser = await User.findOneAndUpdate(
-            {
-                _id: identifier,
-                'resetToken.token': token
-            },
-            { password: hash, salt: newSalt, $unset: { resetToken: '' } },
-            { new: true }
-        ).exec()
-        return newUser
-    }
-
     const newSalt = bcrypt.genSaltSync(12)
     const hash = bcrypt.hashSync(newPassword, newSalt)
-    const newUser = await User.findOneAndUpdate(
+    return User.findOneAndUpdate(
+        identifier
+            ? { _id: identifier, 'resetToken.token': token }
+            : { 'forgotToken.token': token },
         {
-            'forgotToken.token': token
+            password: hash,
+            salt: newSalt,
+            $unset: identifier
+                ? { resetToken: '' }
+                : { forgotToken: '' }
         },
-        { password: hash, salt: newSalt, $unset: { forgotToken: '' } },
         { new: true }
     ).exec()
-    return newUser
 }
 
 export default {

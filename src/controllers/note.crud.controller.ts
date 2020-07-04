@@ -72,7 +72,7 @@ const editNote = async (req: Request, res: Response) => {
             if (archived) newProps.archived = archived
             if (color) newProps.color = color
 
-            const newNote = await noteQuery.updateOneOwnOrCollabByID(
+            const newNote = await noteQuery.updateOneByID(
                 id,
                 res.locals.user.userID,
                 newProps,
@@ -89,7 +89,7 @@ const editNote = async (req: Request, res: Response) => {
         if (title) newProps.title = title
         if (content) newProps.content = content
 
-        const newNote = await noteQuery.updateOneOwnOrCollabByID(
+        const newNote = await noteQuery.updateOneByID(
             id,
             res.locals.user.userID,
             newProps,

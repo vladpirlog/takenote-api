@@ -4,148 +4,72 @@ import { IRateLimiting } from '../interfaces/rateLimiting.interface'
 import getUnixTime from '../utils/getUnixTime.util'
 import constants from '../config/constants'
 import redisConfig from '../config/redis.config'
+import { RedisClient } from 'redis'
 
-const forRequests = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const redisClient = await redisConfig.getClient()
-        redisClient.get(req.ip, (err, reply) => {
-            if (err) throw err
-            res.setHeader(
-                'X-RateLimit-Limit-Minute',
-                constants.rateLimiting.requestsPerMin
-            )
-            if (reply) {
-                const data: IRateLimiting = JSON.parse(reply)
-                if (
-                    data.requests.counter >=
-                    constants.rateLimiting.requestsPerMin
-                ) {
-                    if (getUnixTime() - data.requests.unixTime < 60) {
-                        data.requests.counter++
-                        redisClient.setex(req.ip, 60, JSON.stringify(data))
-                        res.setHeader(
-                            'X-RateLimit-Remaining-Minute',
-                            constants.rateLimiting.requestsPerMin -
-                                data.requests.counter <
-                                0
-                                ? 0
-                                : constants.rateLimiting.requestsPerMin -
-                                      data.requests.counter
-                        )
-                        return createResponse(
-                            res,
-                            429,
-                            'Request threshold has been reached.'
-                        )
-                    } else {
-                        const newEntry: IRateLimiting = {
-                            requests: {
-                                counter: 1,
-                                unixTime: getUnixTime()
-                            },
-                            email: data.email
-                        }
-                        redisClient.setex(req.ip, 60, JSON.stringify(newEntry))
-                        res.setHeader(
-                            'X-RateLimit-Remaining-Minute',
-                            constants.rateLimiting.requestsPerMin -
-                                newEntry.requests.counter <
-                                0
-                                ? 0
-                                : constants.rateLimiting.requestsPerMin -
-                                      newEntry.requests.counter
-                        )
-                    }
-                } else {
-                    data.requests.counter++
-                    redisClient.setex(req.ip, 60, JSON.stringify(data))
-                    res.setHeader(
-                        'X-RateLimit-Remaining-Minute',
-                        constants.rateLimiting.requestsPerMin -
-                            data.requests.counter <
-                            0
-                            ? 0
-                            : constants.rateLimiting.requestsPerMin -
-                                  data.requests.counter
-                    )
-                }
-            } else {
-                const newEntry: IRateLimiting = {
-                    requests: {
-                        counter: 1,
-                        unixTime: getUnixTime()
-                    },
-                    email: {
-                        counter: 0,
-                        unixTime: getUnixTime()
-                    }
-                }
-                redisClient.setex(req.ip, 60, JSON.stringify(newEntry))
-                res.setHeader(
-                    'X-RateLimit-Remaining-Minute',
-                    constants.rateLimiting.requestsPerMin -
-                        newEntry.requests.counter <
-                        0
-                        ? 0
-                        : constants.rateLimiting.requestsPerMin -
-                              newEntry.requests.counter
-                )
-            }
-            return next()
-        })
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
+const setRateLimitHeaders = (res: Response, data: IRateLimiting) => {
+    const remainingRequests = constants.rateLimiting.request - data.request.counter
+    res.setHeader(
+        'X-RateLimit-Remaining-Minute',
+        remainingRequests < 0 ? 0 : remainingRequests
+    )
+    res.setHeader('X-RateLimit-Limit-Minute', constants.rateLimiting.request)
+    return res
+}
+
+const createNewEntry = (
+    request: IRateLimiting['request']['counter'] | IRateLimiting['request'],
+    email: IRateLimiting['email']['counter'] | IRateLimiting['email']
+): IRateLimiting => {
+    return {
+        request: typeof request === 'number'
+            ? {
+                counter: request, unixTime: getUnixTime()
+            } : request,
+        email: typeof email === 'number'
+            ? {
+                counter: email, unixTime: getUnixTime()
+            } : email
     }
 }
 
-const forEmail = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const redisClient = await redisConfig.getClient()
-        redisClient.get(req.ip, (err, reply) => {
-            if (err) throw err
+const saveAndSetHeaders = (
+    res: Response,
+    redisClient: RedisClient,
+    data: IRateLimiting,
+    ipAddr: string,
+    type: 'request' | 'email'
+) => {
+    redisClient.setex(ipAddr, 60, JSON.stringify(data))
+    return type === 'request' ? setRateLimitHeaders(res, data) : res
+}
+
+const rateLimiting = (type: 'request' | 'email') => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const redisClient = await redisConfig.getClient()
+            const reply: string = await new Promise((resolve, reject) => {
+                redisClient.get(req.ip, (err, reply) => err ? reject(err) : resolve(reply))
+            })
+            let data: IRateLimiting
             if (reply) {
-                const data: IRateLimiting = JSON.parse(reply)
-                if (data.email.counter >= constants.rateLimiting.emailsPerMin) {
-                    if (getUnixTime() - data.email.unixTime < 60) {
-                        data.email.counter++
-                        redisClient.setex(req.ip, 60, JSON.stringify(data))
-                        return createResponse(
-                            res,
-                            429,
-                            'Email threshold has been reached.'
-                        )
+                data = JSON.parse(reply)
+                if (data[type].counter >= constants.rateLimiting[type]) {
+                    if (getUnixTime() - data[type].unixTime < 60) {
+                        data[type].counter++
+                        res = saveAndSetHeaders(res, redisClient, data, req.ip, type)
+                        return createResponse(res, 429)
                     } else {
-                        const newEntry: IRateLimiting = {
-                            requests: data.requests,
-                            email: {
-                                counter: 1,
-                                unixTime: getUnixTime()
-                            }
-                        }
-                        redisClient.setex(req.ip, 60, JSON.stringify(newEntry))
+                        data = createNewEntry(type === 'request' ? 1 : data.request,
+                            type === 'email' ? 1 : data.email)
                     }
-                } else {
-                    data.email.counter++
-                    redisClient.setex(req.ip, 60, JSON.stringify(data))
-                }
-            } else {
-                const newEntry: IRateLimiting = {
-                    requests: {
-                        counter: 0,
-                        unixTime: getUnixTime()
-                    },
-                    email: {
-                        counter: 1,
-                        unixTime: getUnixTime()
-                    }
-                }
-                redisClient.setex(req.ip, 60, JSON.stringify(newEntry))
-            }
+                } else { data[type].counter++ }
+            } else { data = createNewEntry(type === 'request' ? 1 : 0, type === 'email' ? 1 : 0) }
+            res = saveAndSetHeaders(res, redisClient, data, req.ip, type)
             return next()
-        })
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
+        } catch (err) {
+            return createResponse(res, 500, err.message, { error: err })
+        }
     }
 }
 
-export default { forRequests, forEmail }
+export default { forRequests: rateLimiting('request'), forEmail: rateLimiting('email') }

@@ -8,29 +8,28 @@ import Permission from '../models/Permission'
  * @param userID id of the note's owner
  * @param permission object of type permission
  */
-const addPermission = async (
+const addPermission = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
     permission: {
         subject: INoteSchema['permissions'][0]['subject'],
         level: INoteSchema['permissions'][0]['level']
     }
-): Promise<INoteSchema | null> => {
-    await Note.findOneAndUpdate(
+) => {
+    Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         {
             $pull: { permissions: { subject: permission.subject } }
         },
         { new: true }
     ).exec()
-    const newNote = await Note.findOneAndUpdate(
+    return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         {
             $push: { permissions: new Permission({ ...permission }) }
         },
         { new: true }
     ).exec()
-    return newNote
 }
 
 /**
@@ -39,12 +38,12 @@ const addPermission = async (
  * @param userID id of the note's owner
  * @param collabUserID id of the collaborator to be removed
  */
-const deletePermission = async (
+const deletePermission = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
     permissionID: INoteSchema['permissions'][0]['_id']
-): Promise<INoteSchema | null> => {
-    return await Note.findOneAndUpdate(
+) => {
+    return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         {
             $pull: { permissions: { _id: permissionID } }

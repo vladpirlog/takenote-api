@@ -8,16 +8,12 @@ import Attachment from '../models/Attachment'
  * @param userID id of the note's owner
  * @param attachment object of type attachment
  */
-const addAttachment = async (
+const addAttachment = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
-    attachment: {
-        title: INoteSchema['attachments'][0]['title'],
-        url: INoteSchema['attachments'][0]['url'],
-        description: INoteSchema['attachments'][0]['description']
-    }
+    attachment: INoteSchema['attachments'][0]
 ) => {
-    return await Note.findOneAndUpdate(
+    return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         { $push: { attachments: new Attachment({ ...attachment }) } },
         { new: true }
@@ -28,18 +24,16 @@ const addAttachment = async (
  * Updated an attachment of a note.
  * @param noteID id of the note
  * @param userID id of the note's owner
- * @param newAttachment object of type attachment with the url as identifier
+ * @param newAttachment object of type Attachment
  */
-const editAttachment = async (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    attachment: {
+const editAttachment = (
+    noteID: INoteSchema['_id'], userID: IUserSchema['_id'], attachment: {
         _id: INoteSchema['attachments'][0]['_id'],
         title: INoteSchema['attachments'][0]['title'],
         description: INoteSchema['attachments'][0]['description']
     }
 ) => {
-    return await Note.findOneAndUpdate(
+    return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         {
             'attachments.$[element].title': attachment.title,
@@ -55,12 +49,12 @@ const editAttachment = async (
  * @param userID id of the note's owner
  * @param attachmentURL the url of the attachment to be removed
  */
-const deleteAttachment = async (
+const deleteAttachment = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
     attachmentID: INoteSchema['attachments'][0]['_id']
 ) => {
-    return await Note.findOneAndUpdate(
+    return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         { $pull: { attachments: { _id: attachmentID } } },
         { new: true }
