@@ -1,7 +1,7 @@
 import getUnixTime from './getUnixTime.util'
-import constants from '../config/constants'
-import randomString from './randomString.util'
+import constants from '../config/constants.config'
 import Token from '../models/Token'
+import getID from './getID.util'
 
 /**
  * Creates a new token object of a certain type. Returns an ITokenSchema object having token and exp properties.
@@ -9,13 +9,7 @@ import Token from '../models/Token'
  */
 export default function getNewToken (type: 'reset' | 'forgot' | 'confirmation') {
     return new Token({
-        token: randomString(
-            type === 'confirmation'
-                ? constants.token.confirmationLength
-                : type === 'forgot'
-                    ? constants.token.forgotLength
-                    : constants.token.resetLength
-        ),
+        token: getID(type),
         exp: Math.floor(getUnixTime() + constants.token.expires / 1000)
     })
 }

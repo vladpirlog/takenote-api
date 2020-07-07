@@ -1,14 +1,13 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import randomString from '../utils/randomString.util'
 import noteShareQuery from '../queries/note.share.query'
 import noteCrudQuery from '../queries/note.crud.query'
 import { PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
-import constants from '../config/constants'
 import stringToBoolean from '../utils/stringToBoolean.util'
+import getID from '../utils/getID.util'
 
-const getNote = async (req: Request, res: Response) => {
+const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { code } = req.params
         const note = await noteCrudQuery.getOneByShareCode(code)
@@ -16,15 +15,10 @@ const getNote = async (req: Request, res: Response) => {
         return note && note.share.active
             ? createResponse(res, 200, 'Note fetched.', { note })
             : createResponse(res, 400, 'Couldn\'t get note.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const getShareLink = async (
-    req: Request,
-    res: Response
-) => {
+const getShareLink = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
@@ -33,8 +27,7 @@ const getShareLink = async (
 
         const newActiveState = stringToBoolean(active as string)
         const newShareCode = getNew !== 'true' && note.share.code
-            ? note.share.code
-            : randomString(constants.sharing.codeLength)
+            ? note.share.code : getID('share')
 
         const newNote = await noteCrudQuery.updateOneByID(
             note.id, res.locals.user.userID, {
@@ -47,15 +40,10 @@ const getShareLink = async (
         return newNote ? createResponse(res, 200, 'Link fetched.', {
             shareURL: newNote.getShareURL()
         }) : createResponse(res, 400, 'Couldn\'t update note.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const addCollaborator = async (
-    req: Request,
-    res: Response
-) => {
+const addCollaborator = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const { user, type } = req.body
@@ -77,15 +65,10 @@ const addCollaborator = async (
             ? createResponse(res, 200, 'Collaborator added.', {
                 permission: newNote.permissions[newNote.permissions.length - 1]
             }) : createResponse(res, 400, 'Couldn\'t add collaborator.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const deleteCollaborator = async (
-    req: Request,
-    res: Response
-) => {
+const deleteCollaborator = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id, permissionID } = req.params
 
@@ -97,9 +80,7 @@ const deleteCollaborator = async (
         return newNote
             ? createResponse(res, 200, 'Collaborator deleted.')
             : createResponse(res, 400, 'Couldn\'t delete collaborator.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default { getNote, getShareLink, addCollaborator, deleteCollaborator }
