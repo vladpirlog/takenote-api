@@ -23,8 +23,14 @@ export default {
         email: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
         password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
     },
-    sharing: {
-        codeLength: 20
+    idInfo: {
+        user: { prefix: 'u', length: 24 },
+        note: { prefix: 'n', length: 24 },
+        jwt: { prefix: 'j', length: 24 },
+        share: { prefix: 's', length: 24 },
+        reset: { prefix: 'rs', length: 24 },
+        forgot: { prefix: 'fr', length: 24 },
+        confirmation: { prefix: 'cn', length: 24 }
     },
     rateLimiting: {
         request: 100, // # of requests per minute from an IP addr
@@ -35,10 +41,7 @@ export default {
         pass: process.env.EMAIL_PASS || ''
     },
     token: {
-        expires: 30 * 60 * 1000, // time in ms
-        confirmationLength: 24,
-        resetLength: 32,
-        forgotLength: 32
+        expires: 30 * 60 * 1000 // time in ms
     },
     test: {
         persistentUser: {

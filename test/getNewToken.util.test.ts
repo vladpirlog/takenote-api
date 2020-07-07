@@ -1,5 +1,5 @@
 import getNewToken from '../src/utils/getNewToken.util'
-import constants from '../src/config/constants'
+import constants from '../src/config/constants.config'
 
 describe('token creation testing', () => {
     test('generate reset token', () => {
@@ -8,7 +8,11 @@ describe('token creation testing', () => {
         expect(token.exp.toString()).toHaveLength(10)
 
         expect(typeof token.token).toBe('string')
-        expect(token.token).toHaveLength(constants.token.resetLength)
+        expect(token.token).toHaveLength(
+            constants.idInfo.reset.prefix.length + constants.idInfo.reset.length
+        )
+        expect(token.token.substr(0, constants.idInfo.reset.prefix.length))
+            .toBe(constants.idInfo.reset.prefix)
     })
 
     test('generate forgot token', () => {
@@ -17,7 +21,11 @@ describe('token creation testing', () => {
         expect(token.exp.toString()).toHaveLength(10)
 
         expect(typeof token.token).toBe('string')
-        expect(token.token).toHaveLength(constants.token.forgotLength)
+        expect(token.token).toHaveLength(
+            constants.idInfo.forgot.prefix.length + constants.idInfo.forgot.length
+        )
+        expect(token.token.substr(0, constants.idInfo.forgot.prefix.length))
+            .toBe(constants.idInfo.forgot.prefix)
     })
 
     test('generate confirmation token', () => {
@@ -26,6 +34,10 @@ describe('token creation testing', () => {
         expect(token.exp.toString()).toHaveLength(10)
 
         expect(typeof token.token).toBe('string')
-        expect(token.token).toHaveLength(constants.token.confirmationLength)
+        expect(token.token).toHaveLength(
+            constants.idInfo.confirmation.prefix.length + constants.idInfo.confirmation.length
+        )
+        expect(token.token.substr(0, constants.idInfo.confirmation.prefix.length))
+            .toBe(constants.idInfo.confirmation.prefix)
     })
 })

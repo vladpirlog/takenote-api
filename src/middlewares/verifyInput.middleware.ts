@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import checkRegex from '../utils/checkRegex.util'
-import constants from '../config/constants'
+import constants from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
 
 /**

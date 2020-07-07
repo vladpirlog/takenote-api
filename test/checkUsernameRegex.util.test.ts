@@ -1,5 +1,5 @@
 import checkRegex from '../src/utils/checkRegex.util'
-import constants from '../src/config/constants'
+import constants from '../src/config/constants.config'
 
 describe('username RegEx testing', () => {
     test('should return true', () => {

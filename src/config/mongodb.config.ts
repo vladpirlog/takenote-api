@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import constants from './constants'
+import constants from './constants.config'
 
 /**
  * Creates a connection to a MongoDB database using mongoose. Returns a promise.

@@ -1,6 +1,6 @@
 import { IUserSchema } from '../models/User'
 import nodemailer from 'nodemailer'
-import constants from '../config/constants'
+import constants from '../config/constants.config'
 import url from 'url'
 import Mail from 'nodemailer/lib/mailer'
 

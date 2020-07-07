@@ -1,6 +1,6 @@
 import { Response } from 'express'
 import { IUserSchema } from '../models/User'
-import constants from '../config/constants'
+import constants from '../config/constants.config'
 import authJWT from './authJWT.util'
 
 /**
