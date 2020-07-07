@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import getUnixTime from '../utils/getUnixTime.util'
 import sendEmailUtil from '../utils/sendEmail.util'
@@ -7,7 +7,7 @@ import { IUserSchema } from '../models/User'
 import { State } from '../interfaces/state.enum'
 import setAuthCookie from '../utils/setAuthCookie.util'
 
-const confirm = async (req: Request, res: Response) => {
+const confirm = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { token } = req.query
         const user = await userQuery.getByToken(
@@ -37,15 +37,10 @@ const confirm = async (req: Request, res: Response) => {
                 "Confirmation token has expired. A new confirmation token was sent to the user's email address."
             )
         }
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const requestConfirmationToken = async (
-    req: Request,
-    res: Response
-) => {
+const requestConfirmationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setNewToken(
             res.locals.user.userID,
@@ -60,9 +55,7 @@ const requestConfirmationToken = async (
             200,
             "Confirmation token sent to the user's email address."
         )
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default {

@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
 import fileUpload from 'express-fileupload'
 import compression from 'compression'
-import constants from './config/constants'
+import constants from './config/constants.config'
 import getLoggedUser from './middlewares/getLoggedUser.middleware'
 import rateLimiting from './middlewares/rateLimiting.middleware'
 import send404 from './middlewares/send404.util'
@@ -12,6 +12,7 @@ import noteRoute from './routes/note.route'
 import sharedNoteRoute from './routes/note.share.route'
 import createResponse from './utils/createResponse.util'
 import helmet from 'helmet'
+import errorHandler from './middlewares/errorHandler.middleware'
 const cloudinary = require('cloudinary').v2
 
 /**
@@ -53,5 +54,7 @@ app.use('/status', (req: Request, res: Response) => {
 })
 
 app.use(send404)
+
+app.use(errorHandler)
 
 export default app

@@ -1,13 +1,10 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import { IUserSchema } from '../models/User'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
 
-const requestResetToken = async (
-    req: Request,
-    res: Response
-) => {
+const requestResetToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
         const user = await userQuery.getById(res.locals.user.userID)
@@ -24,15 +21,10 @@ const requestResetToken = async (
             return createResponse(res, 200, 'Reset token sent.')
         }
         return createResponse(res, 401, 'Wrong credentials.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const requestForgotToken = async (
-    req: Request,
-    res: Response
-) => {
+const requestForgotToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email } = req.body
 
@@ -41,14 +33,10 @@ const requestForgotToken = async (
 
         await sendEmailUtil.sendToken(user, 'forgot')
         return createResponse(res, 200, 'Forgot token sent.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const submitResetToken = async (
-    req: Request,
-    res: Response) => {
+const submitResetToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { new_password: newPassword } = req.body
         const { token } = req.query
@@ -60,15 +48,10 @@ const submitResetToken = async (
         )
         return newUser ? createResponse(res, 200, 'Password changed.')
             : createResponse(res, 400)
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const submitForgotToken = async (
-    req: Request,
-    res: Response
-) => {
+const submitForgotToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { new_password: newPassword } = req.body
         const { token } = req.query
@@ -80,9 +63,7 @@ const submitForgotToken = async (
         )
         return newUser ? createResponse(res, 200, 'Password changed.')
             : createResponse(res, 400)
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default {

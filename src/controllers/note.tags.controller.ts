@@ -1,9 +1,9 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteTagsQuery from '../queries/note.tags.query'
 import parseStringToArray from '../utils/parseStringToArray.util'
 
-const addTags = async (req: Request, res: Response) => {
+const addTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const tags = parseStringToArray(req.query.tags as string)
@@ -22,12 +22,10 @@ const addTags = async (req: Request, res: Response) => {
             ? createResponse(res, 200, 'Tags added.', {
                 tags: newNote.tags
             }) : createResponse(res, 400, 'Couldn\'t add tags.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const deleteTags = async (req: Request, res: Response) => {
+const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const tags = parseStringToArray(req.query.tags as string)
@@ -35,7 +33,7 @@ const deleteTags = async (req: Request, res: Response) => {
         if (
             !Array.isArray(tags) ||
             tags.length === 0 ||
-            typeof tags[0] !== 'string'
+            tags.includes('')
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
         const newNote = await noteTagsQuery.delete(
@@ -46,9 +44,7 @@ const deleteTags = async (req: Request, res: Response) => {
         return newNote
             ? createResponse(res, 200, 'Tags deleted.')
             : createResponse(res, 400, 'Couldn\'t delete tags.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default { addTags, deleteTags }
