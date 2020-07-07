@@ -1,20 +1,18 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteQuery from '../queries/note.crud.query'
 import { INoteBody } from '../models/Note'
 
-const getOneNote = async (req: Request, res: Response) => {
+const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const note = await noteQuery.getOneOwnByID(id, res.locals.user.userID)
         return note ? createResponse(res, 200, 'Note fetched.', { note })
             : createResponse(res, 400, 'Couldn\'t get note.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const getAllNotes = async (req: Request, res: Response) => {
+const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { collaborations } = req.query
         const notes = await noteQuery.getAllOwn(res.locals.user.userID)
@@ -28,12 +26,10 @@ const getAllNotes = async (req: Request, res: Response) => {
             })
         }
         return createResponse(res, 200, 'Notes fetched.', { notes })
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const addNote = async (req: Request, res: Response) => {
+const addNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, content, color } = req.body
         const newNote = await noteQuery.createNewNote({
@@ -46,12 +42,10 @@ const addNote = async (req: Request, res: Response) => {
             ? createResponse(res, 201, 'Note created.', {
                 note: newNote
             }) : createResponse(res, 400, 'Couldn\'t create note.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const editNote = async (req: Request, res: Response) => {
+const editNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const { title, content, archived, color } = req.body
@@ -99,21 +93,17 @@ const editNote = async (req: Request, res: Response) => {
             ? createResponse(res, 200, 'Note updated.', {
                 note: newNote
             }) : createResponse(res, 400, 'Couldn\'t update note.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const deleteNote = async (req: Request, res: Response) => {
+const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
         const note = await noteQuery.deleteOneOwn(id, res.locals.user.userID)
         return note ? createResponse(res, 200, 'Note deleted.')
             : createResponse(res, 400, 'Couldn\'t delete note.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default { getOneNote, getAllNotes, addNote, editNote, deleteNote }

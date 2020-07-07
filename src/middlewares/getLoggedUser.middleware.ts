@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
 import authJWT from '../utils/authJWT.util'
-import createResponse from '../utils/createResponse.util'
 
 /**
  * Middleware function that identifies the user making the request based on the JWT cookie.
@@ -12,9 +11,8 @@ export default async function getLoggedUser (
     next: NextFunction
 ) {
     try {
-        if (req.cookies.access_token) { res.locals.user = await authJWT.verify(req.cookies.access_token) } else res.locals.user = null
+        res.locals.user = req.cookies.access_token
+            ? await authJWT.verify(req.cookies.access_token) : null
         return next()
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }

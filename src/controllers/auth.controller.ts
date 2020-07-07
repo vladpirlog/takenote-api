@@ -1,4 +1,4 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import authJWT from '../utils/authJWT.util'
 import sendEmailUtil from '../utils/sendEmail.util'
@@ -8,7 +8,7 @@ import { State } from '../interfaces/state.enum'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 import setAuthCookie from '../utils/setAuthCookie.util'
 
-const getMe = async (req: Request, res: Response) => {
+const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userQuery.getById(res.locals.user.userID)
         return user ? createResponse(res, 200, 'User found.', {
@@ -18,12 +18,10 @@ const getMe = async (req: Request, res: Response) => {
                 email: user.email
             }
         }) : createResponse(res, 404, 'User not found.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const login = async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body
         const user = await userQuery.getByUsernameOrEmail(email)
@@ -34,23 +32,19 @@ const login = async (req: Request, res: Response) => {
                 userID: user.id
             })
         } else return createResponse(res, 401)
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const logout = async (req: Request, res: Response) => {
+const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
         await jwtBlacklist.add(id, exp)
         res.clearCookie('access_token')
         return createResponse(res, 200, 'User logged out.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const register = async (req: Request, res: Response) => {
+const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { username, email, password } = req.body
         const confirmationToken = getNewToken('confirmation')
@@ -65,13 +59,11 @@ const register = async (req: Request, res: Response) => {
         return createResponse(res, 201, 'User created successfully.', {
             userID: newUser.id
         })
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 // TODO: delete users from db after some time
-const deleteUser = async (req: Request, res: Response) => {
+const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
         const user = await userQuery.getById(res.locals.user.userID)
@@ -88,12 +80,10 @@ const deleteUser = async (req: Request, res: Response) => {
             return createResponse(res, 200, 'Account is being deleted.')
         }
         return createResponse(res, 401, 'Wrong credentials.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const recoverUser = async (req: Request, res: Response) => {
+const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setUserState(
             res.locals.user.userID,
@@ -104,9 +94,7 @@ const recoverUser = async (req: Request, res: Response) => {
         res.clearCookie('access_token')
         res = setAuthCookie(res, newUser)
         return createResponse(res, 200, 'Account is now active.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default { getMe, login, logout, register, deleteUser, recoverUser }

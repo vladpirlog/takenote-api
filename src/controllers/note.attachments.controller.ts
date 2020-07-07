@@ -1,13 +1,10 @@
-import { Request, Response } from 'express'
+import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import uploadFile from '../utils/uploadFile.util'
 import { UploadedFile } from 'express-fileupload'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
 
-const addAttachment = async (
-    req: Request,
-    res: Response
-) => {
+const addAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, description } = req.body
         const { id } = req.params
@@ -28,15 +25,10 @@ const addAttachment = async (
             ? createResponse(res, 200, 'Attachment added.', {
                 attachment: newNote.attachments[newNote.attachments.length - 1]
             }) : createResponse(res, 400, 'Couldn\'t add attachment.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const editAttachment = async (
-    req: Request,
-    res: Response
-) => {
+const editAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, description } = req.body
         const { id, attachmentID } = req.params
@@ -51,15 +43,10 @@ const editAttachment = async (
             ? createResponse(res, 200, 'Attachment edited.', {
                 attachment: newNote.attachments.filter(a => a.id === attachmentID)[0]
             }) : createResponse(res, 400, 'Couldn\'t edit attachment.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
-const deleteAttachment = async (
-    req: Request,
-    res: Response
-) => {
+const deleteAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id, attachmentID } = req.params
 
@@ -71,9 +58,7 @@ const deleteAttachment = async (
         return newNote
             ? createResponse(res, 200, 'Attachment deleted.')
             : createResponse(res, 400, 'Couldn\'t delete attachment.')
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }
 
 export default { addAttachment, editAttachment, deleteAttachment }

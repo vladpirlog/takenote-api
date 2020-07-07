@@ -43,11 +43,7 @@ const checkUserState = (states: IUserSchema['state'][]) => {
                 )
             }
             return next()
-        } catch (err) {
-            return createResponse(res, 500, err.message, {
-                error: err
-            })
-        }
+        } catch (err) { return next(err) }
     }
 }
 

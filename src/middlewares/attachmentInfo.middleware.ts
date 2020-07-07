@@ -28,7 +28,5 @@ export default function checkAttachmentInfo (
             return createResponse(res, 413, 'File is larger than 8 MB.')
         }
         return next()
-    } catch (err) {
-        return createResponse(res, 500, err.message, { error: err })
-    }
+    } catch (err) { return next(err) }
 }

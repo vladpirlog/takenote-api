@@ -30,11 +30,7 @@ const validateToken = (
                     : next()
             }
             return createResponse(res, 401, 'Token expired.')
-        } catch (err) {
-            return createResponse(res, 500, err.message, {
-                error: err
-            })
-        }
+        } catch (err) { return next(err) }
     }
 }
 
