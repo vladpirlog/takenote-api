@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose'
 import { Role } from '../interfaces/role.enum'
-import { v4 as uuidv4 } from 'uuid'
 import { TokenSchema, ITokenSchema } from './Token'
 import bcrypt from 'bcrypt'
 import { State } from '../interfaces/state.enum'
+import getID from '../utils/getID.util'
 
 export interface IUserSchema extends Document {
     username: string;
@@ -26,7 +26,7 @@ export const UserSchema: Schema = new Schema(
         _id: {
             type: String,
             required: true,
-            default: uuidv4
+            default: () => getID('user')
         },
         username: {
             type: String,
@@ -58,13 +58,13 @@ export const UserSchema: Schema = new Schema(
         },
         role: {
             type: Number,
-            default: Role.user,
+            default: Role.USER,
             required: true,
             enum: [
-                Role.admin,
-                Role.secondaryAdmin,
-                Role.unidentified,
-                Role.user
+                Role.ADMIN,
+                Role.SECONDARY_ADMIN,
+                Role.UNIDENTIFIED,
+                Role.USER
             ]
         },
         resetToken: {

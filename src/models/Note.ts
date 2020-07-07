@@ -1,9 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose'
 import { AttachmentSchema, IAttachmentSchema } from './Attachment'
-import { v4 as uuidv4 } from 'uuid'
 import { PermissionSchema, IPermissionSchema } from './Permission'
 import { Color } from '../interfaces/color.enum'
 import { IUserSchema } from './User'
+import getID from '../utils/getID.util'
 
 export interface INoteSchema extends Document {
     title: string;
@@ -33,7 +33,7 @@ export const NoteSchema: Schema = new Schema(
         _id: {
             type: String,
             required: true,
-            default: uuidv4
+            default: () => getID('note')
         },
         title: {
             type: String,
