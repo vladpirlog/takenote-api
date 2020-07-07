@@ -2,7 +2,7 @@ import supertest from 'supertest'
 import app from '../src/app'
 import mongodbConfig from '../src/config/mongodb.config'
 import redisConfig from '../src/config/redis.config'
-import constants from '../src/config/constants'
+import constants from '../src/config/constants.config'
 import User from '../src/models/User'
 
 describe('test registration and authentication flows', () => {

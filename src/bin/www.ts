@@ -5,7 +5,7 @@
  */
 import app from '../app'
 import http, { Server } from 'http'
-import constants from '../config/constants'
+import constants from '../config/constants.config'
 import mongodbConfig from '../config/mongodb.config'
 import redisConfig from '../config/redis.config'
 const debug = require('debug')('takenote')

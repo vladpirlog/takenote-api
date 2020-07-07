@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import { IRateLimiting } from '../interfaces/rateLimiting.interface'
 import getUnixTime from '../utils/getUnixTime.util'
-import constants from '../config/constants'
+import constants from '../config/constants.config'
 import redisConfig from '../config/redis.config'
 import { RedisClient } from 'redis'
 
@@ -66,9 +66,7 @@ const rateLimiting = (type: 'request' | 'email') => {
             } else { data = createNewEntry(type === 'request' ? 1 : 0, type === 'email' ? 1 : 0) }
             res = saveAndSetHeaders(res, redisClient, data, req.ip, type)
             return next()
-        } catch (err) {
-            return createResponse(res, 500, err.message, { error: err })
-        }
+        } catch (err) { return next(err) }
     }
 }
 
