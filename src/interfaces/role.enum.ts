@@ -1,6 +1,6 @@
 export enum Role {
-    admin = 0,
-    secondaryAdmin = 1,
-    user = 2,
-    unidentified = -1,
+    ADMIN = 0,
+    SECONDARY_ADMIN = 1,
+    USER = 2,
+    UNIDENTIFIED = -1,
 }

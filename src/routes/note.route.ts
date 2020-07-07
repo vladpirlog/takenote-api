@@ -11,10 +11,17 @@ import checkAttachmentInfo from '../middlewares/attachmentInfo.middleware'
 import checkQueryNotArray from '../middlewares/checkQueryNotArray.middleware'
 import { State } from '../interfaces/state.enum'
 import checkQuery from '../middlewares/checkQuery.middleware'
+import checkUserRole from '../middlewares/checkUserRole.middleware'
+import { Role } from '../interfaces/role.enum'
 
 const router = Router()
 
-router.all('*', checkAuthStatus(true), checkUserState([State.ACTIVE]))
+router.all(
+    '*',
+    checkAuthStatus(true),
+    checkUserRole([Role.USER]),
+    checkUserState([State.ACTIVE])
+)
 
 /**
  * GET all notes
@@ -46,7 +53,7 @@ router.put('/:id', checkParams(['id']), noteCrudController.editNote)
 router.delete('/:id', checkParams(['id']), noteCrudController.deleteNote)
 
 /**
- * GET sharing URL and set that URL's state(active or not); optionally, request a new URL for a note
+ * GET sharing URL and set that URL's state; optionally, request a new URL for a note
  */
 router.get(
     '/:id/share',
@@ -115,7 +122,6 @@ router.put(
     noteAttachmentsController.editAttachment
 )
 
-// ? sa sterg si poza din cloudinary??
 /**
  * DELETE a photo attachment from a note
  */
