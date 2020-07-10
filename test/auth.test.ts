@@ -116,7 +116,7 @@ describe('test registration and authentication flows', () => {
             .exec()
         request
             .post('/auth/confirm')
-            .query({ token: info.confirmationToken.token })
+            .query({ token: info.confirmationToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
