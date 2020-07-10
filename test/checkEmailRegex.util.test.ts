@@ -2,67 +2,34 @@ import checkRegex from '../src/utils/checkRegex.util'
 import constants from '../src/config/constants.config'
 
 describe('email RegEx testing', () => {
-    test('should return true', () => {
-        expect(checkRegex(constants.regex.email, 'test@test.com')).toBeTruthy()
+    const acceptedStrings = [
+        'test@test.com',
+        'example-_.email@email1.com',
+        [
+            '-_aa@test.lala',
+            'bbb@aaa.bbb.lala'
+        ]
+    ]
+
+    const rejectedStrings = [
+        'a',
+        '-_]]][',
+        'example-_.email@email1_-.com',
+        'jlsdfjdksfdsjgerglkjgoigj',
+        ['AAZZ0-9_'],
+        ['qwerty', 'uiop00000'],
+        [
+            'ppppp',
+            'test-test@test.test.com'
+        ],
+        ['..', 'lala-eeligg']
+    ]
+
+    test.each(acceptedStrings)('%j should return true', (s) => {
+        expect(checkRegex(constants.regex.email, s)).toBeTruthy()
     })
 
-    test('should return false', () => {
-        expect(checkRegex(constants.regex.email, 'a')).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(checkRegex(constants.regex.email, '-_]]][')).toBeFalsy()
-    })
-
-    test('should return true', () => {
-        expect(
-            checkRegex(constants.regex.email, 'example-_.email@email1.com')
-        ).toBeTruthy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.email, 'example-_.email@email1_-.com')
-        ).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.email, 'jlsdfjdksfdsjgerglkjgoigj')
-        ).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(checkRegex(constants.regex.email, ['AAZZ0-9_'])).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.email, ['qwerty', 'uiop00000'])
-        ).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.email, [
-                'ppppp',
-                'test-test@test.test.com'
-            ])
-        ).toBeFalsy()
-    })
-
-    test('should return true', () => {
-        expect(
-            checkRegex(constants.regex.email, [
-                '-_aa@test.lala',
-                'bbb@aaa.bbb.lala'
-            ])
-        ).toBeTruthy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.email, ['..', 'lala-eeligg'])
-        ).toBeFalsy()
+    test.each(rejectedStrings)('%j should return false', (s) => {
+        expect(checkRegex(constants.regex.email, s)).toBeFalsy()
     })
 })

@@ -51,7 +51,7 @@ describe('test pw reset and pw forgotten flows', () => {
             .exec()
         request
             .get('/auth/check_token')
-            .query({ token: info.forgotToken.token })
+            .query({ token: info.forgotToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -86,7 +86,7 @@ describe('test pw reset and pw forgotten flows', () => {
                 'confirm_new_password',
                 constants.test.persistentUser.password
             )
-            .query({ token: info.forgotToken.token })
+            .query({ token: info.forgotToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -133,7 +133,7 @@ describe('test pw reset and pw forgotten flows', () => {
             .exec()
         request
             .get('/auth/check_token')
-            .query({ token: info.resetToken.token })
+            .query({ token: info.resetToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -168,7 +168,7 @@ describe('test pw reset and pw forgotten flows', () => {
                 'confirm_new_password',
                 constants.test.persistentUser.password
             )
-            .query({ token: info.resetToken.token })
+            .query({ token: info.resetToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()

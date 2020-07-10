@@ -2,43 +2,25 @@ import checkRegex from '../src/utils/checkRegex.util'
 import constants from '../src/config/constants.config'
 
 describe('username RegEx testing', () => {
-    test('should return true', () => {
-        expect(checkRegex(constants.regex.username, 'salut')).toBeTruthy()
+    const acceptedStrings = [
+        'salut',
+        ['AAZZ0-9_'],
+        ['qwerty', 'uiop00000']
+    ]
+
+    const rejectedStrings = [
+        'a',
+        '-_]]][',
+        'jlsdfjdksfdsjgerglkjgoigj',
+        ['ppppp', 'aaaaaajsgjsg ghe'],
+        ['..', 'lala-eeligg']
+    ]
+
+    test.each(acceptedStrings)('%j should return true', (s) => {
+        expect(checkRegex(constants.regex.username, s)).toBeTruthy()
     })
 
-    test('should return false', () => {
-        expect(checkRegex(constants.regex.username, 'a')).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(checkRegex(constants.regex.username, '-_]]][')).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.username, 'jlsdfjdksfdsjgerglkjgoigj')
-        ).toBeFalsy()
-    })
-
-    test('should return true', () => {
-        expect(checkRegex(constants.regex.username, ['AAZZ0-9_'])).toBeTruthy()
-    })
-
-    test('should return true', () => {
-        expect(
-            checkRegex(constants.regex.username, ['qwerty', 'uiop00000'])
-        ).toBeTruthy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.username, ['ppppp', 'aaaaaajsgjsg ghe'])
-        ).toBeFalsy()
-    })
-
-    test('should return false', () => {
-        expect(
-            checkRegex(constants.regex.username, ['..', 'lala-eeligg'])
-        ).toBeFalsy()
+    test.each(rejectedStrings)('%j should return false', (s) => {
+        expect(checkRegex(constants.regex.username, s)).toBeFalsy()
     })
 })
