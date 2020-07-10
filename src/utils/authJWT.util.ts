@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken'
 import constants from '../config/constants.config'
 import jwtBlacklistUtil from './jwtBlacklist.util'
 import { IDecodedJWT } from '../interfaces/decodedJWT.interface'
-import getID from './getID.util'
+import createID from './createID.util'
 
 /**
  * Generates a JWT using the info in the payload. Returns a string token.
@@ -23,7 +23,7 @@ const generate = (payload: {
             }h`,
             issuer: constants.domain.baseDomain,
             audience: [constants.domain.baseDomain],
-            jwtid: getID('jwt'),
+            jwtid: createID('jwt'),
             subject: payload.userID,
             notBefore: 0
         }

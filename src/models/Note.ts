@@ -3,7 +3,7 @@ import { AttachmentSchema, IAttachmentSchema } from './Attachment'
 import { PermissionSchema, IPermissionSchema } from './Permission'
 import { Color } from '../interfaces/color.enum'
 import { IUserSchema } from './User'
-import getID from '../utils/getID.util'
+import createID from '../utils/createID.util'
 
 export interface INoteSchema extends Document {
     title: string;
@@ -33,7 +33,7 @@ export const NoteSchema: Schema = new Schema(
         _id: {
             type: String,
             required: true,
-            default: () => getID('note')
+            default: () => createID('note')
         },
         title: {
             type: String,
