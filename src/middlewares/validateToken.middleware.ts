@@ -12,15 +12,15 @@ const validateToken = (
         try {
             const { token } = req.query
             const user = await userQuery.getByToken(
-                token as ITokenSchema['token'],
+                token as ITokenSchema['_id'],
                 tokenType
             )
             if (!user) { return createResponse(res, 401, "Couldn't validate token.") }
 
             let expirationTime: number
-            if (user.resetToken?.token === token) {
+            if (user.resetToken?.id === token) {
                 expirationTime = user.resetToken.exp
-            } else if (user.forgotToken?.token === token) {
+            } else if (user.forgotToken?.id === token) {
                 expirationTime = user.forgotToken.exp
             } else expirationTime = user.confirmationToken.exp
 
