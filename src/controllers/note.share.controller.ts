@@ -5,7 +5,9 @@ import noteCrudQuery from '../queries/note.crud.query'
 import { PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
-import getID from '../utils/getID.util'
+import createID from '../utils/createID.util'
+import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import checkNoteLimits from '../utils/checkNoteLimits.util'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -22,15 +24,15 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
-        const note = await noteCrudQuery.getOneOwnByID(id, res.locals.user.userID)
+        const note = await noteCrudQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
 
         const newActiveState = stringToBoolean(active as string)
         const newShareCode = getNew !== 'true' && note.share.code
-            ? note.share.code : getID('share')
+            ? note.share.code : createID('share')
 
         const newNote = await noteCrudQuery.updateOneByID(
-            note.id, res.locals.user.userID, {
+            note.id, getAuthenticatedUser(res)?.userID, {
                 share: {
                     active: newActiveState === null
                         ? note.share.active : newActiveState,
@@ -56,9 +58,12 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         if (permissionLevel === null) {
             return createResponse(res, 400, "Invalid type. Should be 'r' or 'rw'.")
         }
+        if (!await checkNoteLimits.forPermission(id, getAuthenticatedUser(res)?.userID)) {
+            return createResponse(res, 400, 'Collaborators limit exceeded.')
+        }
         const newNote = await noteShareQuery.addPermission(
             id,
-            res.locals.user.userID,
+            getAuthenticatedUser(res)?.userID,
             { subject: collabUser.id, level: permissionLevel }
         )
         return newNote
@@ -74,7 +79,7 @@ const deleteCollaborator = async (req: Request, res: Response, next: NextFunctio
 
         const newNote = await noteShareQuery.deletePermission(
             id,
-            res.locals.user.userID,
+            getAuthenticatedUser(res)?.userID,
             permissionID
         )
         return newNote

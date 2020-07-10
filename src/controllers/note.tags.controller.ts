@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteTagsQuery from '../queries/note.tags.query'
 import parseStringToArray from '../utils/parseStringToArray.util'
+import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import checkNoteLimits from '../utils/checkNoteLimits.util'
 
 const addTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -10,13 +12,14 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
         if (
             !Array.isArray(tags) ||
             tags.length === 0 ||
-            typeof tags[0] !== 'string'
+            tags.includes('')
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
+        if (!await checkNoteLimits.forTag(id, getAuthenticatedUser(res)?.userID, tags)) {
+            return createResponse(res, 400, 'Tags limit exceeded.')
+        }
         const newNote = await noteTagsQuery.add(
-            id,
-            res.locals.user.userID,
-            tags
+            id, getAuthenticatedUser(res)?.userID, tags
         )
         return newNote
             ? createResponse(res, 200, 'Tags added.', {
@@ -37,9 +40,7 @@ const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
         const newNote = await noteTagsQuery.delete(
-            id,
-            res.locals.user.userID,
-            tags
+            id, getAuthenticatedUser(res)?.userID, tags
         )
         return newNote
             ? createResponse(res, 200, 'Tags deleted.')
