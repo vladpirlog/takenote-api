@@ -4,7 +4,7 @@ import morgan from 'morgan'
 import fileUpload from 'express-fileupload'
 import compression from 'compression'
 import constants from './config/constants.config'
-import getLoggedUser from './middlewares/getLoggedUser.middleware'
+import extractUserFromCookie from './middlewares/extractUserFromCookie.middleware'
 import rateLimiting from './middlewares/rateLimiting.middleware'
 import send404 from './middlewares/send404.util'
 import authRoute from './routes/auth.route'
@@ -43,7 +43,7 @@ app.use(
 )
 
 app.use(rateLimiting.forRequests)
-app.use(getLoggedUser)
+app.use(extractUserFromCookie)
 
 app.use('/auth', authRoute)
 app.use('/notes', noteRoute)
