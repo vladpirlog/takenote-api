@@ -14,9 +14,9 @@ const sendToken = async (
     type: 'reset' | 'forgot' | 'confirmation'
 ) => {
     let info: {token: string, pathname: string}
-    if (type === 'reset') info = { token: user.resetToken.token, pathname: '/rpassword' }
-    else if (type === 'forgot') info = { token: user.forgotToken.token, pathname: '/fpassword' }
-    else info = { token: user.confirmationToken.token, pathname: '/confirm' }
+    if (type === 'reset') info = { token: user.resetToken.id, pathname: '/rpassword' }
+    else if (type === 'forgot') info = { token: user.forgotToken.id, pathname: '/fpassword' }
+    else info = { token: user.confirmationToken.id, pathname: '/confirm' }
 
     const transporter = nodemailer.createTransport({
         service: 'gmail',

@@ -4,12 +4,11 @@ import mongoose, { Schema, Document } from 'mongoose'
  * Schema describing a token(can be of type reset, forgot or confirmation).
  */
 export interface ITokenSchema extends Document {
-    token: string;
     exp: number;
 }
 
 export const TokenSchema: Schema = new Schema({
-    token: {
+    _id: {
         type: String,
         required: true
     },
