@@ -1,5 +1,6 @@
 import { IUserSchema } from '../models/User'
 import mongoose, { Schema, Document } from 'mongoose'
+import createID from '../utils/createID.util'
 
 /**
  * Schema describing a permission, containing a subject and a level (read or read-write).
@@ -15,6 +16,11 @@ export enum PermissionLevel {
 }
 
 export const PermissionSchema: Schema = new Schema({
+    _id: {
+        type: String,
+        required: true,
+        default: () => createID('permission')
+    },
     subject: {
         type: String,
         required: true,

@@ -3,7 +3,7 @@ import { Role } from '../interfaces/role.enum'
 import { TokenSchema, ITokenSchema } from './Token'
 import bcrypt from 'bcrypt'
 import { State } from '../interfaces/state.enum'
-import getID from '../utils/getID.util'
+import createID from '../utils/createID.util'
 
 export interface IUserSchema extends Document {
     username: string;
@@ -26,7 +26,7 @@ export const UserSchema: Schema = new Schema(
         _id: {
             type: String,
             required: true,
-            default: () => getID('user')
+            default: () => createID('user')
         },
         username: {
             type: String,
