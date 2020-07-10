@@ -1,5 +1,5 @@
 import User, { IUserSchema } from '../models/User'
-import getNewToken from '../utils/getNewToken.util'
+import createNewToken from '../utils/createNewToken.util'
 import bcrypt from 'bcrypt'
 import { MongooseUpdateQuery } from 'mongoose'
 
@@ -46,31 +46,31 @@ const getByUsernameOrEmail = (
  */
 const getByToken = (
     token:
-        | IUserSchema['resetToken']['token']
-        | IUserSchema['forgotToken']['token']
-        | IUserSchema['confirmationToken']['token'],
+        | IUserSchema['resetToken']['_id']
+        | IUserSchema['forgotToken']['_id']
+        | IUserSchema['confirmationToken']['_id'],
     type: 'reset' | 'forgot' | 'confirmation' | 'any'
 ) => {
     if (!token) return null
 
     if (type === 'reset') {
         return User.findOne({
-            'resetToken.token': token
+            'resetToken._id': token
         }).exec()
     } else if (type === 'forgot') {
         return User.findOne({
-            'forgotToken.token': token
+            'forgotToken._id': token
         }).exec()
     } else if (type === 'confirmation') {
         return User.findOne({
-            'confirmationToken.token': token
+            'confirmationToken._id': token
         }).exec()
     } else {
         return User.findOne({
             $or: [
-                { 'resetToken.token': token },
-                { 'forgotToken.token': token },
-                { 'confirmationToken.token': token }
+                { 'resetToken._id': token },
+                { 'forgotToken._id': token },
+                { 'confirmationToken._id': token }
             ]
         }).exec()
     }
@@ -119,9 +119,9 @@ const setNewToken = (
     type: 'reset' | 'forgot' | 'confirmation'
 ) => {
     let updateQuery: MongooseUpdateQuery<IUserSchema>
-    if (type === 'reset') updateQuery = { resetToken: getNewToken('reset') }
-    else if (type === 'forgot') updateQuery = { forgotToken: getNewToken('forgot') }
-    else updateQuery = { confirmationToken: getNewToken('confirmation') }
+    if (type === 'reset') updateQuery = { resetToken: createNewToken('reset') }
+    else if (type === 'forgot') updateQuery = { forgotToken: createNewToken('forgot') }
+    else updateQuery = { confirmationToken: createNewToken('confirmation') }
 
     return User.findOneAndUpdate(
         {
@@ -146,15 +146,15 @@ const setNewPassword = (
     identifier: IUserSchema['_id'] | null,
     newPassword: string,
     token:
-        | IUserSchema['resetToken']['token']
-        | IUserSchema['forgotToken']['token']
+        | IUserSchema['resetToken']['_id']
+        | IUserSchema['forgotToken']['_id']
 ) => {
     const newSalt = bcrypt.genSaltSync(12)
     const hash = bcrypt.hashSync(newPassword, newSalt)
     return User.findOneAndUpdate(
         identifier
-            ? { _id: identifier, 'resetToken.token': token }
-            : { 'forgotToken.token': token },
+            ? { _id: identifier, 'resetToken._id': token }
+            : { 'forgotToken._id': token },
         {
             password: hash,
             salt: newSalt,
