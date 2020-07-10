@@ -2,11 +2,12 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteQuery from '../queries/note.crud.query'
 import { INoteBody } from '../models/Note'
+import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const note = await noteQuery.getOneOwnByID(id, res.locals.user.userID)
+        const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         return note ? createResponse(res, 200, 'Note fetched.', { note })
             : createResponse(res, 400, 'Couldn\'t get note.')
     } catch (err) { return next(err) }
@@ -15,10 +16,10 @@ const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
 const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { collaborations } = req.query
-        const notes = await noteQuery.getAllOwn(res.locals.user.userID)
+        const notes = await noteQuery.getAllOwn(getAuthenticatedUser(res)?.userID)
         if (collaborations === 'true') {
             const collabNotes = await noteQuery.getAllCollab(
-                res.locals.user.userID
+                getAuthenticatedUser(res)?.userID
             )
             return createResponse(res, 200, 'Notes fetched.', {
                 notes,
@@ -36,7 +37,7 @@ const addNote = async (req: Request, res: Response, next: NextFunction) => {
             title,
             content,
             color,
-            owner: res.locals.user.userID
+            owner: getAuthenticatedUser(res)?.userID
         })
         return newNote
             ? createResponse(res, 201, 'Note created.', {
@@ -50,7 +51,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
         const { id } = req.params
         const { title, content, archived, color } = req.body
 
-        const note = await noteQuery.getOneOwnByID(id, res.locals.user.userID)
+        const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         if (note) {
             if (note.archived && (title || content || color)) {
                 return createResponse(
@@ -68,7 +69,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
 
             const newNote = await noteQuery.updateOneByID(
                 id,
-                res.locals.user.userID,
+                getAuthenticatedUser(res)?.userID,
                 newProps,
                 false
             )
@@ -85,7 +86,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
 
         const newNote = await noteQuery.updateOneByID(
             id,
-            res.locals.user.userID,
+            getAuthenticatedUser(res)?.userID,
             newProps,
             true
         )
@@ -100,7 +101,7 @@ const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
-        const note = await noteQuery.deleteOneOwn(id, res.locals.user.userID)
+        const note = await noteQuery.deleteOneOwn(id, getAuthenticatedUser(res)?.userID)
         return note ? createResponse(res, 200, 'Note deleted.')
             : createResponse(res, 400, 'Couldn\'t delete note.')
     } catch (err) { return next(err) }
