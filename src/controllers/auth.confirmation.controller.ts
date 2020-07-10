@@ -6,19 +6,20 @@ import userQuery from '../queries/user.query'
 import { IUserSchema } from '../models/User'
 import { State } from '../interfaces/state.enum'
 import setAuthCookie from '../utils/setAuthCookie.util'
+import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 
 const confirm = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { token } = req.query
         const user = await userQuery.getByToken(
-            token as IUserSchema['confirmationToken']['token'],
+            token as IUserSchema['confirmationToken']['_id'],
             'confirmation'
         )
         if (!user) return createResponse(res, 400)
         if (getUnixTime() <= user.confirmationToken.exp) {
             const newUser = await userQuery.setUserState(user.id, State.ACTIVE)
             if (!newUser) return createResponse(res, 400)
-            if (res.locals.user) {
+            if (getAuthenticatedUser(res)) {
                 // only refresh the cookie if the user is authenticated while confirming the email address
                 res.clearCookie('access_token')
                 res = setAuthCookie(res, newUser)
@@ -43,7 +44,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
 const requestConfirmationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setNewToken(
-            res.locals.user.userID,
+            getAuthenticatedUser(res)?.userID,
             'confirmation'
         )
         if (!newUser) return createResponse(res, 400)
