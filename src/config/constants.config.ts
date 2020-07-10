@@ -21,16 +21,28 @@ export default {
     regex: {
         username: /^[a-zA-Z0-9_-]{4,16}$/,
         email: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-        password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+        password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/,
+        attachment: {
+            title: /^[ -~]{0,32}$/,
+            description: /^[ -~]{0,256}$/
+        },
+        note: {
+            title: /^[ -~]{0,100}$/,
+            content: /^[ -~\s]{0,10000}$/,
+            color: /^#[0-9a-fA-F]{6}$/
+        }
     },
     idInfo: {
         user: { prefix: 'u', length: 24 },
         note: { prefix: 'n', length: 24 },
+        permission: { prefix: 'p', length: 24 },
+        attachment: { prefix: 'a', length: 24 },
         jwt: { prefix: 'j', length: 24 },
         share: { prefix: 's', length: 24 },
         reset: { prefix: 'rs', length: 24 },
         forgot: { prefix: 'fr', length: 24 },
-        confirmation: { prefix: 'cn', length: 24 }
+        confirmation: { prefix: 'cn', length: 24 },
+        log: { prefix: 'log', length: 32 }
     },
     rateLimiting: {
         request: 100, // # of requests per minute from an IP addr
@@ -39,6 +51,11 @@ export default {
     email: {
         user: process.env.EMAIL_USER || '',
         pass: process.env.EMAIL_PASS || ''
+    },
+    limitsPerNote: {
+        attachment: 10,
+        permission: 10,
+        tag: 20
     },
     token: {
         expires: 30 * 60 * 1000 // time in ms
