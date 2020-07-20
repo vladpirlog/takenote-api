@@ -6,26 +6,26 @@ import { IUserSchema } from './User'
 import createID from '../utils/createID.util'
 
 export interface INoteSchema extends Document {
-    title: string;
-    content: string;
-    owner: IUserSchema['_id'];
-    permissions: IPermissionSchema[];
-    attachments: IAttachmentSchema[];
-    tags: string[];
-    share: { code: string; active: boolean };
-    createdAt: Date;
-    updatedAt: Date;
-    archived: boolean;
-    color: Color;
-    getShareURL(): string;
+    title: string
+    content: string
+    owner: IUserSchema['_id']
+    permissions: IPermissionSchema[]
+    attachments: IAttachmentSchema[]
+    tags: string[]
+    share: { code: string, active: boolean }
+    createdAt: Date
+    updatedAt: Date
+    archived: boolean
+    color: Color
+    getShareURL(): string
 }
 
 export interface INoteBody {
-    title?: INoteSchema['title'];
-    content?: INoteSchema['content'];
-    archived?: INoteSchema['archived'];
-    color?: INoteSchema['color'];
-    share?: INoteSchema['share'];
+    title?: INoteSchema['title']
+    content?: INoteSchema['content']
+    archived?: INoteSchema['archived']
+    color?: INoteSchema['color']
+    share?: INoteSchema['share']
 }
 
 export const NoteSchema: Schema = new Schema(

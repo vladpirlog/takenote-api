@@ -6,8 +6,8 @@ import createID from '../utils/createID.util'
  * Schema describing a permission, containing a subject and a level (read or read-write).
  */
 export interface IPermissionSchema extends Document {
-  subject: IUserSchema['_id'];
-  level: PermissionLevel;
+    subject: IUserSchema['_id']
+    level: PermissionLevel
 }
 
 export enum PermissionLevel {
