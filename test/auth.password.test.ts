@@ -7,10 +7,9 @@ import User from '../src/models/User'
 
 describe('test pw reset and pw forgotten flows', () => {
     const request = supertest.agent(app)
-    beforeAll(async (done) => {
+    beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         await redisConfig.connect()
-        done()
     })
 
     test('check wrong token for expiration', (done) => {
@@ -175,9 +174,8 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    afterAll(async (done) => {
+    afterAll(async () => {
         await mongodbConfig.close()
         await redisConfig.close()
-        done()
     })
 })

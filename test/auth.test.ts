@@ -7,10 +7,9 @@ import User from '../src/models/User'
 
 describe('test registration and authentication flows', () => {
     const request = supertest.agent(app)
-    beforeAll(async (done) => {
+    beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         await redisConfig.connect()
-        done()
     })
 
     test('server status', (done) => {
@@ -175,12 +174,11 @@ describe('test registration and authentication flows', () => {
         })
     }, 20000)
 
-    afterAll(async (done) => {
+    afterAll(async () => {
         await User.findOneAndDelete({
             email: constants.test.acceptedCredentials.email
         }).exec()
         await mongodbConfig.close()
         await redisConfig.close()
-        done()
     })
 })

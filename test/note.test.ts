@@ -15,10 +15,9 @@ describe('test note-related operations', () => {
     let createdNoteShareURL: string
     let permissionID: INoteSchema['permissions'][0]['_id']
     let attachmentID: INoteSchema['attachments'][0]['_id']
-    beforeAll(async (done) => {
+    beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         await redisConfig.connect()
-        done()
     })
 
     test('successful username-pw login', (done) => {
@@ -261,9 +260,8 @@ describe('test note-related operations', () => {
         })
     }, 20000)
 
-    afterAll(async (done) => {
+    afterAll(async () => {
         await mongodbConfig.close()
         await redisConfig.close()
-        done()
     })
 })
