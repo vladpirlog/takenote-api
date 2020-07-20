@@ -6,19 +6,19 @@ import { State } from '../interfaces/state.enum'
 import createID from '../utils/createID.util'
 
 export interface IUserSchema extends Document {
-    username: string;
-    email: string;
-    password: string;
-    salt: string;
-    state: State;
-    confirmationToken: ITokenSchema;
-    role: Role;
-    resetToken: ITokenSchema;
-    forgotToken: ITokenSchema;
-    createdAt: Date;
-    updatedAt: Date;
-    hasConfirmed(): boolean;
-    validPassword(hash: string): boolean;
+    username: string
+    email: string
+    password: string
+    salt: string
+    state: State
+    confirmationToken: ITokenSchema
+    role: Role
+    resetToken: ITokenSchema
+    forgotToken: ITokenSchema
+    createdAt: Date
+    updatedAt: Date
+    hasConfirmed(): boolean
+    validPassword(hash: string): boolean
 }
 
 export const UserSchema: Schema = new Schema(
