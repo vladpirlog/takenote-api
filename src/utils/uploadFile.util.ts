@@ -1,6 +1,6 @@
-import fs from 'fs'
 import { UploadedFile } from 'express-fileupload'
 import { IUserSchema } from '../models/User'
+import deleteFile from './deleteFile.util'
 const cloudinary = require('cloudinary').v2
 
 /**
@@ -17,10 +17,10 @@ export default async function uploadFile (
         const result = await cloudinary.uploader.upload(file.tempFilePath, {
             folder: `${userID}/`
         })
-        fs.unlinkSync(file.tempFilePath)
+        deleteFile(file)
         return result.secure_url
     } catch (err) {
-        fs.unlinkSync(file.tempFilePath)
+        deleteFile(file)
         throw err
     }
 }

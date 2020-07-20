@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
+import deleteFile from '../utils/deleteFile.util'
 
 /**
  * Function that returns a middleware function that checks if the request parameters have certain fields.
@@ -11,6 +12,7 @@ export default function checkParams (fields: string[]) {
             fields.length &&
             fields.every((field) => Object.keys(req.params).includes(field))
         ) { return next() }
+        if (req.files?.photo) deleteFile(req.files?.photo)
         return createResponse(
             res,
             422,

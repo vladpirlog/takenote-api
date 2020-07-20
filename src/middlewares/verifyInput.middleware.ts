@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import checkRegex from '../utils/checkRegex.util'
 import constants from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
+import deleteFile from '../utils/deleteFile.util'
 
 /**
  * Middleware function that tests the email/username and password against the RegExp.
@@ -108,10 +109,12 @@ const note = (req: Request, res: Response, next: NextFunction) => {
 const attachment = (req: Request, res: Response, next: NextFunction) => {
     const { title, description } = req.body
     if (title && !checkRegex(constants.regex.attachment.title, title)) {
+        if (req.files?.photo) deleteFile(req.files?.photo)
         return createResponse(res, 422, 'Attachment title invalid.')
     }
 
     if (description && !checkRegex(constants.regex.attachment.description, description)) {
+        if (req.files?.photo) deleteFile(req.files?.photo)
         return createResponse(res, 422, 'Attachment description invalid.')
     }
     return next()
