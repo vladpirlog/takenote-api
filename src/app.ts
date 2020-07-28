@@ -2,6 +2,7 @@ import express, { Application, Response, Request } from 'express'
 import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
 import fileUpload from 'express-fileupload'
+// import cors from 'cors'
 import compression from 'compression'
 import constants from './config/constants.config'
 import extractUserFromCookie from './middlewares/extractUserFromCookie.middleware'
@@ -42,6 +43,19 @@ app.use(
     })
 )
 
+// Only needed when running the server and frontend on different (sub)domains.
+
+// app.use(cors({
+//     origin: (origin, callback) => {
+//         if (origin && constants.domain.whitelist.indexOf(origin) !== -1) {
+//             callback(null, true)
+//         } else {
+//             callback(new Error('Not allowed by CORS.'))
+//         }
+//     },
+//     optionsSuccessStatus: 200
+// }))
+
 app.use(rateLimiting.forRequests)
 app.use(extractUserFromCookie)
 
@@ -49,7 +63,7 @@ app.use('/auth', authRoute)
 app.use('/notes', noteRoute)
 app.use('/shared', sharedNoteRoute)
 
-app.use('/status', (req: Request, res: Response) => {
+app.get('/status', (req: Request, res: Response) => {
     return createResponse(res, 200)
 })
 

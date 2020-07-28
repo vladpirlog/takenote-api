@@ -6,7 +6,8 @@ export default {
     nodeEnv: process.env.NODE_ENV || 'development',
     domain: {
         baseDomain: process.env.BASE_DOMAIN || 'localhost',
-        apiDomain: process.env.API_DOMAIN || 'api.localhost'
+        apiDomain: process.env.API_DOMAIN || 'api.localhost',
+        whitelist: ['http://localhost', 'http://www.localhost']
     },
     mongodbURI: process.env.MONGODB_URI || '',
     cloudinary: {
