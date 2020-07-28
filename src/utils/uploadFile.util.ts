@@ -9,10 +9,10 @@ const cloudinary = require('cloudinary').v2
  * @param file file to be uploaded
  * @param userID id of the file's owner
  */
-export default async function uploadFile (
+const uploadFile = async (
     file: UploadedFile,
     userID: IUserSchema['_id']
-): Promise<string> {
+): Promise<string> => {
     try {
         const result = await cloudinary.uploader.upload(file.tempFilePath, {
             folder: `${userID}/`
@@ -24,3 +24,5 @@ export default async function uploadFile (
         throw err
     }
 }
+
+export default uploadFile

@@ -20,6 +20,8 @@ const rateLimiting = (type: 'request' | 'email') => {
                 data = JSON.parse(reply)
                 if (data.counter >= constants.rateLimiting[type]) {
                     if (getUnixTime() - data.unixTime < 60) {
+                        // block the request if there were more requests than the maximum
+                        // allowed in a single minute
                         data.counter++
                         blockRequest = true
                     } else { data = { counter: 1, unixTime: getUnixTime() } }
