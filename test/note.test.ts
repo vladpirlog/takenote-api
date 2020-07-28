@@ -99,6 +99,18 @@ describe('test note-related operations', () => {
             })
     }, 20000)
 
+    test('duplicate note', (done) => {
+        request
+            .post(`/notes/${createdNoteID}/duplicate`)
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.note.title).toBe('my-title')
+                expect(res.body.note.content).toBe('my-content')
+                expect(res.body.note._id).not.toBe(createdNoteID)
+                return done()
+            })
+    }, 20000)
+
     test('add tags', (done) => {
         request
             .post(`/notes/${createdNoteID}/tags`)
