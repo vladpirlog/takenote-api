@@ -14,6 +14,7 @@ module.exports = {
     rules: {
         'no-unused-vars': 'off',
         '@typescript-eslint/no-unused-vars': 'error',
-        indent: [2, 4]
+        indent: [2, 4],
+        'linebreak-style': [2, 'unix']
     }
 }
