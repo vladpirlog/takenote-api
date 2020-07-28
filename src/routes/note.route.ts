@@ -54,6 +54,11 @@ router.put('/:id', checkParams(['id']), verifyInput.note, noteCrudController.edi
 router.delete('/:id', checkParams(['id']), noteCrudController.deleteNote)
 
 /**
+ * DUPLICATE a note
+ */
+router.post('/:id/duplicate', checkParams(['id']), noteCrudController.duplicateNote)
+
+/**
  * GET sharing URL and set that URL's state; optionally, request a new URL for a note
  */
 router.get(
