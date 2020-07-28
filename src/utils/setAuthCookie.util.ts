@@ -8,7 +8,7 @@ import authJWT from './authJWT.util'
  * @param res object of type express.Response
  * @param user the owner of the cookie
  */
-export default (res: Response, user: IUserSchema): Response => {
+const setAuthCookie = (res: Response, user: IUserSchema): Response => {
     const token = authJWT.generate({
         userID: user.id,
         role: user.role,
@@ -25,3 +25,5 @@ export default (res: Response, user: IUserSchema): Response => {
     })
     return res
 }
+
+export default setAuthCookie
