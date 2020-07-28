@@ -30,8 +30,7 @@ router.all(
 /**
  * GET all notes
  */
-router.get('/', checkQueryNotArray(['collaborations']), noteCrudController.getAllNotes
-)
+router.get('/', checkQueryNotArray(['collaborations', 'skip', 'limit']), noteCrudController.getAllNotes)
 
 /**
  * GET a note
@@ -61,7 +60,7 @@ router.post('/:id/duplicate', checkParams(['id']), noteCrudController.duplicateN
 /**
  * GET sharing URL and set that URL's state; optionally, request a new URL for a note
  */
-router.get(
+router.post(
     '/:id/share',
     checkParams(['id']),
     checkQueryNotArray(['active', 'get_new']),
