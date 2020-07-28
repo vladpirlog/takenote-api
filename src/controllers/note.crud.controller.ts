@@ -107,4 +107,24 @@ const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
     } catch (err) { return next(err) }
 }
 
-export default { getOneNote, getAllNotes, addNote, editNote, deleteNote }
+const duplicateNote = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+
+        const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
+        if (!note) return createResponse(res, 400, 'Couldn\'t duplicate note.')
+
+        const newNote = await noteQuery.createNewNote({
+            title: note.title,
+            content: note.content,
+            color: note.color,
+            archived: note.archived,
+            owner: getAuthenticatedUser(res)?.userID
+        })
+
+        return newNote ? createResponse(res, 200, 'Note duplicated.')
+            : createResponse(res, 400, 'Couldn\'t duplicate note.')
+    } catch (err) { return next(err) }
+}
+
+export default { getOneNote, getAllNotes, addNote, editNote, deleteNote, duplicateNote }
