@@ -5,11 +5,18 @@ import { PermissionLevel } from '../models/Permission'
 /**
  * Fetches all the notes belonging to the user.
  * @param userID id of the user
+ * @param skip number of notes to skip
+ * @param limit maximum number of notes to return
  */
 const getAllOwn = (
-    userID: IUserSchema['_id']
+    userID: IUserSchema['_id'],
+    skip?: number,
+    limit?: number
 ) => {
-    return Note.find({ owner: userID }).exec()
+    let query = Note.find({ owner: userID })
+    if (skip) query = query.skip(skip)
+    if (limit) query = query.limit(limit)
+    return query
 }
 
 /**

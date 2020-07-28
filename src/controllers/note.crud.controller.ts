@@ -15,8 +15,16 @@ const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
 
 const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { collaborations } = req.query
-        const notes = await noteQuery.getAllOwn(getAuthenticatedUser(res)?.userID)
+        const { collaborations, skip, limit } = req.query
+        if ((skip && !Number.isSafeInteger(skip)) ||
+        (limit && !Number.isSafeInteger(limit))) {
+            return createResponse(res, 422, 'The skip and limit params should be integers.')
+        }
+        const notes = await noteQuery.getAllOwn(
+            getAuthenticatedUser(res)?.userID,
+            parseInt(skip as string),
+            parseInt(limit as string)
+        )
         if (collaborations === 'true') {
             const collabNotes = await noteQuery.getAllCollab(
                 getAuthenticatedUser(res)?.userID
@@ -122,8 +130,9 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
             owner: getAuthenticatedUser(res)?.userID
         })
 
-        return newNote ? createResponse(res, 200, 'Note duplicated.')
-            : createResponse(res, 400, 'Couldn\'t duplicate note.')
+        return newNote ? createResponse(res, 200, 'Note duplicated.', {
+            note: newNote
+        }) : createResponse(res, 400, 'Couldn\'t duplicate note.')
     } catch (err) { return next(err) }
 }
 
