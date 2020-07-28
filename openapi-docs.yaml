@@ -15,8 +15,6 @@ info:
 servers:
   - description: SwaggerHub API Auto Mocking
     url: https://virtserver.swaggerhub.com/vladpirlog/takenote-api/1.0.0
-  - description: When running locally on port 8000
-    url: "http://localhost:8000/"
 tags:
   - name: auth
     description: Everything related to the users and authentication
@@ -33,11 +31,18 @@ paths:
     get:
       summary: Get server status
       responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Server is ok
           content:
-            text/plain:
-              example: "OK"
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   /auth/me:
     get:
       tags:
@@ -45,34 +50,51 @@ paths:
       summary: Get authenticated user
       operationId: getMe
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user
-        "404":
-          description: User not found
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Authenticated user fetched
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   user:
+                    additionalProperties: false
                     type: object
                     properties:
                       userID:
-                        $ref: "#/components/schemas/User/properties/_id"
+                        type: string
+                        pattern: /^u[a-zA-Z0-9_-]{24}$/
+                        maxLength: 25
+                        minLength: 25
                       username:
-                        $ref: "#/components/schemas/User/properties/username"
+                        type: string
+                        pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                        maxLength: 16
+                        minLength: 4
                       email:
-                        $ref: "#/components/schemas/User/properties/email"
+                        type: string
+                        pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                        maxLength: 254
+                        minLength: 3
   /auth/login:
     post:
       tags:
@@ -80,25 +102,35 @@ paths:
       summary: Login
       operationId: login
       responses:
-        "401":
-          description: User already authenticated or credentials invalid
-        "422":
-          description: Input data missing or invalid
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Authentication successful
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   userID:
-                    $ref: "#/components/schemas/User/properties/_id"
+                    type: string
+                    pattern: /^u[a-zA-Z0-9_-]{24}$/
+                    maxLength: 25
+                    minLength: 25
       requestBody:
         $ref: "#/components/requestBodies/Login"
   /auth/logout:
@@ -108,12 +140,20 @@ paths:
       summary: Logout
       operationId: logout
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: User logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   /auth/register:
     post:
       tags:
@@ -121,31 +161,35 @@ paths:
       summary: Register
       operationId: register
       responses:
-        "401":
-          description: User already authenticated
-        "422":
-          description: Input data missing or invalid
-        "409":
-          description: User already exists
-        "429":
-          description: Email threshold has been reached
-        "400":
-          description: Couldn't create user
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "201":
           description: User created successfully
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 201
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   userID:
-                    $ref: "#/components/schemas/User/properties/_id"
+                    type: string
+                    pattern: /^u[a-zA-Z0-9_-]{24}$/
+                    maxLength: 25
+                    minLength: 25
       requestBody:
         $ref: "#/components/requestBodies/Register"
   /auth/confirm:
@@ -161,16 +205,30 @@ paths:
           description: The token to be used for confirmation
           required: true
           schema:
-            $ref: "#/components/schemas/Token/properties/token"
+            additionalProperties: false
+            type: string
+            pattern: /^cn[a-zA-Z0-9_-]{24}$/
+            maxLength: 26
+            minLength: 26
       responses:
-        "422":
-          description: Input data missing from query
-        "400":
-          description: Couldn't confirm email address
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Email address confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
         "202":
           description: A new confirmation token was sent to the user's email address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   /auth/request_confirmation:
     post:
       tags:
@@ -179,18 +237,20 @@ paths:
       summary: Request a new confirmation token
       operationId: requestConfirmationToken
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "429":
-          description: Email threshold has been reached
-        "400":
-          description: Couldn't issue new confirmation token
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Confirmation token sent to the user's email address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   /auth/reset_password:
     post:
       tags:
@@ -199,18 +259,20 @@ paths:
       summary: Request pw reset token
       operationId: resetPassword
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user or wrong credentials
-        "422":
-          description: Input data missing or invalid
-        "429":
-          description: Email threshold has been reached
-        "400":
-          description: Couldn't issue new reset token
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Reset token sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/OldPassword"
   /auth/rpassword:
@@ -221,23 +283,30 @@ paths:
       summary: Submit reset token
       operationId: submitResetToken
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: token
           in: query
           description: The token to be checked against the user's ResetToken
           required: true
           schema:
-            $ref: "#/components/schemas/Token/properties/token"
+            type: string
+            pattern: /^rs[a-zA-Z0-9_-]{24}$/
+            maxLength: 26
+            minLength: 26
       responses:
-        "401":
-          description: No authenticated user or token expired
-        "422":
-          description: Input data missing or invalid
-        "400":
-          description: Couldn't change password
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/NewPassword"
   /auth/forgot_password:
@@ -248,16 +317,18 @@ paths:
       summary: Request pw forgot token
       operationId: requestForgotToken
       responses:
-        "401":
-          description: User already authenticated
-        "422":
-          description: Input data missing or invalid
-        "429":
-          description: Email threshold has been reached
-        "400":
-          description: Couldn't issue new forgot token
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Forgot token sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/ForgotPassword"
   /auth/fpassword:
@@ -273,16 +344,23 @@ paths:
           description: The token to be checked against the user's ForgotToken
           required: true
           schema:
-            $ref: "#/components/schemas/Token/properties/token"
+            type: string
+            pattern: /^fr[a-zA-Z0-9_-]{24}$/
+            maxLength: 26
+            minLength: 26
       responses:
-        "401":
-          description: User already authenticated or token expired
-        "422":
-          description: Input data missing or invalid
-        "400":
-          description: Couldn't change password
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/NewPassword"
   /auth/check_token:
@@ -298,16 +376,23 @@ paths:
           description: The token to be checked
           required: true
           schema:
-            $ref: "#/components/schemas/Token/properties/token"
+            type: string
+            pattern: /^(rs|fr|cn)[a-zA-Z0-9_-]{24}$/
+            maxLength: 26
+            minLength: 26
       responses:
-        "422":
-          description: Input data missing from query
-        "404":
-          description: Couldn't validate token
-        "401":
-          description: Reset token expired
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Reset token valid (not expired)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   /auth/delete:
     post:
       tags:
@@ -315,18 +400,20 @@ paths:
       summary: Delete account
       operationId: deleteMe
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user or wrong credentials
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing or invalid
-        "400":
-          description: Couldn't delete account
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Account is being deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/OldPassword"
   /auth/recover:
@@ -336,24 +423,28 @@ paths:
       summary: Recover account
       operationId: recoverMe
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "400":
-          description: Couldn't recover account
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Account is now active
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   /notes:
     get:
       tags:
         - notes
-      summary: User's notes
+      summary: Get all the user's notes
       operationId: allNotes
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: collaborations
           in: query
@@ -361,18 +452,31 @@ paths:
           schema:
             type: boolean
             description: Specifies whether the notes where the user is collaborating should be included
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: number
+            description: The number of notes to skip from the result
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: number
+            description: The maximum number of notes to return
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing or invalid
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Notes fetched
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 required:
                   - status
@@ -382,9 +486,13 @@ paths:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   notes:
                     type: array
                     items:
@@ -399,27 +507,32 @@ paths:
       summary: Add note
       operationId: addNote
       security:
-        - api_key: []
+        - cookieAuth: []
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "400":
-          description: Couldn't create note
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "201":
           description: Note created
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 201
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   note:
                     $ref: "#/components/schemas/Note"
       requestBody:
@@ -431,36 +544,42 @@ paths:
       summary: One user's note
       operationId: oneNote
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to return
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Couldn't get note
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Note fetched
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
+                    enum:
+                      - 200
                     description: HTTP status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   note:
                     $ref: "#/components/schemas/Note"
     put:
@@ -469,36 +588,42 @@ paths:
       summary: Update note
       operationId: updateNote
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to update
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Couldn't update note
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Note updated
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   note:
                     $ref: "#/components/schemas/Note"
       requestBody:
@@ -509,51 +634,93 @@ paths:
       summary: Delete note
       operationId: deleteNote
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to delete
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Couldn't delete note
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Note deleted
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: number
-                    format: int32
-                    description: HTTP status code
-                  message:
-                    type: string
-  "/notes/{noteID}/share":
-    get:
+                $ref: "#/components/schemas/ResponseBody"
+  "/notes/{noteID}/duplicate":
+    post:
       tags:
         - notes
-      summary: Get sharing URL for a note
-      operationId: shareLink
+      summary: Duplicate a note
+      operationId: duplicate
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to share
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Note duplicated
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: number
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  note:
+                    $ref: "#/components/schemas/Note"
+  "/notes/{noteID}/share":
+    post:
+      tags:
+        - notes
+      summary: Get sharing URL for a note
+      operationId: shareLink
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to share
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
         - name: active
           in: query
           description: Set the sharing URL active or not
@@ -567,29 +734,35 @@ paths:
           schema:
             type: boolean
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path or invalid queries
-        "400":
-          description: Couldn't get note
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Link fetched
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   shareURL:
                     type: string
+                    pattern: /^\/shared\/s[a-zA-Z0-9_-]{24}$/
+                    maxLength: 33
+                    minLength: 33
                     description: URL path to the shared note
   "/notes/{noteID}/share/collaborators":
     post:
@@ -599,36 +772,42 @@ paths:
       summary: Add note collaborator
       operationId: addCollaborator
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to add collab to
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from body or path
-        "400":
-          description: Couldn't add collaborator
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Collaborator added
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   permission:
                     $ref: "#/components/schemas/Permission"
       requestBody:
@@ -641,42 +820,39 @@ paths:
       summary: Delete note collaborator
       operationId: deleteCollaborator
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to delete collab from
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
         - name: permissionID
           in: path
           description: ID of the permission to delete
           required: true
           schema:
-            $ref: "#/components/schemas/Permission/properties/_id"
+            type: string
+            pattern: /^p[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Couldn't delete collaborator
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Collaborator deleted
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: number
-                    format: int32
-                    description: HTTP status code
-                  message:
-                    type: string
+                $ref: "#/components/schemas/ResponseBody"
   "/notes/{noteID}/tags":
     post:
       tags:
@@ -684,84 +860,92 @@ paths:
       summary: Add tags
       operationId: addTags
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of a note to add tags to
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
         - name: tags
           in: query
           description: Tags to add to the note, separated with commas
           schema:
             type: string
+            pattern: /^.*$/
+            maxLength: 1000
+            minLength: 0
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path or query
-        "400":
-          description: Couldn't add tags or tags invalid
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Tags added
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   tags:
-                    $ref: "#/components/schemas/Note/properties/tags"
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Tag"
     delete:
       tags:
         - notes
       summary: Delete tags
       operationId: deleteTags
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of a note to delete tags from
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
         - name: tags
           in: query
           description: Tags to delete from the note, separated with commas
           schema:
             type: string
+            pattern: /^.*$/
+            maxLength: 1000
+            minLength: 0
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path or query
-        "400":
-          description: Couldn't delete tags or tags invalid
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Tags deleted
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: number
-                    format: int32
-                    description: HTTP status code
-                  message:
-                    type: string
+                $ref: "#/components/schemas/ResponseBody"
   "/notes/{noteID}/attachments":
     post:
       tags:
@@ -770,40 +954,42 @@ paths:
       summary: Add attachment
       operationId: addAttachment
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to add attachment to
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Multiple files uploaded or couldn't add attachment
-        "415":
-          description: File has unaccepted type
-        "413":
-          description: File too large
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Attachment added
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   attachment:
                     $ref: "#/components/schemas/Attachment"
       requestBody:
@@ -816,42 +1002,51 @@ paths:
       summary: Update attachment
       operationId: updateAttachment
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to update attachment from
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
         - name: attachmentID
           in: path
           description: ID of attachment to update
           required: true
           schema:
-            $ref: "#/components/schemas/Attachment/properties/_id"
+            type: string
+            pattern: /^a[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Couldn't edit attachment
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Attachment edited
           content:
             application/json:
               schema:
+                additionalProperties: false
                 type: object
                 properties:
                   status:
                     type: number
                     format: int32
-                    description: HTTP status code
+                    enum:
+                      - 200
+                    description: HTTP success status code
                   message:
                     type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
                   attachment:
                     $ref: "#/components/schemas/Attachment"
       requestBody:
@@ -863,54 +1058,58 @@ paths:
       summary: Delete attachment
       operationId: deleteAttachment
       security:
-        - api_key: []
+        - cookieAuth: []
       parameters:
         - name: noteID
           in: path
           description: ID of note to delete attachment from
           required: true
           schema:
-            $ref: "#/components/schemas/Note/properties/_id"
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
         - name: attachmentID
           in: path
           description: ID of attachment to delete
           required: true
           schema:
-            $ref: "#/components/schemas/Attachment/properties/_id"
+            type: string
+            pattern: /^a[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
       responses:
-        "401":
-          description: No authenticated user
-        "403":
-          description: User has incompatible state
-        "422":
-          description: Input data missing from path
-        "400":
-          description: Couldn't delete attachment
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "200":
           description: Attachment deleted
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  status:
-                    type: number
-                    format: int32
-                    description: HTTP status code
-                  message:
-                    type: string
+                $ref: "#/components/schemas/ResponseBody"
 externalDocs:
   description: Find out more about Swagger
   url: "http://swagger.io"
 components:
   schemas:
     Permission:
+      additionalProperties: false
       type: object
       properties:
         _id:
           type: string
+          pattern: /^p[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
         subject:
-          $ref: "#/components/schemas/User/properties/_id"
+          type: string
+          pattern: /^u[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
         level:
           type: number
           format: int32
@@ -918,30 +1117,51 @@ components:
             - 0
             - 1
     Attachment:
+      additionalProperties: false
       type: object
       properties:
         _id:
           type: string
+          pattern: /^a[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
         url:
           type: string
           description: A valid URL of a photo
+          pattern: /^[a-zA-Z0-9_\-.:\/\\?!=+\|]$/
+          maxLength: 300
+          minLength: 5
         title:
           type: string
+          pattern: /^[a-zA-Z0-9_\-.,]{0,32}$/
+          maxLength: 32
+          minLength: 0
         description:
           type: string
+          pattern: /^[a-zA-Z0-9_\-.,]{0,256}$/
+          maxLength: 256
+          minLength: 0
     Tag:
+      additionalProperties: false
       type: string
+      pattern: /^.*$/
+      maxLength: 100
     Token:
+      additionalProperties: false
       type: object
       properties:
         _id:
           type: string
-        token:
-          type: string
+          pattern: /^(rs|fr|cn)[a-zA-Z0-9_-]{24}$/
+          maxLength: 26
+          minLength: 26
         exp:
           type: number
-          format: int64
+          format: int32
+          minimum: 1000000000
+          maximum: 2147483647
     User:
+      additionalProperties: false
       type: object
       required:
         - _id
@@ -956,14 +1176,28 @@ components:
       properties:
         _id:
           type: string
+          pattern: /^u[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
         username:
           type: string
+          pattern: /^[a-zA-Z0-9_-]{4,16}$/
+          maxLength: 16
+          minLength: 4
         email:
           type: string
+          pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+          maxLength: 254
+          minLength: 3
         password:
           type: string
+          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+          maxLength: 24
+          minLength: 8
         salt:
           type: string
+          pattern: /^.*$/
+          maxLength: 32
         state:
           type: string
           enum:
@@ -988,58 +1222,127 @@ components:
         createdAt:
           type: string
           format: date-time
+          maxLength: 100
         updatedAt:
           type: string
           format: date-time
-      xml:
-        name: User
+          maxLength: 100
     Note:
+      additionalProperties: false
       type: object
       required:
-        - name
-        - photoUrls
+        - _id
+        - owner
+        - archived
+        - share
+        - color
+        - createdAt
+        - updatedAt
       properties:
         _id:
           type: string
+          pattern: /^n[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
         title:
           type: string
+          pattern: /^[a-zA-Z0-9_\-.,]{0,100}$/
+          maxLength: 100
+          minLength: 0
         content:
           type: string
+          pattern: /^[a-zA-Z0-9_\-.,]{0,10000}$/
+          maxLength: 10000
+          minLength: 0
         owner:
-          $ref: "#/components/schemas/User/properties/_id"
+          type: string
+          pattern: /^u[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
         permissions:
           type: array
+          maxItems: 10
           items:
             $ref: "#/components/schemas/Permission"
         attachments:
           type: array
+          maxItems: 10
           items:
             $ref: "#/components/schemas/Attachment"
         tags:
           type: array
+          maxItems: 20
           items:
             $ref: "#/components/schemas/Tag"
-        shared:
-          type: boolean
-        shareCode:
-          type: string
+        share:
+          additionalProperties: false
+          type: object
+          required:
+            - active
+          properties:
+            active:
+              type: boolean
+            code:
+              type: string
+              pattern: /^s[a-zA-Z0-9_-]{24}$/
+              maxLength: 25
+              minLength: 25
         archived:
           type: boolean
         color:
           type: string
+          pattern: /^#[0-9abcdef]{6}$/
+          maxLength: 7
+          minLength: 7
         createdAt:
           type: string
           format: date-time
+          maxLength: 100
         updatedAt:
           type: string
           format: date-time
-      xml:
-        name: Note
+          maxLength: 100
+    ResponseBody:
+      additionalProperties: false
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: number
+          format: int32
+          minimum: 200
+          maximum: 299
+          description: HTTP success status code
+        message:
+          type: string
+          pattern: /^[a-zA-Z0-9_\-.,]*$/
+          maxLength: 1000
+    Error:
+      additionalProperties: false
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          type: number
+          format: int32
+          minimum: 400
+          maximum: 599
+          description: HTTP error status code
+        message:
+          type: string
+          pattern: /^[a-zA-Z0-9_\-.,]*$/
+          maxLength: 200
+          description: A brief summary of the error
   requestBodies:
     Login:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - email
@@ -1047,10 +1350,15 @@ components:
             properties:
               email:
                 type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
                 description: The user's email or username
               password:
                 type: string
                 format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
                 description: The user's password
       description: The user's credentials required for authentication
       required: true
@@ -1058,32 +1366,46 @@ components:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - username
               - email
               - password
-              - confirm_new_password
+              - confirm_password
             properties:
               username:
                 type: string
+                pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                maxLength: 16
+                minLength: 4
                 description: The chosen username
               email:
                 type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
+                minLength: 3
                 description: The user's email
               password:
                 type: string
                 format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
                 description: The user's password
               confirm_password:
                 type: string
                 format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
                 description: The user's password entered again
       description: The user's info required for registration
     OldPassword:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - old_password
@@ -1091,18 +1413,24 @@ components:
               old_password:
                 type: string
                 format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
                 description: The user's password
       description: The user's old password required for changing it to a new one
     ForgotPassword:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - email
             properties:
               email:
                 type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
                 description: The user's email or username
       description: The user's current username or email address required for resetting the password when forgotten
       required: true
@@ -1110,6 +1438,7 @@ components:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - new_password
@@ -1118,30 +1447,50 @@ components:
               new_password:
                 type: string
                 format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
                 description: The user's password
               confirm_new_password:
                 type: string
                 format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
                 description: The user's password again
       description: The user's old password required for changing it to a new one
     AddOrUpdateNote:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             properties:
               title:
-                $ref: "#/components/schemas/Note/properties/title"
+                type: string
+                pattern: /^[a-zA-Z0-9_\-.,]{0,100}$/
+                maxLength: 100
+                minLength: 0
               content:
-                $ref: "#/components/schemas/Note/properties/content"
+                type: string
+                pattern: /^[a-zA-Z0-9_\-.,]{0,10000}$/
+                maxLength: 10000
+                minLength: 0
               archived:
-                $ref: "#/components/schemas/Note/properties/archived"
+                type: string
+                enum:
+                  - "true"
+                  - "false"
               color:
-                $ref: "#/components/schemas/Note/properties/color"
+                type: string
+                pattern: /^#[0-9abcdef]{6}$/
+                maxLength: 7
+                minLength: 7
     AddCollaborator:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - user
@@ -1149,6 +1498,9 @@ components:
             properties:
               user:
                 type: string
+                pattern: /^([a-zA-Z0-9_-]{4,16})|((([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,})))|((?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24})$/
+                maxLength: 254
+                minLength: 3
                 description: Username, email or id of the user to make collab
               type:
                 type: string
@@ -1159,6 +1511,7 @@ components:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
             required:
               - photo
@@ -1168,27 +1521,35 @@ components:
                 format: binary
                 description: Image to be added as attachment
               title:
-                $ref: "#/components/schemas/Attachment/properties/title"
+                type: string
+                pattern: /^[a-zA-Z0-9_\-.,]{0,32}$/
+                maxLength: 32
+                minLength: 0
               description:
-                $ref: "#/components/schemas/Attachment/properties/description"
+                type: string
+                pattern: /^[a-zA-Z0-9_\-.,]{0,256}$/
+                maxLength: 256
+                minLength: 0
     UpdateAttachment:
       content:
         multipart/formdata:
           schema:
+            additionalProperties: false
             type: object
-            required:
-              - url
             properties:
-              url:
-                type: string
-                description: URL of the attachment image
               title:
-                $ref: "#/components/schemas/Attachment/properties/title"
+                type: string
+                pattern: /^[ -~]{0,32}$/
+                maxLength: 32
+                minLength: 0
               description:
-                $ref: "#/components/schemas/Attachment/properties/description"
+                type: string
+                pattern: /^[ -~]{0,256}$/
+                maxLength: 256
+                minLength: 0
   securitySchemes:
-    api_key:
+    cookieAuth:
       type: apiKey
       description: JWT signed token used for authentication
-      name: api_key
+      name: access_token
       in: cookie
