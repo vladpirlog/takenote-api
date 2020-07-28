@@ -104,8 +104,8 @@ describe('test note-related operations', () => {
             .post(`/notes/${createdNoteID}/duplicate`)
             .then((res) => {
                 expect(res.status).toBe(200)
-                expect(res.body.note.title).toBe('my-title')
-                expect(res.body.note.content).toBe('my-content')
+                expect(res.body.note.title).toBe('my-new-title')
+                expect(res.body.note.content).toBe('my-new-content')
                 expect(res.body.note._id).not.toBe(createdNoteID)
                 return done()
             })
@@ -174,7 +174,7 @@ describe('test note-related operations', () => {
 
     test('get sharing link and set it active', (done) => {
         request
-            .get(`/notes/${createdNoteID}/share`)
+            .post(`/notes/${createdNoteID}/share`)
             .query({ active: true })
             .then((res) => {
                 createdNoteShareURL = res.body.shareURL
@@ -194,7 +194,7 @@ describe('test note-related operations', () => {
 
     test('get new sharing link and set it inactive', (done) => {
         request
-            .get(`/notes/${createdNoteID}/share`)
+            .post(`/notes/${createdNoteID}/share`)
             .query({ active: false, get_new: true })
             .then((res) => {
                 expect(res.status).toBe(200)
