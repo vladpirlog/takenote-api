@@ -61,14 +61,6 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
 
         const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         if (note) {
-            if (note.archived && (title || content || color)) {
-                return createResponse(
-                    res,
-                    400,
-                    'Cannot update fields on an archived note.'
-                )
-            }
-
             const newProps: INoteBody = {}
             if (title) newProps.title = title
             if (content) newProps.content = content

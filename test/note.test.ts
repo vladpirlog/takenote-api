@@ -77,17 +77,6 @@ describe('test note-related operations', () => {
             })
     }, 20000)
 
-    test('edit properties of an archived note', (done) => {
-        request
-            .put(`/notes/${createdNoteID}`)
-            .field('title', 'my-new-new-title')
-            .field('content', 'my-new-new-content')
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
-    }, 20000)
-
     test('unarchive note', (done) => {
         request
             .put(`/notes/${createdNoteID}`)

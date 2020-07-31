@@ -37,13 +37,11 @@ export const NoteSchema: Schema = new Schema(
         },
         title: {
             type: String,
-            required: false,
-            default: ''
+            required: false
         },
         content: {
             type: String,
-            required: false,
-            default: ''
+            required: false
         },
         owner: {
             type: String,
