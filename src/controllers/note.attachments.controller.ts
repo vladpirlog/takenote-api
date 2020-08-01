@@ -46,7 +46,8 @@ const editAttachment = async (req: Request, res: Response, next: NextFunction) =
         const newNote = await noteAttachmentsQuery.editAttachment(
             id,
             getAuthenticatedUser(res)?.userID,
-            { _id: attachmentID, title, description }
+            attachmentID,
+            { title, description }
         )
 
         return newNote

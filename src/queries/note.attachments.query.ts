@@ -1,17 +1,18 @@
 import Note, { INoteSchema } from '../models/Note'
 import { IUserSchema } from '../models/User'
 import Attachment from '../models/Attachment'
+import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 
 /**
  * Adds an attachment(title, description, url) to a note.
  * @param noteID id of the note
  * @param userID id of the note's owner
- * @param attachment object of type attachment
+ * @param data object of type attachment
  */
 const addAttachment = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
-    attachment: {
+    data: {
         url: INoteSchema['attachments'][0]['url'],
         title: INoteSchema['attachments'][0]['title'],
         description: INoteSchema['attachments'][0]['description'],
@@ -19,7 +20,7 @@ const addAttachment = (
 ) => {
     return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
-        { $push: { attachments: new Attachment({ ...attachment }) } },
+        { $push: { attachments: new Attachment({ ...removeUndefinedProps(data) }) } },
         { new: true }
     ).exec()
 }
@@ -33,19 +34,19 @@ const addAttachment = (
 const editAttachment = (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
-    attachment: {
-        _id: INoteSchema['attachments'][0]['_id'],
+    attachmentID: INoteSchema['attachments'][0]['_id'],
+    data: {
         title: INoteSchema['attachments'][0]['title'],
         description: INoteSchema['attachments'][0]['description']
     }
 ) => {
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        {
-            'attachments.$[element].title': attachment.title,
-            'attachments.$[element].description': attachment.description
-        },
-        { new: true, arrayFilters: [{ 'element._id': attachment._id }] }
+        { _id: noteID, owner: userID, 'attachments._id': attachmentID },
+        removeUndefinedProps({
+            'attachments.$.title': data.title,
+            'attachments.$.description': data.description
+        }),
+        { new: true }
     ).exec()
 }
 

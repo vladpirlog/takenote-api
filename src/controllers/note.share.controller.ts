@@ -8,6 +8,7 @@ import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 import checkNoteLimits from '../utils/checkNoteLimits.util'
+import { INoteSchema } from '../models/Note'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -27,15 +28,25 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
         const note = await noteCrudQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
 
-        const newActiveState = stringToBoolean(active as string)
+        // By default, the new active state will remain the same.
+        let newActiveState: INoteSchema['share']['active'] = note.share.active
+
+        // If the 'active' query param exists and resolves to true of false, the new active state
+        // becomes that value.
+        const activeParamResolved = stringToBoolean(active as string || '')
+        if (activeParamResolved !== null) {
+            newActiveState = activeParamResolved
+        }
+
+        // If the user does not request a new code and there is already one available,
+        // the new share code stays the same.
         const newShareCode = getNew !== 'true' && note.share.code
             ? note.share.code : createID('share')
 
         const newNote = await noteCrudQuery.updateOneByID(
             note.id, getAuthenticatedUser(res)?.userID, {
                 share: {
-                    active: newActiveState === null
-                        ? note.share.active : newActiveState,
+                    active: newActiveState,
                     code: newShareCode
                 }
             }, false)
@@ -49,7 +60,7 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
     try {
         const { id } = req.params
         const { user, type } = req.body
-        const collabUser = await userQuery.getByUsernameEmailOrId(user)
+        const collabUser = await userQuery.getByUsernameOrEmail(user)
         if (!collabUser) { return createResponse(res, 400, 'Couldn\'t add collaborator.') }
 
         const permissionLevel = type === 'r'
