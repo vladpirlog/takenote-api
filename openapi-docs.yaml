@@ -67,7 +67,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -117,7 +117,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -176,7 +176,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 201
@@ -205,7 +205,6 @@ paths:
           description: The token to be used for confirmation
           required: true
           schema:
-            additionalProperties: false
             type: string
             pattern: /^cn[a-zA-Z0-9_-]{24}$/
             maxLength: 26
@@ -456,13 +455,15 @@ paths:
           in: query
           required: false
           schema:
-            type: number
+            type: integer
+            format: int32
             description: The number of notes to skip from the result
         - name: limit
           in: query
           required: false
           schema:
-            type: number
+            type: integer
+            format: int32
             description: The maximum number of notes to return
       responses:
         default:
@@ -484,7 +485,7 @@ paths:
                   - notes
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -524,7 +525,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 201
@@ -537,6 +538,60 @@ paths:
                     $ref: "#/components/schemas/Note"
       requestBody:
         $ref: "#/components/requestBodies/AddOrUpdateNote"
+  /notes/tags:
+    get:
+      tags:
+        - notes
+      summary: Get the user's notes by a tag
+      operationId: allNotesByTag
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: tag
+          in: query
+          required: true
+          schema:
+            type: string
+            description: The tag to search by
+        - name: match
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: If true, return the notes that contain that exact tag, else do a regexp match
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Notes fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                required:
+                  - status
+                  - message
+                  - notes
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  notes:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Note"
   "/notes/{noteID}":
     get:
       tags:
@@ -571,7 +626,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -615,7 +670,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -692,7 +747,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -749,7 +804,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -799,7 +854,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -895,7 +950,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -981,7 +1036,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -1038,7 +1093,7 @@ paths:
                 type: object
                 properties:
                   status:
-                    type: number
+                    type: integer
                     format: int32
                     enum:
                       - 200
@@ -1111,7 +1166,7 @@ components:
           maxLength: 25
           minLength: 25
         level:
-          type: number
+          type: integer
           format: int32
           enum:
             - 0
@@ -1142,7 +1197,6 @@ components:
           maxLength: 256
           minLength: 0
     Tag:
-      additionalProperties: false
       type: string
       pattern: /^.*$/
       maxLength: 100
@@ -1156,7 +1210,7 @@ components:
           maxLength: 26
           minLength: 26
         exp:
-          type: number
+          type: integer
           format: int32
           minimum: 1000000000
           maximum: 2147483647
@@ -1208,7 +1262,7 @@ components:
         confirmationToken:
           $ref: "#/components/schemas/Token"
         role:
-          type: number
+          type: integer
           format: int32
           enum:
             - -1
@@ -1310,7 +1364,7 @@ components:
         - message
       properties:
         status:
-          type: number
+          type: integer
           format: int32
           minimum: 200
           maximum: 299
@@ -1327,7 +1381,7 @@ components:
         - message
       properties:
         status:
-          type: number
+          type: integer
           format: int32
           minimum: 400
           maximum: 599

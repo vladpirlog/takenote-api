@@ -111,6 +111,50 @@ describe('test note-related operations', () => {
             })
     }, 20000)
 
+    test('get by exact tag which exists', (done) => {
+        request
+            .get('/notes/tags')
+            .query({ tag: 'tag2', match: 'true' })
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.notes.length).toBe(1)
+                return done()
+            })
+    }, 20000)
+
+    test('get by exact tag which doesn\'t exist', (done) => {
+        request
+            .get('/notes/tags')
+            .query({ tag: 'abc', match: 'true' })
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.notes.length).toBe(0)
+                return done()
+            })
+    }, 20000)
+
+    test('get by regexp tag which exists', (done) => {
+        request
+            .get('/notes/tags')
+            .query({ tag: 'ag' })
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.notes.length).toBe(1)
+                return done()
+            })
+    }, 20000)
+
+    test('get by regexp tag which doesn\'t exist', (done) => {
+        request
+            .get('/notes/tags')
+            .query({ tag: 'abc' })
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.notes.length).toBe(0)
+                return done()
+            })
+    }, 20000)
+
     test('delete tags', (done) => {
         request
             .delete(`/notes/${createdNoteID}/tags`)
