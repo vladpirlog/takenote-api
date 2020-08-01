@@ -33,6 +33,11 @@ router.all(
 router.get('/', checkQueryNotArray(['collaborations', 'skip', 'limit']), noteCrudController.getAllNotes)
 
 /**
+ * GET notes by tag or tag RegExp
+ */
+router.get('/tags', checkQuery(['tag']), checkQueryNotArray(['tag', 'match']), noteTagsController.getByTag)
+
+/**
  * GET a note
  */
 router.get('/:id', checkParams(['id']), noteCrudController.getOneNote)

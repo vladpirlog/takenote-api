@@ -5,6 +5,17 @@ import parseStringToArray from '../utils/parseStringToArray.util'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 import checkNoteLimits from '../utils/checkNoteLimits.util'
 
+const getByTag = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { tag, match } = req.query
+        const notes = await noteTagsQuery.get(
+            getAuthenticatedUser(res)?.userID,
+            tag as string,
+            match === 'true')
+        return createResponse(res, 200, 'Notes fetched.', { notes })
+    } catch (err) { return next(err) }
+}
+
 const addTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
@@ -48,4 +59,4 @@ const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
     } catch (err) { return next(err) }
 }
 
-export default { addTags, deleteTags }
+export default { getByTag, addTags, deleteTags }
