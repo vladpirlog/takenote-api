@@ -2,11 +2,11 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import userQuery from '../queries/user.query'
 
-export default async function checkUniqueUser (
+const checkUniqueUser = async (
     req: Request,
     res: Response,
     next: NextFunction
-) {
+) => {
     const { username, email } = req.body
     try {
         const user = await userQuery.getByUsernameOrEmail(username, email)
@@ -14,3 +14,5 @@ export default async function checkUniqueUser (
         return next()
     } catch (err) { return next(err) }
 }
+
+export default checkUniqueUser

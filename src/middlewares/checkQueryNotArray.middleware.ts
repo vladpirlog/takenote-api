@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 
 /**
- * Function that returns a middleware function that checks if the request query fields aren't arrays
+ * Function that returns a middleware function that checks if the request query fields aren't arrays.
  * @param fields a string array representing the properties that need to pass this test
  */
 export default function checkQueryNotArray (fields: string[]) {
