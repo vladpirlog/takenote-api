@@ -8,7 +8,7 @@ import Permission from '../models/Permission'
  * @param userID id of the note's owner
  * @param permission object of type permission
  */
-const addPermission = (
+const addPermission = async (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
     permission: {
@@ -16,7 +16,7 @@ const addPermission = (
         level: INoteSchema['permissions'][0]['level']
     }
 ) => {
-    Note.findOneAndUpdate(
+    await Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         { $pull: { permissions: { subject: permission.subject } } },
         { new: true }

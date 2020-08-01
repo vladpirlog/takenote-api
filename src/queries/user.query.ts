@@ -14,18 +14,6 @@ const getById = (
 }
 
 /**
- * Searches for and returns a user using its username, email or id.
- * @param identifier username, email or id of a user
- */
-const getByUsernameEmailOrId = (
-    identifier: IUserSchema['email'] | IUserSchema['username'] | IUserSchema['_id']
-) => {
-    return User.findOne({
-        $or: [{ username: identifier }, { email: identifier }, { _id: identifier }]
-    }).exec()
-}
-
-/**
  * Searches for and returns a user using its username, email or both.
  * @param username username of a user
  * @param email email of a user
@@ -51,8 +39,6 @@ const getByToken = (
         | IUserSchema['confirmationToken']['_id'],
     type: 'reset' | 'forgot' | 'confirmation' | 'any'
 ) => {
-    if (!token) return null
-
     if (type === 'reset') {
         return User.findOne({
             'resetToken._id': token
@@ -168,7 +154,6 @@ const setNewPassword = (
 
 export default {
     getById,
-    getByUsernameEmailOrId,
     getByUsernameOrEmail,
     getByToken,
     createNewUser,
