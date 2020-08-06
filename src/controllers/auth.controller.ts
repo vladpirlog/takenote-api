@@ -29,7 +29,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const user = await userQuery.getByUsernameOrEmail(email)
         if (!user) return createResponse(res, 401)
         if (user.validPassword(password)) {
-            res = setAuthCookie(res, user)
+            setAuthCookie(res, user)
             await logging(req.ip, user.id, 'login', true)
             return createResponse(res, 200, 'Authentication successful.', {
                 userID: user.id
@@ -86,7 +86,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
             const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
             await jwtBlacklist.add(id, exp)
             res.clearCookie('access_token')
-            res = setAuthCookie(res, newUser)
+            setAuthCookie(res, newUser)
             return createResponse(res, 200, 'Account is being deleted.')
         }
         return createResponse(res, 401, 'Wrong credentials.')
@@ -104,7 +104,7 @@ const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
         const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
         await jwtBlacklist.add(id, exp)
         res.clearCookie('access_token')
-        res = setAuthCookie(res, newUser)
+        setAuthCookie(res, newUser)
         return createResponse(res, 200, 'Account is now active.')
     } catch (err) { return next(err) }
 }

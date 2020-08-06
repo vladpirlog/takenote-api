@@ -2,6 +2,7 @@ import http from 'http'
 import { IUserSchema } from '../models/User'
 import Log, { ILogSchema } from '../models/Log'
 import IIpApiResponse from '../interfaces/ipApiResponse.interface'
+import removeUndefinedProps from './removeUndefinedProps.util'
 
 /**
  * Creates a log entry in the logs database. Returns a promise.
@@ -29,15 +30,14 @@ const logging = async (
         })
     })
     const apiResponse = await p
-    const newLogProps: any = { ip, type, successful }
-    if (userID) newLogProps.userID = userID
+    const newLogProps: any = { ip, type, successful, userID }
     if (apiResponse.status === 'success') {
         newLogProps.location = {
             type: 'Point',
             coordinates: [apiResponse.lon, apiResponse.lat]
         }
     }
-    const newLog = new Log(newLogProps)
+    const newLog = new Log(removeUndefinedProps(newLogProps))
     return newLog.save()
 }
 

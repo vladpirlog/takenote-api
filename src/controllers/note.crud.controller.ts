@@ -1,29 +1,37 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteQuery from '../queries/note.crud.query'
-import { INoteBody } from '../models/Note'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import removeUndefinedProps from '../utils/removeUndefinedProps.util'
+import checkLimits from '../utils/checkLimits.util'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         return note ? createResponse(res, 200, 'Note fetched.', { note })
-            : createResponse(res, 400, 'Couldn\'t get note.')
+            : next()
     } catch (err) { return next(err) }
 }
 
 const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { collaborations, skip, limit } = req.query
-        if ((skip && !Number.isSafeInteger(skip)) ||
-        (limit && !Number.isSafeInteger(limit))) {
-            return createResponse(res, 422, 'The skip and limit params should be integers.')
+
+        const skipNumber = parseInt(skip as string, 10)
+        const limitNumber = parseInt(limit as string, 10)
+
+        if (limitNumber && (limitNumber < 0 || !Number.isSafeInteger(limitNumber))) {
+            return createResponse(res, 422, 'The limit param is invalid.')
+        }
+
+        if (skipNumber && (skipNumber < 0 || !Number.isSafeInteger(skipNumber))) {
+            return createResponse(res, 422, 'The skip param is invalid.')
         }
         const notes = await noteQuery.getAllOwn(
             getAuthenticatedUser(res)?.userID,
-            parseInt(skip as string),
-            parseInt(limit as string)
+            skipNumber,
+            limitNumber
         )
         if (collaborations === 'true') {
             const collabNotes = await noteQuery.getAllCollab(
@@ -41,6 +49,9 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
 const addNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, content, color } = req.body
+        if (!(await checkLimits.forNote(getAuthenticatedUser(res)?.userID))) {
+            return createResponse(res, 400, 'Notes limit exceeded.')
+        }
         const newNote = await noteQuery.createNewNote({
             title,
             content,
@@ -61,16 +72,10 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
 
         const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
         if (note) {
-            const newProps: INoteBody = {}
-            if (title) newProps.title = title
-            if (content) newProps.content = content
-            if (archived) newProps.archived = archived
-            if (color) newProps.color = color
-
             const newNote = await noteQuery.updateOneByID(
                 id,
                 getAuthenticatedUser(res)?.userID,
-                newProps,
+                removeUndefinedProps({ title, content, archived, color }),
                 false
             )
             if (newNote) {
@@ -80,14 +85,11 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
             }
             return createResponse(res, 400, 'Couldn\'t update note.')
         }
-        const newProps: INoteBody = {}
-        if (title) newProps.title = title
-        if (content) newProps.content = content
 
         const newNote = await noteQuery.updateOneByID(
             id,
             getAuthenticatedUser(res)?.userID,
-            newProps,
+            removeUndefinedProps({ title, content }),
             true
         )
         return newNote
