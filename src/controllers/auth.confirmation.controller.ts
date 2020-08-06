@@ -26,7 +26,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
                 const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
                 await jwtBlacklist.add(id, exp)
                 res.clearCookie('access_token')
-                res = setAuthCookie(res, newUser)
+                setAuthCookie(res, newUser)
             }
             return createResponse(res, 200, 'Email address confirmed.')
         } else {

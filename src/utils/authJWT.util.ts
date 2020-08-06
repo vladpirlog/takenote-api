@@ -32,7 +32,7 @@ const generate = (payload: {
 }
 
 /**
- * Decodes a JWT using the a secret. Checks the expiration time and whether the token has been blacklisted or not.
+ * Decodes a JWT using the secret. Checks the expiration time and whether the token has been blacklisted or not.
  * Async returns the user info stored in the JWT payload.
  * @param token JWT to check and decode
  */
