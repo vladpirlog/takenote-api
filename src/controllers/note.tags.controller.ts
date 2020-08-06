@@ -3,7 +3,7 @@ import createResponse from '../utils/createResponse.util'
 import noteTagsQuery from '../queries/note.tags.query'
 import parseStringToArray from '../utils/parseStringToArray.util'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
-import checkNoteLimits from '../utils/checkNoteLimits.util'
+import checkLimits from '../utils/checkLimits.util'
 
 const getByTag = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -26,7 +26,7 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
             tags.includes('')
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
-        if (!await checkNoteLimits.forTag(id, getAuthenticatedUser(res)?.userID, tags)) {
+        if (!(await checkLimits.forTag(id, getAuthenticatedUser(res)?.userID, tags))) {
             return createResponse(res, 400, 'Tags limit exceeded.')
         }
         const newNote = await noteTagsQuery.add(

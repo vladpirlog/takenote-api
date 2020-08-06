@@ -7,7 +7,7 @@ import userQuery from '../queries/user.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
-import checkNoteLimits from '../utils/checkNoteLimits.util'
+import checkLimits from '../utils/checkLimits.util'
 import { INoteSchema } from '../models/Note'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
@@ -17,7 +17,7 @@ const getNote = async (req: Request, res: Response, next: NextFunction) => {
 
         return note && note.share.active
             ? createResponse(res, 200, 'Note fetched.', { note })
-            : createResponse(res, 400, 'Couldn\'t get note.')
+            : next()
     } catch (err) { return next(err) }
 }
 
@@ -26,12 +26,12 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
         const { id } = req.params
         const { active, get_new: getNew } = req.query
         const note = await noteCrudQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
-        if (!note) return createResponse(res, 400, 'Couldn\'t get note.')
+        if (!note) return next()
 
         // By default, the new active state will remain the same.
         let newActiveState: INoteSchema['share']['active'] = note.share.active
 
-        // If the 'active' query param exists and resolves to true of false, the new active state
+        // If the 'active' query param exists and resolves to true or false, the new active state
         // becomes that value.
         const activeParamResolved = stringToBoolean(active as string || '')
         if (activeParamResolved !== null) {
@@ -69,7 +69,7 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         if (permissionLevel === null) {
             return createResponse(res, 400, "Invalid type. Should be 'r' or 'rw'.")
         }
-        if (!await checkNoteLimits.forPermission(id, getAuthenticatedUser(res)?.userID)) {
+        if (!(await checkLimits.forPermission(id, getAuthenticatedUser(res)?.userID))) {
             return createResponse(res, 400, 'Collaborators limit exceeded.')
         }
         const newNote = await noteShareQuery.addPermission(
