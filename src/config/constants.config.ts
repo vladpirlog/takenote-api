@@ -45,18 +45,21 @@ export default {
         confirmation: { prefix: 'cn', length: 24 },
         log: { prefix: 'log', length: 32 }
     },
-    rateLimiting: {
-        request: 100, // # of requests per minute from an IP addr
-        email: 8 // # of emails per minute sent to an IP addr
-    },
     email: {
         user: process.env.EMAIL_USER || '',
         pass: process.env.EMAIL_PASS || ''
     },
-    limitsPerNote: {
-        attachment: 10,
-        permission: 10,
-        tag: 20
+    limits: {
+        perUser: {
+            request: 100, // # of requests per minute from an IP addr
+            email: 8, // # of emails per minute sent to an IP addr
+            notes: 1000
+        },
+        perNote: {
+            attachments: 10,
+            permissions: 10,
+            tags: 20
+        }
     },
     token: {
         expires: 30 * 60 * 1000 // time in ms
