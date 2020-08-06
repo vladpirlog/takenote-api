@@ -50,6 +50,6 @@ const LogSchema = new Schema({
             required: false
         }
     }
-}, { timestamps: true })
+}, { timestamps: true, writeConcern: { w: 0 } })
 
 export default mongoose.model<ILogSchema>('Log', LogSchema)
