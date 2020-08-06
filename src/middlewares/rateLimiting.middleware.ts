@@ -5,38 +5,69 @@ import getUnixTime from '../utils/getUnixTime.util'
 import constants from '../config/constants.config'
 import redisConfig from '../config/redis.config'
 
+const getKey = (req: Request, type: 'request' | 'email') => {
+    return `${req.ip}--${type}`
+}
+
+const getValue = async (key: string) => {
+    const redisClient = await redisConfig.getClient()
+    const value: string = await new Promise((resolve, reject) => {
+        redisClient.get(key, (err, reply) => err ? reject(err) : resolve(reply))
+    })
+    return value
+}
+
+const setHeaders = (res: Response, data: IRateLimiting) => {
+    res.setHeader(
+        'X-RateLimit-Remaining-Minute',
+        Math.max(0, constants.limits.perUser.request - data.counter)
+    )
+    res.setHeader('X-RateLimit-Limit-Minute', constants.limits.perUser.request)
+}
+
+const writeToDatabase = async (key: string, data: IRateLimiting) => {
+    const redisClient = await redisConfig.getClient()
+    redisClient.setex(key, 60, JSON.stringify(data))
+}
+
+const createNewEntry = async (res: Response, key: string, type: 'request' | 'email') => {
+    const data = { counter: 1, unixTime: getUnixTime() }
+
+    await writeToDatabase(key, data)
+    if (type === 'request') { setHeaders(res, data) }
+}
+
+const verifyExistingEntry = async (
+    res: Response,
+    key: string,
+    value: string,
+    type: 'request' | 'email'
+) => {
+    const data: IRateLimiting = JSON.parse(value)
+    if (data.unixTime + 60 < getUnixTime()) {
+        await createNewEntry(res, key, type)
+        return false
+    }
+    data.counter++
+
+    await writeToDatabase(key, data)
+    if (type === 'request') { setHeaders(res, data) }
+
+    return data.counter > constants.limits.perUser[type]
+}
+
 const rateLimiting = (type: 'request' | 'email') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const key = `${req.ip}--${type}`
-            const redisClient = await redisConfig.getClient()
-            const reply: string = await new Promise((resolve, reject) => {
-                redisClient.get(key, (err, reply) => err ? reject(err) : resolve(reply))
-            })
-            let data: IRateLimiting
-            let blockRequest = false
+            const key = getKey(req, type)
+            const value = await getValue(key)
 
-            if (reply) {
-                data = JSON.parse(reply)
-                if (data.counter >= constants.rateLimiting[type]) {
-                    if (getUnixTime() - data.unixTime < 60) {
-                        // block the request if there were more requests than the maximum
-                        // allowed in a single minute
-                        data.counter++
-                        blockRequest = true
-                    } else { data = { counter: 1, unixTime: getUnixTime() } }
-                } else { data.counter++ }
-            } else { data = { counter: 1, unixTime: getUnixTime() } }
-
-            redisClient.setex(key, 60, JSON.stringify(data))
-            if (type === 'request') {
-                res.setHeader(
-                    'X-RateLimit-Remaining-Minute',
-                    Math.max(0, constants.rateLimiting.request - data.counter)
-                )
-                res.setHeader('X-RateLimit-Limit-Minute', constants.rateLimiting.request)
+            if (value) {
+                const blockRequest = await verifyExistingEntry(res, key, value, type)
+                return blockRequest ? createResponse(res, 429) : next()
             }
-            return blockRequest ? createResponse(res, 429) : next()
+            await createNewEntry(res, key, type)
+            return next()
         } catch (err) { return next(err) }
     }
 }
