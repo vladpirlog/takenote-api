@@ -76,7 +76,7 @@ export const UserSchema: Schema = new Schema(
             required: false
         }
     },
-    { timestamps: true }
+    { timestamps: true, writeConcern: { w: 'majority', wtimeout: 1000 } }
 )
 
 UserSchema.pre('save', function (next) {
