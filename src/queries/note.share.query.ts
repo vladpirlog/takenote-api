@@ -29,7 +29,7 @@ const addPermission = async (
 }
 
 /**
- * Removes a permission from a note.
+ * Remove a permission from a note.
  * @param noteID id of the note
  * @param userID id of the note's owner
  * @param collabUserID id of the collaborator to be removed

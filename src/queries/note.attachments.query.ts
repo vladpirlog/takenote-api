@@ -14,8 +14,8 @@ const addAttachment = (
     userID: IUserSchema['_id'],
     data: {
         url: INoteSchema['attachments'][0]['url'],
-        title: INoteSchema['attachments'][0]['title'],
-        description: INoteSchema['attachments'][0]['description'],
+        title?: INoteSchema['attachments'][0]['title'],
+        description?: INoteSchema['attachments'][0]['description'],
     }
 ) => {
     return Note.findOneAndUpdate(
@@ -36,8 +36,8 @@ const editAttachment = (
     userID: IUserSchema['_id'],
     attachmentID: INoteSchema['attachments'][0]['_id'],
     data: {
-        title: INoteSchema['attachments'][0]['title'],
-        description: INoteSchema['attachments'][0]['description']
+        title?: INoteSchema['attachments'][0]['title'],
+        description?: INoteSchema['attachments'][0]['description']
     }
 ) => {
     return Note.findOneAndUpdate(
