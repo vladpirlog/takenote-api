@@ -5,15 +5,17 @@ import jwtBlacklistUtil from './jwtBlacklist.util'
 import { IDecodedJWT } from '../interfaces/decodedJWT.interface'
 import createID from './createID.util'
 
+interface IJWTPayload {
+    userID: IUserSchema['_id']
+    role: IUserSchema['role']
+    state: IUserSchema['state']
+}
+
 /**
  * Generates a JWT using the info in the payload. Returns a string token.
  * @param payload object containing id, role and state of the user
  */
-const generate = (payload: {
-    userID: IUserSchema['_id'];
-    role: IUserSchema['role'];
-    state: IUserSchema['state'];
-}): string => {
+const generate = (payload: IJWTPayload) => {
     const token = jwt.sign(
         { _info: payload.role, _state: payload.state },
         constants.authentication.jwtSecret,
@@ -36,13 +38,7 @@ const generate = (payload: {
  * Async returns the user info stored in the JWT payload.
  * @param token JWT to check and decode
  */
-const verify = async (
-    token: string
-): Promise<{
-    userID: IUserSchema['_id'];
-    role: IUserSchema['role'];
-    state: IUserSchema['state'];
-}> => {
+const verify = async (token: string): Promise<IJWTPayload> => {
     const decoded: IDecodedJWT = jwt.verify(
         token,
         constants.authentication.jwtSecret
