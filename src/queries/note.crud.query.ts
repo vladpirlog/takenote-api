@@ -16,7 +16,7 @@ const getAllOwn = (
     let query = Note.find({ owner: userID })
     if (skip) query = query.skip(skip)
     if (limit) query = query.limit(limit)
-    return query
+    return query.exec()
 }
 
 /**

@@ -103,5 +103,5 @@ function onListening () {
  */
 function onClosing () {
     redisConfig.close().catch((err) => console.log(err))
-    mongodbConfig.close().then((err) => console.log(err))
+    mongodbConfig.close().catch((err) => console.log(err))
 }
