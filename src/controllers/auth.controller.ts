@@ -32,7 +32,11 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             setAuthCookie(res, user)
             await logging(req.ip, user.id, 'login', true)
             return createResponse(res, 200, 'Authentication successful.', {
-                userID: user.id
+                user: {
+                    userID: user.id,
+                    email: user.email,
+                    username: user.username
+                }
             })
         }
         return createResponse(res, 401)
