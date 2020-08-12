@@ -93,7 +93,9 @@ describe('test registration and authentication flows', () => {
             .field('password', constants.test.acceptedCredentials.password)
             .then((res) => {
                 expect(res.status).toBe(200)
-                expect(res.body).toHaveProperty('userID')
+                expect(res.body).toHaveProperty('user')
+                expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
+                expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
                 return done()
             })
     }, 20000)
@@ -126,8 +128,8 @@ describe('test registration and authentication flows', () => {
         request.get('/auth/me').then((res) => {
             expect(res.status).toBe(200)
             expect(res.body).toHaveProperty('user')
-            expect(res.body.user).toHaveProperty('username')
-            expect(res.body.user).toHaveProperty('email')
+            expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
+            expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
             expect(res.body.user).toHaveProperty('userID')
             return done()
         })
