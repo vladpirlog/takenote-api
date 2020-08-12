@@ -27,7 +27,6 @@ describe('test note-related operations', () => {
             .field('password', constants.test.persistentUser.password)
             .then((res) => {
                 expect(res.status).toBe(200)
-                expect(typeof res.body.userID).toBe('string')
                 return done()
             })
     }, 20000)

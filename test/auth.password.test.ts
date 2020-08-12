@@ -99,7 +99,7 @@ describe('test pw reset and pw forgotten flows', () => {
             .field('password', constants.test.persistentUser.password)
             .then((res) => {
                 expect(res.status).toBe(200)
-                expect(res.body).toHaveProperty('userID')
+                expect(typeof res.body.user).toBe('object')
                 return done()
             })
     }, 20000)
