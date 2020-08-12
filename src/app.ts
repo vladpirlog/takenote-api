@@ -46,14 +46,10 @@ app.use(
 // Only needed when running the server and frontend on different (sub)domains.
 
 // app.use(cors({
-//     origin: (origin, callback) => {
-//         if (origin && constants.domain.whitelist.indexOf(origin) !== -1) {
-//             callback(null, true)
-//         } else {
-//             callback(new Error('Not allowed by CORS.'))
-//         }
-//     },
-//     optionsSuccessStatus: 200
+//     origin: constants.domain.whitelist,
+//     optionsSuccessStatus: 200,
+//     credentials: true,
+//     methods: ['GET', 'PUT', 'POST', 'DELETE']
 // }))
 
 app.use(rateLimiting.forRequests)
