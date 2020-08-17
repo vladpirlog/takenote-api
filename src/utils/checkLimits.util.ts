@@ -10,7 +10,7 @@ import { IUserSchema } from '../models/User'
 const forNote = async (
     userID: IUserSchema['_id']
 ): Promise<boolean> => {
-    const notes = await noteCrudQuery.getAllOwn(userID)
+    const notes = await noteCrudQuery.getAllOwn(userID, null)
     return notes
         ? notes.length + 1 <= constants.limits.perUser.notes
         : false
@@ -27,7 +27,7 @@ const forTag = async (
     userID: IUserSchema['_id'],
     tags: string[]
 ): Promise<boolean> => {
-    const note = await noteCrudQuery.getOneOwnByID(noteID, userID)
+    const note = await noteCrudQuery.getOneByID(noteID, userID)
     return note
         ? note.tags.length + tags.length <= constants.limits.perNote.tags
         : false
@@ -39,7 +39,7 @@ const forTag = async (
  */
 const forPermissionOrAttachment = (type: 'attachments' | 'permissions') => {
     return async (noteID: INoteSchema['_id'], userID: IUserSchema['_id']) => {
-        const note = await noteCrudQuery.getOneOwnByID(noteID, userID)
+        const note = await noteCrudQuery.getOneByID(noteID, userID)
         return note
             ? note[type].length + 1 <= constants.limits.perNote[type]
             : false

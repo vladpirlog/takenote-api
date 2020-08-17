@@ -3,6 +3,7 @@ import checkRegex from '../utils/checkRegex.util'
 import constants from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
 import deleteFile from '../utils/deleteFile.util'
+import { Color } from '../interfaces/color.enum'
 
 /**
  * Middleware function that tests the email/username and password against the RegExp.
@@ -97,7 +98,7 @@ const note = (req: Request, res: Response, next: NextFunction) => {
         return createResponse(res, 422, 'Note content invalid.')
     }
 
-    if (color && !checkRegex(constants.regex.note.color, color)) {
+    if (color && !Object.values(Color).includes(color)) {
         return createResponse(res, 422, 'Note color invalid.')
     }
     return next()
@@ -120,4 +121,16 @@ const attachment = (req: Request, res: Response, next: NextFunction) => {
     return next()
 }
 
-export default { login, register, newPassword, oldPassword, email, note, attachment }
+const checkCredentials = (req: Request, res: Response, next: NextFunction) => {
+    const { username, email } = req.body
+    if (username && !checkRegex(constants.regex.username, username)) {
+        return createResponse(res, 422, 'Username invalid.')
+    }
+
+    if (email && !checkRegex(constants.regex.email, email)) {
+        return createResponse(res, 422, 'Email invalid.')
+    }
+    return next()
+}
+
+export default { login, register, newPassword, oldPassword, email, note, attachment, checkCredentials }

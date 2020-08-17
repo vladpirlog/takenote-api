@@ -25,7 +25,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
-        const note = await noteCrudQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
+        const note = await noteCrudQuery.getOneByID(id, getAuthenticatedUser(res)?.userID)
         if (!note) return next()
 
         // By default, the new active state will remain the same.

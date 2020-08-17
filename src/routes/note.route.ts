@@ -13,7 +13,7 @@ import { State } from '../interfaces/state.enum'
 import checkQuery from '../middlewares/checkQuery.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import { Role } from '../interfaces/role.enum'
-import verifyInput from '../middlewares/verifyInput.middleware'
+import verifyReqBody from '../middlewares/verifyReqBody.middleware'
 
 const router = Router()
 
@@ -30,7 +30,7 @@ router.all(
 /**
  * GET all notes
  */
-router.get('/', checkQueryNotArray(['collaborations', 'skip', 'limit']), noteCrudController.getAllNotes)
+router.get('/', checkQueryNotArray(['collaborations', 'skip', 'limit', 'archived']), noteCrudController.getAllNotes)
 
 /**
  * GET notes by tag or tag RegExp
@@ -45,12 +45,12 @@ router.get('/:id', checkParams(['id']), noteCrudController.getOneNote)
 /**
  * ADD a note
  */
-router.post('/', verifyInput.note, noteCrudController.addNote)
+router.post('/', verifyReqBody.note, noteCrudController.addNote)
 
 /**
  * UPDATE a note
  */
-router.put('/:id', checkParams(['id']), verifyInput.note, noteCrudController.editNote)
+router.put('/:id', checkParams(['id']), verifyReqBody.note, noteCrudController.editNote)
 
 /**
  * DELETE a note
@@ -119,7 +119,7 @@ router.delete(
 router.post(
     '/:id/attachments',
     checkParams(['id']),
-    verifyInput.attachment,
+    verifyReqBody.attachment,
     checkAttachmentInfo,
     noteAttachmentsController.addAttachment
 )
@@ -130,7 +130,7 @@ router.post(
 router.put(
     '/:id/attachments/:attachmentID',
     checkParams(['id', 'attachmentID']),
-    verifyInput.attachment,
+    verifyReqBody.attachment,
     noteAttachmentsController.editAttachment
 )
 

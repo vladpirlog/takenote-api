@@ -15,7 +15,7 @@ const validateToken = (
                 token as ITokenSchema['_id'],
                 tokenType
             )
-            if (!user) { return createResponse(res, 401, "Couldn't validate token.") }
+            if (!user) { return createResponse(res, 401, 'Couldn\'t validate token.') }
 
             let expirationTime: number
             if (user.resetToken?.id === token) {
