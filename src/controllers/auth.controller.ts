@@ -7,7 +7,6 @@ import createNewToken from '../utils/createNewToken.util'
 import { State } from '../interfaces/state.enum'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 import setAuthCookie from '../utils/setAuthCookie.util'
-import logging from '../utils/logging.util'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
@@ -30,7 +29,6 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         if (!user) return createResponse(res, 401)
         if (user.validPassword(password)) {
             setAuthCookie(res, user)
-            await logging(req.ip, user.id, 'login', true)
             return createResponse(res, 200, 'Authentication successful.', {
                 user: {
                     userID: user.id,
@@ -48,7 +46,6 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
         const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
         await jwtBlacklist.add(id, exp)
         res.clearCookie('access_token')
-        await logging(req.ip, getAuthenticatedUser(res)?.userID, 'logout', true)
         return createResponse(res, 200, 'User logged out.')
     } catch (err) { return next(err) }
 }
@@ -67,7 +64,6 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
             return createResponse(res, 400, 'Couldn\'t create user.')
         }
         await sendEmailUtil.sendToken(newUser, 'confirmation')
-        await logging(req.ip, newUser.id, 'register', true)
         return createResponse(res, 201, 'User created successfully.', {
             userID: newUser.id
         })
