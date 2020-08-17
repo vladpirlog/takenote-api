@@ -10,10 +10,15 @@ export default {
         whitelist: ['http://localhost', 'http://www.localhost']
     },
     mongodbURI: process.env.MONGODB_URI || '',
-    cloudinary: {
-        name: process.env.CLOUDINARY_CLOUD_NAME || '',
-        key: process.env.CLOUDINARY_API_KEY || '',
-        secret: process.env.CLOUDINARY_API_SECRET || ''
+    storage: {
+        cloudinary: {
+            name: process.env.CLOUDINARY_CLOUD_NAME || '',
+            key: process.env.CLOUDINARY_API_KEY || '',
+            secret: process.env.CLOUDINARY_API_SECRET || ''
+        },
+        google: {
+            bucketName: process.env.GOOGLE_BUCKET_NAME || ''
+        }
     },
     authentication: {
         jwtSecret: process.env.JWT_SECRET || '',

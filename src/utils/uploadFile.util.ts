@@ -1,24 +1,39 @@
 import { UploadedFile } from 'express-fileupload'
 import { IUserSchema } from '../models/User'
 import deleteFile from './deleteFile.util'
-const cloudinary = require('cloudinary').v2
+import constants from '../config/constants.config'
+import { INoteSchema } from '../models/Note'
+import getUnixTime from './getUnixTime.util'
+const { Storage } = require('@google-cloud/storage')
 
 /**
  * Async uploads a file to the cloudinary.com platform, in the folder belonging to the owner, then deletes the temp file.
  * Returns the file URL.
  * @param file file to be uploaded
  * @param userID id of the file's owner
+ * @param noteID id of the note where the attachment is created
  */
 const uploadFile = async (
     file: UploadedFile,
-    userID: IUserSchema['_id']
-): Promise<string> => {
+    userID: IUserSchema['_id'],
+    noteID: INoteSchema['_id']
+) => {
     try {
-        const result = await cloudinary.uploader.upload(file.tempFilePath, {
-            folder: `${userID}/`
-        })
+        const storage = new Storage()
+        const options = {
+            gzip: true,
+            metadata: {
+                cacheControl: 'public, max-age=31536000'
+            },
+            destination: `images/${userID}/${noteID}/${getUnixTime().toString()}-${file.name}`
+        }
+
+        const [result] = await storage.bucket(constants.storage.google.bucketName).upload(file.tempFilePath, options)
+        const [metadata] = await result.getMetadata()
         deleteFile(file)
-        return result.secure_url
+
+        return encodeURI(`http://storage.googleapis.com/${metadata.bucket}/${metadata.name}`)
+        // return encodeURI(`/${metadata.name}`)
     } catch (err) {
         deleteFile(file)
         throw err
