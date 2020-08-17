@@ -13,7 +13,7 @@ describe('test registration and authentication flows', () => {
     })
 
     test('server status', (done) => {
-        request.get('/status').then((res) => {
+        request.get('/').then((res) => {
             expect(res.status).toBe(200)
             expect(typeof res.body).toBe('object')
             expect(res.body.status).toBe(200)

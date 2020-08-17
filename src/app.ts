@@ -60,7 +60,7 @@ app.use('/auth', authRoute)
 app.use('/notes', noteRoute)
 app.use('/shared', sharedNoteRoute)
 
-app.get('/status', (req: Request, res: Response) => {
+app.get('/', (req: Request, res: Response) => {
     return createResponse(res, 200)
 })
 
