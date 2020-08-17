@@ -4,11 +4,12 @@ import noteQuery from '../queries/note.crud.query'
 import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 import checkLimits from '../utils/checkLimits.util'
+import stringToBoolean from '../utils/stringToBoolean.util'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
+        const note = await noteQuery.getOneByID(id, getAuthenticatedUser(res)?.userID)
         return note ? createResponse(res, 200, 'Note fetched.', { note })
             : next()
     } catch (err) { return next(err) }
@@ -16,22 +17,26 @@ const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
 
 const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { collaborations, skip, limit } = req.query
+        const { collaborations, skip, limit, archived } = req.query
 
-        const skipNumber = parseInt(skip as string, 10)
-        const limitNumber = parseInt(limit as string, 10)
+        const archivedOption = archived ? stringToBoolean(archived as string) : null
 
-        if (limitNumber && (limitNumber < 0 || !Number.isSafeInteger(limitNumber))) {
+        const skipOption = parseInt(skip as string, 10)
+        const limitOption = parseInt(limit as string, 10)
+
+        if (limitOption && (limitOption < 0 || !Number.isSafeInteger(limitOption))) {
             return createResponse(res, 422, 'The limit param is invalid.')
         }
 
-        if (skipNumber && (skipNumber < 0 || !Number.isSafeInteger(skipNumber))) {
+        if (skipOption && (skipOption < 0 || !Number.isSafeInteger(skipOption))) {
             return createResponse(res, 422, 'The skip param is invalid.')
         }
+
         const notes = await noteQuery.getAllOwn(
             getAuthenticatedUser(res)?.userID,
-            skipNumber,
-            limitNumber
+            archivedOption,
+            skipOption,
+            limitOption
         )
         if (collaborations === 'true') {
             const collabNotes = await noteQuery.getAllCollab(
@@ -70,7 +75,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
         const { id } = req.params
         const { title, content, archived, color } = req.body
 
-        const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
+        const note = await noteQuery.getOneByID(id, getAuthenticatedUser(res)?.userID)
         if (note) {
             const newNote = await noteQuery.updateOneByID(
                 id,
@@ -113,7 +118,7 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const { id } = req.params
 
-        const note = await noteQuery.getOneOwnByID(id, getAuthenticatedUser(res)?.userID)
+        const note = await noteQuery.getOneByID(id, getAuthenticatedUser(res)?.userID)
         if (!note) return createResponse(res, 400, 'Couldn\'t duplicate note.')
 
         const newNote = await noteQuery.createNewNote({
