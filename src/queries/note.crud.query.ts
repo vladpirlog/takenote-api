@@ -10,10 +10,21 @@ import { PermissionLevel } from '../models/Permission'
  */
 const getAllOwn = (
     userID: IUserSchema['_id'],
+    archived: boolean | null,
     skip?: number,
     limit?: number
 ) => {
-    let query = Note.find({ owner: userID })
+    let filter: any = { owner: userID }
+    if (archived === true) {
+        filter = {
+            owner: userID, archived: true
+        }
+    } else if (archived === false) {
+        filter = {
+            owner: userID, archived: false
+        }
+    }
+    let query = Note.find(filter)
     if (skip) query = query.skip(skip)
     if (limit) query = query.limit(limit)
     return query.exec()
@@ -23,24 +34,34 @@ const getAllOwn = (
  * Fetches all the notes where the user is a collaborator.
  * @param userID id of the user
  */
-const getAllCollab = (
+const getAllCollab = async (
     userID: INoteSchema['permissions'][0]['subject']
 ) => {
-    return Note.find({
+    const notes = await Note.find({
         'permissions.subject': userID
-    }).select('-permissions').exec()
+    }).exec()
+    notes.forEach(n => { n.permissions = n.permissions.filter(p => p.subject === userID) })
+    return notes
 }
 
 /**
  * Fetches a note by the id property.
  * @param noteID id of the note
- * @param userID id of the note's owner
+ * @param userID id of the note's owner or a user with reading permission
  */
-const getOneOwnByID = (
+const getOneByID = async (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id']
 ) => {
-    return Note.findOne({ _id: noteID, owner: userID }).exec()
+    const note = await Note.findOne({
+        _id: noteID,
+        $or: [{ owner: userID }, { 'permissions.subject': userID }]
+    }).exec()
+
+    if (!note || note.owner === userID) return note
+
+    note.permissions = note.permissions.filter(p => p.subject === userID)
+    return note
 }
 
 /**
@@ -87,20 +108,20 @@ const deleteOneOwn = (
 
 /**
  * Updates a note where the user is the owner or a collaborator.
- * Updating a collaborating note does not return the permissions array.
+ * Updating a collaborating note does not return the full permissions array.
  * @param noteID id of the note
  * @param userID id of the note's owner
  * @param props object containing the new note properties
  * @param allowForCollab allow collaborating notes to be updated
  */
-const updateOneByID = (
+const updateOneByID = async (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id'],
     props: INoteBody,
     allowForCollab: boolean
 ) => {
     if (allowForCollab) {
-        return Note.findOneAndUpdate(
+        const note = await Note.findOneAndUpdate(
             {
                 _id: noteID,
                 $or: [{ owner: userID }, {
@@ -114,7 +135,11 @@ const updateOneByID = (
             },
             props,
             { new: true }
-        ).select('-permissions').exec()
+        ).exec()
+        if (!note || note.owner === userID) return note
+
+        note.permissions = note.permissions.filter(p => p.subject === userID)
+        return note
     }
     return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
@@ -126,7 +151,7 @@ const updateOneByID = (
 export default {
     getAllOwn,
     getAllCollab,
-    getOneOwnByID,
+    getOneByID,
     getOneByShareCode,
     createNewNote,
     deleteOneOwn,
