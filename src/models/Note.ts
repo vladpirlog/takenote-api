@@ -73,7 +73,7 @@ export const NoteSchema: Schema = new Schema(
         },
         color: {
             type: String,
-            default: Color.grey,
+            default: Color.DEFAULT,
             required: true
         },
         archived: {

@@ -1,6 +1,9 @@
 export enum Color {
-    red = '#ff0000',
-    green = '#00ff00',
-    blue = '#0000ff',
-    grey = '#989898',
+    DEFAULT = '#ced4da',
+    RED = '#edafb8',
+    BLUE = '#d6efff',
+    YELLOW = '#fbf7ae',
+    GREEN = '#cce7cf',
+    PURPLE = '#e9dff7',
+    ORANGE = '#fdeac4'
 }
