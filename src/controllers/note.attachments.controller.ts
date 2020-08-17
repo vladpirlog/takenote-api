@@ -24,7 +24,8 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
 
         const url = await uploadFile(
             file as UploadedFile,
-            getAuthenticatedUser(res)?.userID
+            getAuthenticatedUser(res)?.userID,
+            id
         )
 
         const newNote = await noteAttachmentsQuery.addAttachment(
