@@ -52,8 +52,8 @@ const makeMailTransport = () => {
         host: 'smtp.mailtrap.io',
         port: 2525,
         auth: {
-            user: '323d6ff04b0943',
-            pass: '18e79ee7038f9a'
+            user: constants.email.user,
+            pass: constants.email.pass
         }
     })
 }
