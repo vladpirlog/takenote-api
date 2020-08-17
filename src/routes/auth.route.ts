@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import authController from '../controllers/auth.controller'
-import verifyInput from '../middlewares/verifyInput.middleware'
+import verifyReqBody from '../middlewares/verifyReqBody.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkBody from '../middlewares/checkBody.middleware'
@@ -23,7 +23,7 @@ router.post(
     '/login',
     checkAuthStatus(false),
     checkBody(['email', 'password']),
-    verifyInput.login,
+    verifyReqBody.login,
     authController.login
 )
 
@@ -35,8 +35,8 @@ router.post(
     '/register',
     checkAuthStatus(false),
     checkBody(['username', 'email', 'password', 'confirm_password']),
-    verifyInput.register,
-    checkUniqueUser,
+    verifyReqBody.register,
+    checkUniqueUser(false),
     rateLimiting.forEmail,
     authController.register
 )
@@ -62,7 +62,7 @@ router.post(
     '/reset_password',
     checkAuthStatus(true),
     checkBody(['old_password']),
-    verifyInput.oldPassword,
+    verifyReqBody.oldPassword,
     rateLimiting.forEmail,
     authPasswordController.requestResetToken
 )
@@ -73,7 +73,7 @@ router.post(
     checkQuery(['token']),
     checkQueryNotArray(['token']),
     checkBody(['new_password', 'confirm_new_password']),
-    verifyInput.newPassword,
+    verifyReqBody.newPassword,
     validateToken('reset', false),
     authPasswordController.submitResetToken
 )
@@ -83,7 +83,7 @@ router.post(
     '/forgot_password',
     checkAuthStatus(false),
     checkBody(['email']),
-    verifyInput.email,
+    verifyReqBody.email,
     rateLimiting.forEmail,
     authPasswordController.requestForgotToken
 )
@@ -94,7 +94,7 @@ router.post(
     checkQuery(['token']),
     checkQueryNotArray(['token']),
     checkBody(['new_password', 'confirm_new_password']),
-    verifyInput.newPassword,
+    verifyReqBody.newPassword,
     validateToken('forgot', false),
     authPasswordController.submitForgotToken
 )
@@ -107,13 +107,20 @@ router.get(
     validateToken('any', true)
 )
 
+router.post(
+    '/check_credentials',
+    checkAuthStatus(false),
+    verifyReqBody.checkCredentials,
+    checkUniqueUser(true)
+)
+
 // Delete user handler
 router.post(
     '/delete',
     checkAuthStatus(true),
     checkUserState([State.ACTIVE, State.UNCONFIRMED]),
     checkBody(['old_password']),
-    verifyInput.oldPassword,
+    verifyReqBody.oldPassword,
     authController.deleteUser
 )
 
