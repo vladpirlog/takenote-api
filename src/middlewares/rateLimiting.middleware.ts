@@ -4,9 +4,10 @@ import { IRateLimiting } from '../interfaces/rateLimiting.interface'
 import getUnixTime from '../utils/getUnixTime.util'
 import constants from '../config/constants.config'
 import redisConfig from '../config/redis.config'
+import { IUserSchema } from '../models/User'
 
-const getKey = (req: Request, type: 'request' | 'email') => {
-    return `${req.ip}--${type}`
+const getKey = (req: Request, type: 'request' | 'email', userID?: IUserSchema['_id']) => {
+    return `${userID || 'guest'}--${req.ip}--${type}`
 }
 
 const getValue = async (key: string) => {
@@ -59,7 +60,7 @@ const verifyExistingEntry = async (
 const rateLimiting = (type: 'request' | 'email') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const key = getKey(req, type)
+            const key = getKey(req, type, res.locals?.user?.userID)
             const value = await getValue(key)
 
             if (value) {
