@@ -19,13 +19,7 @@ const uploadFile = async (
     noteID: INoteSchema['_id']
 ) => {
     try {
-        if (constants.nodeEnv === 'testing') {
-            const result = await cloudinary.uploader.upload(file.tempFilePath, {
-                folder: `${userID}/`
-            })
-            deleteFile(file)
-            return result.secure_url
-        } else {
+        if (constants.nodeEnv === 'production') {
             const storage = new Storage()
             const options = {
                 gzip: true,
@@ -41,6 +35,12 @@ const uploadFile = async (
 
             return encodeURI(`http://storage.googleapis.com/${metadata.bucket}/${metadata.name}`)
             // return encodeURI(`/${metadata.name}`)
+        } else {
+            const result = await cloudinary.uploader.upload(file.tempFilePath, {
+                folder: `${userID}/`
+            })
+            deleteFile(file)
+            return result.secure_url
         }
     } catch (err) {
         deleteFile(file)
