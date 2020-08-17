@@ -28,7 +28,7 @@ const sendToken = async (
     const mailOptions = makeMailOptions(user, tokenMailContent)
     const mailTransport = makeMailTransport()
 
-    await mailTransport.sendMail(mailOptions)
+    if (constants.nodeEnv === 'production') await mailTransport.sendMail(mailOptions)
 }
 
 /**
@@ -41,7 +41,7 @@ const sendNotice = async (user: IUserSchema, type: 'delete' | 'recover') => {
     const noticeMailContent = makeNoticeMailContent(user, type === 'delete')
     const mailOptions = makeMailOptions(user, noticeMailContent)
 
-    await mailTransport.sendMail(mailOptions)
+    if (constants.nodeEnv === 'production') await mailTransport.sendMail(mailOptions)
 }
 
 /**
@@ -49,14 +49,11 @@ const sendNotice = async (user: IUserSchema, type: 'delete' | 'recover') => {
  */
 const makeMailTransport = () => {
     return nodemailer.createTransport({
-        service: 'gmail',
-        secure: false,
+        host: 'smtp.mailtrap.io',
+        port: 2525,
         auth: {
-            user: constants.email.user,
-            pass: constants.email.pass
-        },
-        tls: {
-            rejectUnauthorized: false
+            user: '323d6ff04b0943',
+            pass: '18e79ee7038f9a'
         }
     })
 }
