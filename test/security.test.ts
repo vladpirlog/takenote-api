@@ -82,12 +82,12 @@ describe('testing the security features of the api', () => {
     xtest('rate limiting for requests', async () => {
         const statuses: number[] = []
         while (true) {
-            const res = await request.get('/status')
+            const res = await request.get('/')
             statuses.push(res.status)
             if (res.header['x-ratelimit-remaining-minute'] === '0') break
         }
         expect(statuses).toEqual(new Array(statuses.length).fill(200))
-        expect((await request.get('/status')).status).toBe(429)
+        expect((await request.get('/')).status).toBe(429)
     })
 
     afterAll(async () => {
