@@ -2,7 +2,7 @@ import express, { Application, Response, Request } from 'express'
 import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
 import fileUpload from 'express-fileupload'
-// import cors from 'cors'
+import cors from 'cors'
 import compression from 'compression'
 import constants from './config/constants.config'
 import extractUserFromCookie from './middlewares/extractUserFromCookie.middleware'
@@ -22,11 +22,12 @@ const cloudinary = require('cloudinary').v2
 
 const app: Application = express()
 app.set('env', constants.nodeEnv)
+app.set('trust proxy', true)
 
 cloudinary.config({
-    cloud_name: constants.cloudinary.name,
-    api_key: constants.cloudinary.key,
-    api_secret: constants.cloudinary.secret
+    cloud_name: constants.storage.cloudinary.name,
+    api_key: constants.storage.cloudinary.key,
+    api_secret: constants.storage.cloudinary.secret
 })
 
 app.use(helmet())
@@ -45,15 +46,15 @@ app.use(
 
 // Only needed when running the server and frontend on different (sub)domains.
 
-// app.use(cors({
-//     origin: constants.domain.whitelist,
-//     optionsSuccessStatus: 200,
-//     credentials: true,
-//     methods: ['GET', 'PUT', 'POST', 'DELETE']
-// }))
+app.use(cors({
+    origin: /* constants.domain.whitelist */ 'http://localhost:3000',
+    optionsSuccessStatus: 200,
+    credentials: true,
+    methods: ['GET', 'PUT', 'POST', 'DELETE']
+}))
 
-app.use(rateLimiting.forRequests)
 app.use(extractUserFromCookie)
+app.use(rateLimiting.forRequests)
 
 app.use('/auth', authRoute)
 app.use('/notes', noteRoute)
