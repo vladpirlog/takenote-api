@@ -6,6 +6,7 @@ import constants from '../src/config/constants.config'
 import { INoteSchema } from '../src/models/Note'
 import { PermissionLevel } from '../src/models/Permission'
 import path from 'path'
+import { Color } from '../src/interfaces/color.enum'
 
 describe('test note-related operations', () => {
     const request = supertest.agent(app)
@@ -55,12 +56,12 @@ describe('test note-related operations', () => {
             .put(`/notes/${createdNoteID}`)
             .field('title', 'my-new-title')
             .field('content', 'my-new-content')
-            .field('color', '#123456')
+            .field('color', Color.RED)
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body.note.title).toBe('my-new-title')
                 expect(res.body.note.content).toBe('my-new-content')
-                expect(res.body.note.color).toBe('#123456')
+                expect(res.body.note.color).toBe(Color.RED)
                 return done()
             })
     }, 20000)
@@ -288,7 +289,7 @@ describe('test note-related operations', () => {
             expect(res.body.note).toHaveProperty('share')
             expect(res.body.note.title).toBe('my-new-title')
             expect(res.body.note.content).toBe('my-new-content')
-            expect(res.body.note.color).toBe('#123456')
+            expect(res.body.note.color).toBe(Color.RED)
             expect(res.body.note.tags).toEqual(['tag1', 'tag2'])
             expect(res.body.note.share).toHaveProperty('code')
             expect(res.body.note.share).toHaveProperty('active')
