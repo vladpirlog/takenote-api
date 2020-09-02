@@ -9,7 +9,7 @@ const getByTag = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { tag, match } = req.query
         const notes = await noteTagsQuery.get(
-            getAuthenticatedUser(res)?.userID,
+            getAuthenticatedUser(res)?._id,
             tag as string,
             match === 'true')
         return createResponse(res, 200, 'Notes fetched.', { notes })
@@ -26,11 +26,11 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
             tags.includes('')
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
-        if (!(await checkLimits.forTag(id, getAuthenticatedUser(res)?.userID, tags))) {
+        if (!(await checkLimits.forTag(id, getAuthenticatedUser(res)?._id, tags))) {
             return createResponse(res, 400, 'Tags limit exceeded.')
         }
         const newNote = await noteTagsQuery.add(
-            id, getAuthenticatedUser(res)?.userID, tags
+            id, getAuthenticatedUser(res)?._id, tags
         )
         return newNote
             ? createResponse(res, 200, 'Tags added.', {
@@ -51,10 +51,10 @@ const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
         ) { return createResponse(res, 400, 'Tags field invalid.') }
 
         const newNote = await noteTagsQuery.delete(
-            id, getAuthenticatedUser(res)?.userID, tags
+            id, getAuthenticatedUser(res)?._id, tags
         )
         return newNote
-            ? createResponse(res, 200, 'Tags deleted.')
+            ? createResponse(res, 200, 'Tags deleted.', { tags: newNote.tags })
             : createResponse(res, 400, 'Couldn\'t delete tags.')
     } catch (err) { return next(err) }
 }
