@@ -60,7 +60,7 @@ const verifyExistingEntry = async (
 const rateLimiting = (type: 'request' | 'email') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const key = getKey(req, type, res.locals?.user?.userID)
+            const key = getKey(req, type, res.locals?.user?._id)
             const value = await getValue(key)
 
             if (value) {

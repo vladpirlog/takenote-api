@@ -7,7 +7,7 @@ import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interfac
  */
 const getAuthenticatedUser = (res: Response): IAuthenticatedUserInfo | null => {
     return res.locals.user ? {
-        userID: res.locals.user.userID,
+        _id: res.locals.user._id,
         role: res.locals.user.role,
         state: res.locals.user.state
     } : null

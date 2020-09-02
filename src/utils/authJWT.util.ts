@@ -6,7 +6,7 @@ import { IDecodedJWT } from '../interfaces/decodedJWT.interface'
 import createID from './createID.util'
 
 interface IJWTPayload {
-    userID: IUserSchema['_id']
+    _id: IUserSchema['_id']
     role: IUserSchema['role']
     state: IUserSchema['state']
 }
@@ -26,7 +26,7 @@ const generate = (payload: IJWTPayload) => {
             issuer: constants.domain.baseDomain,
             audience: [constants.domain.baseDomain],
             jwtid: createID('jwt'),
-            subject: payload.userID,
+            subject: payload._id,
             notBefore: 0
         }
     )
@@ -46,7 +46,7 @@ const verify = async (token: string): Promise<IJWTPayload> => {
     const valid = await jwtBlacklistUtil.check(decoded.jti)
     if (!valid) throw new Error('Blacklisted JWT.')
     return {
-        userID: decoded.sub,
+        _id: decoded.sub,
         role: decoded._info,
         state: decoded._state
     }

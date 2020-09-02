@@ -8,12 +8,12 @@ import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 const requestResetToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
-        const user = await userQuery.getById(getAuthenticatedUser(res)?.userID)
+        const user = await userQuery.getById(getAuthenticatedUser(res)?._id)
         if (!user) return createResponse(res, 400)
 
         if (user.validPassword(oldPassword)) {
             const newUser = await userQuery.setNewToken(
-                getAuthenticatedUser(res)?.userID,
+                getAuthenticatedUser(res)?._id,
                 'reset'
             )
             if (!newUser) return createResponse(res, 400)
@@ -43,7 +43,7 @@ const submitResetToken = async (req: Request, res: Response, next: NextFunction)
         const { token } = req.query
 
         const newUser = await userQuery.setNewPassword(
-            getAuthenticatedUser(res)?.userID,
+            getAuthenticatedUser(res)?._id,
             newPassword,
             token as IUserSchema['resetToken']['_id']
         )

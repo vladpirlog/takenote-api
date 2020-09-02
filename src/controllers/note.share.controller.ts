@@ -25,7 +25,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
-        const note = await noteCrudQuery.getOneByID(id, getAuthenticatedUser(res)?.userID)
+        const note = await noteCrudQuery.getOneByID(id, getAuthenticatedUser(res)?._id)
         if (!note) return next()
 
         // By default, the new active state will remain the same.
@@ -44,15 +44,15 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
             ? note.share.code : createID('share')
 
         const newNote = await noteCrudQuery.updateOneByID(
-            note.id, getAuthenticatedUser(res)?.userID, {
+            note.id, getAuthenticatedUser(res)?._id, {
                 share: {
                     active: newActiveState,
                     code: newShareCode
                 }
             }, false)
         return newNote ? createResponse(res, 200, 'Link fetched.', {
-            shareURL: newNote.getShareURL()
-        }) : createResponse(res, 400, 'Couldn\'t update note.')
+            share: newNote.share
+        }) : createResponse(res, 400)
     } catch (err) { return next(err) }
 }
 
@@ -61,26 +61,31 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const { id } = req.params
         const { user, type } = req.body
         const collabUser = await userQuery.getByUsernameOrEmail(user)
-        if (!collabUser) { return createResponse(res, 400, 'Couldn\'t add collaborator.') }
+        if (!collabUser) return createResponse(res, 400)
 
         const permissionLevel = type === 'r'
             ? PermissionLevel.read : type === 'rw'
                 ? PermissionLevel.readWrite : null
         if (permissionLevel === null) {
-            return createResponse(res, 400, "Invalid type. Should be 'r' or 'rw'.")
+            return createResponse(res, 400, 'Invalid type. Should be \'r\' or \'rw\'.')
         }
-        if (!(await checkLimits.forPermission(id, getAuthenticatedUser(res)?.userID))) {
-            return createResponse(res, 400, 'Collaborators limit exceeded.')
+        if (!(await checkLimits.forPermission(id, getAuthenticatedUser(res)?._id))) {
+            return createResponse(res, 400)
         }
         const newNote = await noteShareQuery.addPermission(
             id,
-            getAuthenticatedUser(res)?.userID,
-            { subject: collabUser.id, level: permissionLevel }
+            getAuthenticatedUser(res)?._id,
+            {
+                subject: {
+                    _id: collabUser.id, username: collabUser.username, email: collabUser.email
+                },
+                level: permissionLevel
+            }
         )
         return newNote
             ? createResponse(res, 200, 'Collaborator added.', {
-                permission: newNote.permissions[newNote.permissions.length - 1]
-            }) : createResponse(res, 400, 'Couldn\'t add collaborator.')
+                permission: newNote.permissions.find(p => p.subject._id === collabUser.id)
+            }) : createResponse(res, 400)
     } catch (err) { return next(err) }
 }
 
@@ -90,7 +95,7 @@ const deleteCollaborator = async (req: Request, res: Response, next: NextFunctio
 
         const newNote = await noteShareQuery.deletePermission(
             id,
-            getAuthenticatedUser(res)?.userID,
+            getAuthenticatedUser(res)?._id,
             permissionID
         )
         return newNote
