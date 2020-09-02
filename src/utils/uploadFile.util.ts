@@ -17,7 +17,7 @@ const uploadFile = async (
     file: UploadedFile,
     userID: IUserSchema['_id'],
     noteID: INoteSchema['_id']
-) => {
+): Promise<INoteSchema['attachments'][0]['url']> => {
     try {
         if (constants.nodeEnv === 'production') {
             const storage = new Storage()

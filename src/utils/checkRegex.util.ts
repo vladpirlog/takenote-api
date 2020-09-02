@@ -6,8 +6,8 @@
  */
 const checkRegex = (regex: RegExp, items: string | string[]) => {
     if (Array.isArray(items)) {
-        return !items.map((elem) => regex.test(elem)).includes(false)
-    } else return regex.test(items as string)
+        return !items.map(elem => regex.test(elem)).includes(false)
+    } else return regex.test(items)
 }
 
 export default checkRegex
