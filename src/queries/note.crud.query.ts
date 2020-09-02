@@ -15,13 +15,9 @@ const getAllOwn = (
     limit?: number
 ) => {
     let filter: any = { owner: userID }
-    if (archived === true) {
+    if (archived === true || archived === false) {
         filter = {
-            owner: userID, archived: true
-        }
-    } else if (archived === false) {
-        filter = {
-            owner: userID, archived: false
+            owner: userID, archived
         }
     }
     let query = Note.find(filter)
@@ -38,9 +34,9 @@ const getAllCollab = async (
     userID: INoteSchema['permissions'][0]['subject']
 ) => {
     const notes = await Note.find({
-        'permissions.subject': userID
+        'permissions.subject._id': userID
     }).exec()
-    notes.forEach(n => { n.permissions = n.permissions.filter(p => p.subject === userID) })
+    notes.forEach(n => { n.permissions = n.permissions.filter(p => p.subject._id === userID) })
     return notes
 }
 
@@ -55,12 +51,12 @@ const getOneByID = async (
 ) => {
     const note = await Note.findOne({
         _id: noteID,
-        $or: [{ owner: userID }, { 'permissions.subject': userID }]
+        $or: [{ owner: userID }, { 'permissions.subject._id': userID }]
     }).exec()
 
     if (!note || note.owner === userID) return note
 
-    note.permissions = note.permissions.filter(p => p.subject === userID)
+    note.permissions = note.permissions.filter(p => p.subject._id === userID)
     return note
 }
 
@@ -127,7 +123,7 @@ const updateOneByID = async (
                 $or: [{ owner: userID }, {
                     permissions: {
                         $elemMatch: {
-                            subject: userID,
+                            'subject._id': userID,
                             level: PermissionLevel.readWrite
                         }
                     }
@@ -136,9 +132,10 @@ const updateOneByID = async (
             props,
             { new: true }
         ).exec()
+
         if (!note || note.owner === userID) return note
 
-        note.permissions = note.permissions.filter(p => p.subject === userID)
+        note.permissions = note.permissions.filter(p => p.subject._id === userID)
         return note
     }
     return Note.findOneAndUpdate(
