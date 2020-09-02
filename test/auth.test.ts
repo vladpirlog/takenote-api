@@ -61,7 +61,7 @@ describe('test registration and authentication flows', () => {
             )
             .then((res) => {
                 expect(res.status).toBe(201)
-                expect(res.body).toHaveProperty('userID')
+                expect(res.body).toHaveProperty('user')
                 return done()
             })
     }, 20000)
@@ -130,7 +130,7 @@ describe('test registration and authentication flows', () => {
             expect(res.body).toHaveProperty('user')
             expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
             expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
-            expect(res.body.user).toHaveProperty('userID')
+            expect(res.body.user).toHaveProperty('user')
             return done()
         })
     }, 20000)

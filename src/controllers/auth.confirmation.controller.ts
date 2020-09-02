@@ -39,7 +39,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
             return createResponse(
                 res,
                 202,
-                "Confirmation token has expired. A new confirmation token was sent to the user's email address."
+                'Confirmation token has expired. A new confirmation token was sent to the user\'s email address.'
             )
         }
     } catch (err) { return next(err) }
@@ -48,7 +48,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
 const requestConfirmationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setNewToken(
-            getAuthenticatedUser(res)?.userID,
+            getAuthenticatedUser(res)?._id,
             'confirmation'
         )
         if (!newUser) return createResponse(res, 400)
@@ -58,7 +58,7 @@ const requestConfirmationToken = async (req: Request, res: Response, next: NextF
         return createResponse(
             res,
             200,
-            "Confirmation token sent to the user's email address."
+            'Confirmation token sent to the user\'s email address.'
         )
     } catch (err) { return next(err) }
 }

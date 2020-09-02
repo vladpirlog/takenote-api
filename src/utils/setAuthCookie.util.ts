@@ -10,7 +10,7 @@ import authJWT from './authJWT.util'
  */
 const setAuthCookie = (res: Response, user: IUserSchema): Response => {
     const token = authJWT.generate({
-        userID: user.id,
+        _id: user.id,
         role: user.role,
         state: user.state
     })
