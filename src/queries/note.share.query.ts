@@ -16,11 +16,17 @@ const addPermission = async (
         level: INoteSchema['permissions'][0]['level']
     }
 ) => {
-    await Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        { $pull: { permissions: { subject: permission.subject } } },
-        { new: true }
+    const note = await Note.findOne(
+        { _id: noteID, owner: userID, 'permissions.subject._id': permission.subject._id }
     ).exec()
+
+    if (note) {
+        return Note.findOneAndUpdate(
+            { _id: noteID, owner: userID, 'permissions.subject._id': permission.subject._id },
+            { 'permissions.$.level': permission.level },
+            { new: true }
+        )
+    }
     return Note.findOneAndUpdate(
         { _id: noteID, owner: userID },
         { $push: { permissions: new Permission({ ...permission }) } },

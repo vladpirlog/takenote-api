@@ -6,7 +6,11 @@ import createID from '../utils/createID.util'
  * Schema describing a permission, containing a subject and a level (read or read-write).
  */
 export interface IPermissionSchema extends Document {
-    subject: IUserSchema['_id']
+    subject: {
+        _id: IUserSchema['_id'],
+        username: IUserSchema['username'],
+        email: IUserSchema['email']
+    },
     level: PermissionLevel
 }
 
@@ -22,9 +26,19 @@ export const PermissionSchema: Schema = new Schema({
         default: () => createID('permission')
     },
     subject: {
-        type: String,
-        required: true,
-        ref: 'User'
+        _id: {
+            type: String,
+            required: true,
+            ref: 'User'
+        },
+        username: {
+            type: String,
+            required: true
+        },
+        email: {
+            type: String,
+            required: true
+        }
     },
     level: {
         type: Number,
