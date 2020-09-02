@@ -35,7 +35,7 @@ app.disable('etag')
 app.use(compression())
 app.use(morgan(app.get('env') === 'production' ? 'combined' : 'dev'))
 app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
 app.use(
     fileUpload({
