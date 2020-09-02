@@ -11,10 +11,10 @@ import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userQuery.getById(getAuthenticatedUser(res)?.userID)
+        const user = await userQuery.getById(getAuthenticatedUser(res)?._id)
         return user ? createResponse(res, 200, 'User found.', {
             user: {
-                userID: user.id,
+                _id: user.id,
                 username: user.username,
                 email: user.email
             }
@@ -31,7 +31,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             setAuthCookie(res, user)
             return createResponse(res, 200, 'Authentication successful.', {
                 user: {
-                    userID: user.id,
+                    _id: user.id,
                     email: user.email,
                     username: user.username
                 }
@@ -65,7 +65,11 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
         }
         await sendEmailUtil.sendToken(newUser, 'confirmation')
         return createResponse(res, 201, 'User created successfully.', {
-            userID: newUser.id
+            user: {
+                _id: newUser.id,
+                email: newUser.email,
+                username: newUser.username
+            }
         })
     } catch (err) { return next(err) }
 }
@@ -74,11 +78,11 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
-        const user = await userQuery.getById(getAuthenticatedUser(res)?.userID)
+        const user = await userQuery.getById(getAuthenticatedUser(res)?._id)
         if (!user) return createResponse(res, 400)
         if (user.validPassword(oldPassword)) {
             const newUser = await userQuery.setUserState(
-                getAuthenticatedUser(res)?.userID,
+                getAuthenticatedUser(res)?._id,
                 State.DELETING
             )
             if (!newUser) return createResponse(res, 400)
@@ -96,7 +100,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setUserState(
-            getAuthenticatedUser(res)?.userID,
+            getAuthenticatedUser(res)?._id,
             State.ACTIVE
         )
         if (!newUser) return createResponse(res, 400)
