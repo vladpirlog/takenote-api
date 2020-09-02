@@ -13,7 +13,7 @@ describe('test note-related operations', () => {
 
     const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
     let createdNoteID: INoteSchema['_id']
-    let createdNoteShareURL: string
+    let createdNoteShareObject: INoteSchema['share']
     let permissionID: INoteSchema['permissions'][0]['_id']
     let attachmentID: INoteSchema['attachments'][0]['_id']
     beforeAll(async () => {
@@ -210,15 +210,17 @@ describe('test note-related operations', () => {
             .post(`/notes/${createdNoteID}/share`)
             .query({ active: true })
             .then((res) => {
-                createdNoteShareURL = res.body.shareURL
+                createdNoteShareObject = res.body.share
                 expect(res.status).toBe(200)
-                expect(res.body).toHaveProperty('shareURL')
+                expect(res.body).toHaveProperty('share')
+                expect(res.body.share).toHaveProperty('code')
+                expect(res.body.share).toHaveProperty('active')
                 return done()
             })
     }, 20000)
 
     test('get shared note with the URL provided', (done) => {
-        request.get(createdNoteShareURL).then((res) => {
+        request.get(`/shared/${createdNoteShareObject.code}`).then((res) => {
             expect(res.status).toBe(200)
             expect(res.body).toHaveProperty('note')
             return done()
@@ -231,8 +233,10 @@ describe('test note-related operations', () => {
             .query({ active: false, get_new: true })
             .then((res) => {
                 expect(res.status).toBe(200)
-                expect(res.body).toHaveProperty('shareURL')
-                expect(res.body.shareURL).not.toBe(createdNoteShareURL)
+                expect(res.body).toHaveProperty('share')
+                expect(res.body.share).toHaveProperty('code')
+                expect(res.body.share).toHaveProperty('active')
+                expect(res.body.share.code).not.toBe(createdNoteShareObject.code)
                 return done()
             })
     }, 20000)
