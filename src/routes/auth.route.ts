@@ -4,7 +4,6 @@ import verifyReqBody from '../middlewares/verifyReqBody.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
-import checkQueryNotArray from '../middlewares/checkQueryNotArray.middleware'
 import authConfirmationController from '../controllers/auth.confirmation.controller'
 import validateToken from '../middlewares/validateToken.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
@@ -51,7 +50,6 @@ router.post(
 router.post(
     '/confirm',
     requestFieldsDefined('query', ['token']),
-    checkQueryNotArray(['token']),
     authConfirmationController.confirm
 )
 
@@ -69,7 +67,6 @@ router.post(
     '/rpassword',
     checkAuthStatus(true),
     requestFieldsDefined('query', ['token']),
-    checkQueryNotArray(['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     verifyReqBody.newPassword,
     validateToken('reset', false),
@@ -90,7 +87,6 @@ router.post(
     '/fpassword',
     checkAuthStatus(false),
     requestFieldsDefined('query', ['token']),
-    checkQueryNotArray(['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     verifyReqBody.newPassword,
     validateToken('forgot', false),
@@ -101,7 +97,6 @@ router.post(
 router.get(
     '/check_token',
     requestFieldsDefined('query', ['token']),
-    checkQueryNotArray(['token']),
     validateToken('any', true)
 )
 

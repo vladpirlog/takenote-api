@@ -6,7 +6,6 @@ import noteShareController from '../controllers/note.share.controller'
 import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import checkAttachmentInfo from '../middlewares/attachmentInfo.middleware'
-import checkQueryNotArray from '../middlewares/checkQueryNotArray.middleware'
 import { State } from '../interfaces/state.enum'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import { Role } from '../interfaces/role.enum'
@@ -28,12 +27,12 @@ router.all(
 /**
  * GET all notes
  */
-router.get('/', checkQueryNotArray(['collaborations', 'skip', 'limit', 'archived']), noteCrudController.getAllNotes)
+router.get('/', noteCrudController.getAllNotes)
 
 /**
  * GET notes by tag or tag RegExp
  */
-router.get('/tags', requestFieldsDefined('query', ['tag']), checkQueryNotArray(['tag', 'match']), noteTagsController.getByTag)
+router.get('/tags', requestFieldsDefined('query', ['tag']), noteTagsController.getByTag)
 
 /**
  * GET a note
@@ -66,7 +65,6 @@ router.post('/:id/duplicate', requestFieldsDefined('params', ['id']), noteCrudCo
 router.post(
     '/:id/share',
     requestFieldsDefined('params', ['id']),
-    checkQueryNotArray(['active', 'get_new']),
     noteShareController.getShareLink
 )
 
@@ -96,7 +94,6 @@ router.post(
     '/:id/tags',
     requestFieldsDefined('params', ['id']),
     requestFieldsDefined('query', ['tags']),
-    checkQueryNotArray(['tags']),
     noteTagsController.addTags
 )
 
@@ -107,7 +104,6 @@ router.delete(
     '/:id/tags',
     requestFieldsDefined('params', ['id']),
     requestFieldsDefined('query', ['tags']),
-    checkQueryNotArray(['tags']),
     noteTagsController.deleteTags
 )
 
