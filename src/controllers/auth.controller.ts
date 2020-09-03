@@ -83,7 +83,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         if (user.validPassword(oldPassword)) {
             return await handleDeleteOrRecover(res, req.cookies.access_token, 'delete')
         }
-        return createResponse(res, 401, 'Wrong credentials.')
+        return createResponse(res, 401)
     } catch (err) { return next(err) }
 }
 

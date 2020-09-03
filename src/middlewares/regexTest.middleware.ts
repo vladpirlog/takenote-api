@@ -46,14 +46,8 @@ const register = (req: Request, res: Response, next: NextFunction) => {
 const newPassword = (req: Request, res: Response, next: NextFunction) => {
     const { new_password: newPassword, confirm_new_password: confirmNewPassword } = req.body
 
-    if (
-        !checkRegex(constants.regex.password, [
-            newPassword,
-            confirmNewPassword
-        ])
-    ) {
-        return createResponse(res, 422, 'Password invalid.')
-    }
+    if (!checkRegex(constants.regex.password, [newPassword, confirmNewPassword])
+    ) { return createResponse(res, 422, 'Password invalid.') }
     if (newPassword !== confirmNewPassword) {
         return createResponse(res, 422, 'Passwords do not match.')
     }
@@ -78,10 +72,10 @@ const oldPassword = (req: Request, res: Response, next: NextFunction) => {
 const email = (req: Request, res: Response, next: NextFunction) => {
     const { email } = req.body
 
-    if (
-        !checkRegex(constants.regex.email, email) &&
-        !checkRegex(constants.regex.username, email)
-    ) { return createResponse(res, 422, 'Email/username invalid.') }
+    if (!checkRegex(constants.regex.email, email) &&
+        !checkRegex(constants.regex.username, email)) {
+        return createResponse(res, 422, 'Email/username invalid.')
+    }
     return next()
 }
 
@@ -110,12 +104,12 @@ const note = (req: Request, res: Response, next: NextFunction) => {
 const attachment = (req: Request, res: Response, next: NextFunction) => {
     const { title, description } = req.body
     if (title && !checkRegex(constants.regex.attachment.title, title)) {
-        if (req.files?.photo) deleteFile(req.files?.photo)
+        if (req.files?.photo) deleteFile(req.files.photo)
         return createResponse(res, 422, 'Attachment title invalid.')
     }
 
     if (description && !checkRegex(constants.regex.attachment.description, description)) {
-        if (req.files?.photo) deleteFile(req.files?.photo)
+        if (req.files?.photo) deleteFile(req.files.photo)
         return createResponse(res, 422, 'Attachment description invalid.')
     }
     return next()

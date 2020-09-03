@@ -4,6 +4,12 @@ import userQuery from '../queries/user.query'
 import getUnixTime from '../utils/getUnixTime.util'
 import { ITokenSchema } from '../models/Token'
 
+/**
+ * Higher order function for validating a user's token
+ * @returns a middleware function
+ * @param tokenType the type of token to verify
+ * @param isFinalMiddleware if true will send a 200 response, else will call the next middleware
+ */
 const validateToken = (
     tokenType: 'reset' | 'forgot' | 'confirmation' | 'any',
     isFinalMiddleware: boolean

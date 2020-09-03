@@ -81,18 +81,10 @@ function onListening () {
     debug('Listening on ' + bind)
     console.log('Listening on ' + bind + '...')
 
-    mongodbConfig
-        .connect()
-        .then(() => console.log('MongoDB connected...'))
-        .catch((err) => {
-            console.log(err)
-            process.exit(-1)
-        })
-
-    redisConfig
-        .connect()
-        .then(() => console.log('Redis connected...'))
-        .catch((err) => {
+    Promise
+        .all([mongodbConfig.connect(), redisConfig.connect()])
+        .then(() => console.log('MongoDB and Redis connected...'))
+        .catch(err => {
             console.log(err)
             process.exit(-1)
         })
@@ -102,6 +94,7 @@ function onListening () {
  * Event listener for HTTP server "closing" event.
  */
 function onClosing () {
-    redisConfig.close().catch((err) => console.log(err))
-    mongodbConfig.close().catch((err) => console.log(err))
+    Promise
+        .all([mongodbConfig.close(), redisConfig.close()])
+        .catch(err => console.log(err))
 }

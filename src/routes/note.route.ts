@@ -9,7 +9,7 @@ import checkAttachmentInfo from '../middlewares/attachmentInfo.middleware'
 import { State } from '../interfaces/state.enum'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import { Role } from '../interfaces/role.enum'
-import verifyReqBody from '../middlewares/verifyReqBody.middleware'
+import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 
 const router = Router()
@@ -42,12 +42,12 @@ router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.ge
 /**
  * ADD a note
  */
-router.post('/', verifyReqBody.note, noteCrudController.addNote)
+router.post('/', regexTest.note, noteCrudController.addNote)
 
 /**
  * UPDATE a note
  */
-router.put('/:id', requestFieldsDefined('params', ['id']), verifyReqBody.note, noteCrudController.editNote)
+router.put('/:id', requestFieldsDefined('params', ['id']), regexTest.note, noteCrudController.editNote)
 
 /**
  * DELETE a note
@@ -113,7 +113,7 @@ router.delete(
 router.post(
     '/:id/attachments',
     requestFieldsDefined('params', ['id']),
-    verifyReqBody.attachment,
+    regexTest.attachment,
     checkAttachmentInfo,
     noteAttachmentsController.addAttachment
 )
@@ -124,7 +124,7 @@ router.post(
 router.put(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
-    verifyReqBody.attachment,
+    regexTest.attachment,
     noteAttachmentsController.editAttachment
 )
 
