@@ -3,7 +3,7 @@ import createResponse from '../utils/createResponse.util'
 import uploadFile from '../utils/uploadFile.util'
 import { UploadedFile } from 'express-fileupload'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
-import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import getAuthUser from '../utils/getAuthUser.util'
 import checkLimits from '../utils/checkLimits.util'
 import deleteFile from '../utils/deleteFile.util'
 
@@ -17,19 +17,19 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
             return createResponse(res, 400, 'File not found.')
         }
 
-        if (!(await checkLimits.forAttachment(id, getAuthenticatedUser(res)?._id))) {
+        if (!(await checkLimits.forAttachment(id, getAuthUser(res)?._id))) {
             deleteFile(file)
             return createResponse(res, 400, 'Attachments limit exceeded.')
         }
 
         const url = await uploadFile(
             file as UploadedFile,
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             id
         )
 
         const newNote = await noteAttachmentsQuery.addAttachment(
-            id, getAuthenticatedUser(res)?._id, { url, title, description }
+            id, getAuthUser(res)?._id, { url, title, description }
         )
 
         return newNote
@@ -46,7 +46,7 @@ const editAttachment = async (req: Request, res: Response, next: NextFunction) =
 
         const newNote = await noteAttachmentsQuery.editAttachment(
             id,
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             attachmentID,
             { title, description }
         )
@@ -64,7 +64,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
 
         const newNote = await noteAttachmentsQuery.deleteAttachment(
             id,
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             attachmentID
         )
         return newNote

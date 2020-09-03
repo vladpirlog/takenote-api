@@ -6,7 +6,7 @@ import userQuery from '../queries/user.query'
 import { IUserSchema } from '../models/User'
 import { State } from '../interfaces/state.enum'
 import setAuthCookie from '../utils/setAuthCookie.util'
-import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import getAuthUser from '../utils/getAuthUser.util'
 import authJWT from '../utils/authJWT.util'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 
@@ -21,7 +21,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
         if (getUnixTime() <= user.confirmationToken.exp) {
             const newUser = await userQuery.setUserState(user.id, State.ACTIVE)
             if (!newUser) return createResponse(res, 400)
-            if (getAuthenticatedUser(res)) {
+            if (getAuthUser(res)) {
                 // only refresh the cookie if the user is authenticated while confirming the email address
                 const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
                 await jwtBlacklist.add(id, exp)
@@ -48,7 +48,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
 const requestConfirmationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setNewToken(
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             'confirmation'
         )
         if (!newUser) return createResponse(res, 400)

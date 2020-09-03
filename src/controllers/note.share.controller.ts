@@ -6,7 +6,7 @@ import { PermissionLevel } from '../models/Permission'
 import userQuery from '../queries/user.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
-import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import getAuthUser from '../utils/getAuthUser.util'
 import checkLimits from '../utils/checkLimits.util'
 import { INoteSchema } from '../models/Note'
 
@@ -25,7 +25,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
-        const note = await noteCrudQuery.getOneByID(id, getAuthenticatedUser(res)?._id)
+        const note = await noteCrudQuery.getOneByID(id, getAuthUser(res)?._id)
         if (!note) return next()
 
         // By default, the new active state will remain the same.
@@ -44,7 +44,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
             ? note.share.code : createID('share')
 
         const newNote = await noteCrudQuery.updateOneByID(
-            note.id, getAuthenticatedUser(res)?._id, {
+            note.id, getAuthUser(res)?._id, {
                 share: {
                     active: newActiveState,
                     code: newShareCode
@@ -69,12 +69,12 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         if (permissionLevel === null) {
             return createResponse(res, 400, 'Invalid type. Should be \'r\' or \'rw\'.')
         }
-        if (!(await checkLimits.forPermission(id, getAuthenticatedUser(res)?._id))) {
+        if (!(await checkLimits.forPermission(id, getAuthUser(res)?._id))) {
             return createResponse(res, 400)
         }
         const newNote = await noteShareQuery.addPermission(
             id,
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             {
                 subject: {
                     _id: collabUser.id, username: collabUser.username, email: collabUser.email
@@ -95,7 +95,7 @@ const deleteCollaborator = async (req: Request, res: Response, next: NextFunctio
 
         const newNote = await noteShareQuery.deletePermission(
             id,
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             permissionID
         )
         return newNote
