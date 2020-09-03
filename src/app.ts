@@ -14,6 +14,7 @@ import sharedNoteRoute from './routes/note.share.route'
 import createResponse from './utils/createResponse.util'
 import helmet from 'helmet'
 import errorHandler from './middlewares/errorHandler.middleware'
+import hpp from 'hpp'
 const cloudinary = require('cloudinary').v2
 
 /**
@@ -36,6 +37,7 @@ app.use(compression())
 app.use(morgan(app.get('env') === 'production' ? 'combined' : 'dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
+app.use(hpp())
 app.use(cookieParser())
 app.use(
     fileUpload({
