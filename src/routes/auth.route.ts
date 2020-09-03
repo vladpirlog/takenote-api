@@ -3,8 +3,6 @@ import authController from '../controllers/auth.controller'
 import verifyReqBody from '../middlewares/verifyReqBody.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
-import checkBody from '../middlewares/checkBody.middleware'
-import checkQuery from '../middlewares/checkQuery.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
 import checkQueryNotArray from '../middlewares/checkQueryNotArray.middleware'
 import authConfirmationController from '../controllers/auth.confirmation.controller'
@@ -12,17 +10,17 @@ import validateToken from '../middlewares/validateToken.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
 import rateLimiting from '../middlewares/rateLimiting.middleware'
 import { State } from '../interfaces/state.enum'
+import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 
 const router = Router()
 
 // Current user handler
 router.get('/me', checkAuthStatus(true), authController.getMe)
-
 // Login handler
 router.post(
     '/login',
     checkAuthStatus(false),
-    checkBody(['email', 'password']),
+    requestFieldsDefined('body', ['email', 'password']),
     verifyReqBody.login,
     authController.login
 )
@@ -34,7 +32,7 @@ router.post('/logout', checkAuthStatus(true), authController.logout)
 router.post(
     '/register',
     checkAuthStatus(false),
-    checkBody(['username', 'email', 'password', 'confirm_password']),
+    requestFieldsDefined('body', ['username', 'email', 'password', 'confirm_password']),
     verifyReqBody.register,
     checkUniqueUser(false),
     rateLimiting.forEmail,
@@ -52,7 +50,7 @@ router.post(
 
 router.post(
     '/confirm',
-    checkQuery(['token']),
+    requestFieldsDefined('query', ['token']),
     checkQueryNotArray(['token']),
     authConfirmationController.confirm
 )
@@ -61,7 +59,7 @@ router.post(
 router.post(
     '/reset_password',
     checkAuthStatus(true),
-    checkBody(['old_password']),
+    requestFieldsDefined('body', ['old_password']),
     verifyReqBody.oldPassword,
     rateLimiting.forEmail,
     authPasswordController.requestResetToken
@@ -70,9 +68,9 @@ router.post(
 router.post(
     '/rpassword',
     checkAuthStatus(true),
-    checkQuery(['token']),
+    requestFieldsDefined('query', ['token']),
     checkQueryNotArray(['token']),
-    checkBody(['new_password', 'confirm_new_password']),
+    requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     verifyReqBody.newPassword,
     validateToken('reset', false),
     authPasswordController.submitResetToken
@@ -82,7 +80,7 @@ router.post(
 router.post(
     '/forgot_password',
     checkAuthStatus(false),
-    checkBody(['email']),
+    requestFieldsDefined('body', ['email']),
     verifyReqBody.email,
     rateLimiting.forEmail,
     authPasswordController.requestForgotToken
@@ -91,9 +89,9 @@ router.post(
 router.post(
     '/fpassword',
     checkAuthStatus(false),
-    checkQuery(['token']),
+    requestFieldsDefined('query', ['token']),
     checkQueryNotArray(['token']),
-    checkBody(['new_password', 'confirm_new_password']),
+    requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     verifyReqBody.newPassword,
     validateToken('forgot', false),
     authPasswordController.submitForgotToken
@@ -102,7 +100,7 @@ router.post(
 // Token validation handler
 router.get(
     '/check_token',
-    checkQuery(['token']),
+    requestFieldsDefined('query', ['token']),
     checkQueryNotArray(['token']),
     validateToken('any', true)
 )
@@ -119,7 +117,7 @@ router.post(
     '/delete',
     checkAuthStatus(true),
     checkUserState([State.ACTIVE, State.UNCONFIRMED]),
-    checkBody(['old_password']),
+    requestFieldsDefined('body', ['old_password']),
     verifyReqBody.oldPassword,
     authController.deleteUser
 )
