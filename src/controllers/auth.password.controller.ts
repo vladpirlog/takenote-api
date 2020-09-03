@@ -12,16 +12,9 @@ const requestResetToken = async (req: Request, res: Response, next: NextFunction
         if (!user) return createResponse(res, 400)
 
         if (user.validPassword(oldPassword)) {
-            const newUser = await userQuery.setNewToken(
-                getAuthUser(res)?._id,
-                'reset'
-            )
-            if (!newUser) return createResponse(res, 400)
-
-            await sendEmailUtil.sendToken(newUser, 'reset')
-            return createResponse(res, 200, 'Reset token sent.')
+            return await handleSendingToken(res, getAuthUser(res)?._id, 'reset')
         }
-        return createResponse(res, 401, 'Wrong credentials.')
+        return createResponse(res, 401)
     } catch (err) { return next(err) }
 }
 
@@ -29,47 +22,45 @@ const requestForgotToken = async (req: Request, res: Response, next: NextFunctio
     try {
         const { email } = req.body
 
-        const user = await userQuery.setNewToken(email, 'forgot')
-        if (!user) return createResponse(res, 400)
-
-        await sendEmailUtil.sendToken(user, 'forgot')
-        return createResponse(res, 200, 'Forgot token sent.')
+        return await handleSendingToken(res, email, 'forgot')
     } catch (err) { return next(err) }
 }
 
-const submitResetToken = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { new_password: newPassword } = req.body
-        const { token } = req.query
+const handleSendingToken = async (
+    res: Response,
+    userIdentifier: IUserSchema['_id'] | IUserSchema['email'],
+    type: 'reset' | 'forgot'
+) => {
+    const user = await userQuery.setNewToken(userIdentifier, type)
+    if (!user) return createResponse(res, 400)
 
-        const newUser = await userQuery.setNewPassword(
-            getAuthUser(res)?._id,
-            newPassword,
-            token as IUserSchema['resetToken']['_id']
-        )
-        return newUser ? createResponse(res, 200, 'Password changed.')
-            : createResponse(res, 400)
-    } catch (err) { return next(err) }
+    await sendEmailUtil.sendToken(user, type)
+    return createResponse(res, 200, 'Token sent.')
 }
 
-const submitForgotToken = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { new_password: newPassword } = req.body
-        const { token } = req.query
+const submitToken = (type: 'reset' | 'forgot') => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { new_password: newPassword } = req.body
+            const { token } = req.query
 
-        const newUser = await userQuery.setNewPassword(
-            null,
-            newPassword,
-            token as IUserSchema['forgotToken']['_id']
-        )
-        return newUser ? createResponse(res, 200, 'Password changed.')
-            : createResponse(res, 400)
-    } catch (err) { return next(err) }
+            const userIdentifier = type === 'reset' ? getAuthUser(res)?._id : null
+
+            const newUser = await userQuery.setNewPassword(
+                userIdentifier,
+                newPassword,
+                token as IUserSchema['resetToken']['_id']
+            )
+            return newUser
+                ? createResponse(res, 200, 'Password changed.')
+                : createResponse(res, 400)
+        } catch (err) { return next(err) }
+    }
 }
 
 export default {
     requestResetToken,
     requestForgotToken,
-    submitResetToken,
-    submitForgotToken
+    submitResetToken: submitToken('reset'),
+    submitForgotToken: submitToken('forgot')
 }

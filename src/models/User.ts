@@ -4,6 +4,7 @@ import { TokenSchema, ITokenSchema } from './Token'
 import bcrypt from 'bcrypt'
 import { State } from '../interfaces/state.enum'
 import createID from '../utils/createID.util'
+import getUnixTime from '../utils/getUnixTime.util'
 
 export interface IUserSchema extends Document {
     username: string
@@ -19,6 +20,7 @@ export interface IUserSchema extends Document {
     updatedAt: Date
     hasConfirmed(): boolean
     validPassword(hash: string): boolean
+    isConfirmationTokenExpired(): boolean
 }
 
 export const UserSchema: Schema = new Schema(
@@ -100,6 +102,10 @@ UserSchema.methods.validPassword = function (password: string): boolean {
  */
 UserSchema.methods.hasConfirmed = function (): boolean {
     return this.status !== 'unconfirmed'
+}
+
+UserSchema.methods.isConfirmationTokenExpired = function (): boolean {
+    return getUnixTime() > this.confirmationToken.exp
 }
 
 export default mongoose.model<IUserSchema>('User', UserSchema)

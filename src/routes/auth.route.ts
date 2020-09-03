@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import authController from '../controllers/auth.controller'
-import verifyReqBody from '../middlewares/verifyReqBody.middleware'
+import regexTest from '../middlewares/regexTest.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
@@ -20,7 +20,7 @@ router.post(
     '/login',
     checkAuthStatus(false),
     requestFieldsDefined('body', ['email', 'password']),
-    verifyReqBody.login,
+    regexTest.login,
     authController.login
 )
 
@@ -32,7 +32,7 @@ router.post(
     '/register',
     checkAuthStatus(false),
     requestFieldsDefined('body', ['username', 'email', 'password', 'confirm_password']),
-    verifyReqBody.register,
+    regexTest.register,
     checkUniqueUser(false),
     rateLimiting.forEmail,
     authController.register
@@ -58,7 +58,7 @@ router.post(
     '/reset_password',
     checkAuthStatus(true),
     requestFieldsDefined('body', ['old_password']),
-    verifyReqBody.oldPassword,
+    regexTest.oldPassword,
     rateLimiting.forEmail,
     authPasswordController.requestResetToken
 )
@@ -68,7 +68,7 @@ router.post(
     checkAuthStatus(true),
     requestFieldsDefined('query', ['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
-    verifyReqBody.newPassword,
+    regexTest.newPassword,
     validateToken('reset', false),
     authPasswordController.submitResetToken
 )
@@ -78,7 +78,7 @@ router.post(
     '/forgot_password',
     checkAuthStatus(false),
     requestFieldsDefined('body', ['email']),
-    verifyReqBody.email,
+    regexTest.email,
     rateLimiting.forEmail,
     authPasswordController.requestForgotToken
 )
@@ -88,7 +88,7 @@ router.post(
     checkAuthStatus(false),
     requestFieldsDefined('query', ['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
-    verifyReqBody.newPassword,
+    regexTest.newPassword,
     validateToken('forgot', false),
     authPasswordController.submitForgotToken
 )
@@ -103,7 +103,7 @@ router.get(
 router.post(
     '/check_credentials',
     checkAuthStatus(false),
-    verifyReqBody.checkCredentials,
+    regexTest.checkCredentials,
     checkUniqueUser(true)
 )
 
@@ -113,7 +113,7 @@ router.post(
     checkAuthStatus(true),
     checkUserState([State.ACTIVE, State.UNCONFIRMED]),
     requestFieldsDefined('body', ['old_password']),
-    verifyReqBody.oldPassword,
+    regexTest.oldPassword,
     authController.deleteUser
 )
 
