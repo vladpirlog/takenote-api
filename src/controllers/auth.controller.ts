@@ -7,11 +7,11 @@ import createNewToken from '../utils/createNewToken.util'
 import { State } from '../interfaces/state.enum'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 import setAuthCookie from '../utils/setAuthCookie.util'
-import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import getAuthUser from '../utils/getAuthUser.util'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userQuery.getById(getAuthenticatedUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res)?._id)
         return user ? createResponse(res, 200, 'User found.', {
             user: {
                 _id: user.id,
@@ -78,11 +78,11 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
-        const user = await userQuery.getById(getAuthenticatedUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res)?._id)
         if (!user) return createResponse(res, 400)
         if (user.validPassword(oldPassword)) {
             const newUser = await userQuery.setUserState(
-                getAuthenticatedUser(res)?._id,
+                getAuthUser(res)?._id,
                 State.DELETING
             )
             if (!newUser) return createResponse(res, 400)
@@ -100,7 +100,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setUserState(
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             State.ACTIVE
         )
         if (!newUser) return createResponse(res, 400)

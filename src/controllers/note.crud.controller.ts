@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteQuery from '../queries/note.crud.query'
-import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import getAuthUser from '../utils/getAuthUser.util'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 import checkLimits from '../utils/checkLimits.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
@@ -10,7 +10,7 @@ import { INoteBody } from '../models/Note'
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const note = await noteQuery.getOneByID(id, getAuthenticatedUser(res)?._id)
+        const note = await noteQuery.getOneByID(id, getAuthUser(res)?._id)
         return note ? createResponse(res, 200, 'Note fetched.', { note })
             : next()
     } catch (err) { return next(err) }
@@ -34,14 +34,14 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         const notes = await noteQuery.getAllOwn(
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             archivedOption,
             skipOption,
             limitOption
         )
         if (collaborations === 'true') {
             const collabNotes = await noteQuery.getAllCollab(
-                getAuthenticatedUser(res)?._id
+                getAuthUser(res)?._id
             )
             return createResponse(res, 200, 'Notes fetched.', {
                 notes,
@@ -55,14 +55,14 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
 const addNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, content, color } = req.body
-        if (!(await checkLimits.forNote(getAuthenticatedUser(res)?._id))) {
+        if (!(await checkLimits.forNote(getAuthUser(res)?._id))) {
             return createResponse(res, 400, 'Notes limit exceeded.')
         }
         const newNote = await noteQuery.createNewNote({
             title,
             content,
             color,
-            owner: getAuthenticatedUser(res)?._id
+            owner: getAuthUser(res)?._id
         })
         return newNote
             ? createResponse(res, 201, 'Note created.', {
@@ -76,7 +76,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
         const { id } = req.params
         const { title, content, archived, color } = req.body
 
-        const note = await noteQuery.getOneByID(id, getAuthenticatedUser(res)?._id)
+        const note = await noteQuery.getOneByID(id, getAuthUser(res)?._id)
         if (!note) {
             return createResponse(res, 400, 'Couldn\'t update note.')
         }
@@ -84,7 +84,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
         let fieldsToUpdate: INoteBody
         let forCollabNote: boolean
 
-        if (note.owner === getAuthenticatedUser(res)?._id) {
+        if (note.owner === getAuthUser(res)?._id) {
             fieldsToUpdate = removeUndefinedProps({ title, content, archived, color })
             forCollabNote = false
         } else {
@@ -94,7 +94,7 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
 
         const updatedNote = await noteQuery.updateOneByID(
             id,
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             fieldsToUpdate,
             forCollabNote
         )
@@ -110,7 +110,7 @@ const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
-        const note = await noteQuery.deleteOneOwn(id, getAuthenticatedUser(res)?._id)
+        const note = await noteQuery.deleteOneOwn(id, getAuthUser(res)?._id)
         return note ? createResponse(res, 200, 'Note deleted.')
             : createResponse(res, 400, 'Couldn\'t delete note.')
     } catch (err) { return next(err) }
@@ -120,7 +120,7 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const { id } = req.params
 
-        const note = await noteQuery.getOneByID(id, getAuthenticatedUser(res)?._id)
+        const note = await noteQuery.getOneByID(id, getAuthUser(res)?._id)
         if (!note) return createResponse(res, 400, 'Couldn\'t duplicate note.')
 
         const newNote = await noteQuery.createNewNote({
@@ -128,7 +128,7 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
             content: note.content,
             color: note.color,
             archived: note.archived,
-            owner: getAuthenticatedUser(res)?._id
+            owner: getAuthUser(res)?._id
         })
 
         return newNote ? createResponse(res, 200, 'Note duplicated.', {

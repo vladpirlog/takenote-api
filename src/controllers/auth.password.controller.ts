@@ -3,17 +3,17 @@ import createResponse from '../utils/createResponse.util'
 import { IUserSchema } from '../models/User'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import getAuthenticatedUser from '../utils/getAuthenticatedUser.util'
+import getAuthUser from '../utils/getAuthUser.util'
 
 const requestResetToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
-        const user = await userQuery.getById(getAuthenticatedUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res)?._id)
         if (!user) return createResponse(res, 400)
 
         if (user.validPassword(oldPassword)) {
             const newUser = await userQuery.setNewToken(
-                getAuthenticatedUser(res)?._id,
+                getAuthUser(res)?._id,
                 'reset'
             )
             if (!newUser) return createResponse(res, 400)
@@ -43,7 +43,7 @@ const submitResetToken = async (req: Request, res: Response, next: NextFunction)
         const { token } = req.query
 
         const newUser = await userQuery.setNewPassword(
-            getAuthenticatedUser(res)?._id,
+            getAuthUser(res)?._id,
             newPassword,
             token as IUserSchema['resetToken']['_id']
         )
