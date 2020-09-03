@@ -3,17 +3,15 @@ import noteCrudController from '../controllers/note.crud.controller'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
 import noteShareController from '../controllers/note.share.controller'
-import checkParams from '../middlewares/checkParams.middleware'
 import noteTagsController from '../controllers/note.tags.controller'
-import checkBody from '../middlewares/checkBody.middleware'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import checkAttachmentInfo from '../middlewares/attachmentInfo.middleware'
 import checkQueryNotArray from '../middlewares/checkQueryNotArray.middleware'
 import { State } from '../interfaces/state.enum'
-import checkQuery from '../middlewares/checkQuery.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import { Role } from '../interfaces/role.enum'
 import verifyReqBody from '../middlewares/verifyReqBody.middleware'
+import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 
 const router = Router()
 
@@ -35,12 +33,12 @@ router.get('/', checkQueryNotArray(['collaborations', 'skip', 'limit', 'archived
 /**
  * GET notes by tag or tag RegExp
  */
-router.get('/tags', checkQuery(['tag']), checkQueryNotArray(['tag', 'match']), noteTagsController.getByTag)
+router.get('/tags', requestFieldsDefined('query', ['tag']), checkQueryNotArray(['tag', 'match']), noteTagsController.getByTag)
 
 /**
  * GET a note
  */
-router.get('/:id', checkParams(['id']), noteCrudController.getOneNote)
+router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.getOneNote)
 
 /**
  * ADD a note
@@ -50,24 +48,24 @@ router.post('/', verifyReqBody.note, noteCrudController.addNote)
 /**
  * UPDATE a note
  */
-router.put('/:id', checkParams(['id']), verifyReqBody.note, noteCrudController.editNote)
+router.put('/:id', requestFieldsDefined('params', ['id']), verifyReqBody.note, noteCrudController.editNote)
 
 /**
  * DELETE a note
  */
-router.delete('/:id', checkParams(['id']), noteCrudController.deleteNote)
+router.delete('/:id', requestFieldsDefined('params', ['id']), noteCrudController.deleteNote)
 
 /**
  * DUPLICATE a note
  */
-router.post('/:id/duplicate', checkParams(['id']), noteCrudController.duplicateNote)
+router.post('/:id/duplicate', requestFieldsDefined('params', ['id']), noteCrudController.duplicateNote)
 
 /**
  * GET sharing URL and set that URL's state; optionally, request a new URL for a note
  */
 router.post(
     '/:id/share',
-    checkParams(['id']),
+    requestFieldsDefined('params', ['id']),
     checkQueryNotArray(['active', 'get_new']),
     noteShareController.getShareLink
 )
@@ -77,8 +75,8 @@ router.post(
  */
 router.post(
     '/:id/share/collaborators',
-    checkParams(['id']),
-    checkBody(['user', 'type']),
+    requestFieldsDefined('params', ['id']),
+    requestFieldsDefined('body', ['user', 'type']),
     noteShareController.addCollaborator
 )
 
@@ -87,7 +85,7 @@ router.post(
  */
 router.delete(
     '/:id/share/collaborators/:permissionID',
-    checkParams(['id', 'permissionID']),
+    requestFieldsDefined('params', ['id', 'permissionID']),
     noteShareController.deleteCollaborator
 )
 
@@ -96,8 +94,8 @@ router.delete(
  */
 router.post(
     '/:id/tags',
-    checkParams(['id']),
-    checkQuery(['tags']),
+    requestFieldsDefined('params', ['id']),
+    requestFieldsDefined('query', ['tags']),
     checkQueryNotArray(['tags']),
     noteTagsController.addTags
 )
@@ -107,8 +105,8 @@ router.post(
  */
 router.delete(
     '/:id/tags',
-    checkParams(['id']),
-    checkQuery(['tags']),
+    requestFieldsDefined('params', ['id']),
+    requestFieldsDefined('query', ['tags']),
     checkQueryNotArray(['tags']),
     noteTagsController.deleteTags
 )
@@ -118,7 +116,7 @@ router.delete(
  */
 router.post(
     '/:id/attachments',
-    checkParams(['id']),
+    requestFieldsDefined('params', ['id']),
     verifyReqBody.attachment,
     checkAttachmentInfo,
     noteAttachmentsController.addAttachment
@@ -129,7 +127,7 @@ router.post(
  */
 router.put(
     '/:id/attachments/:attachmentID',
-    checkParams(['id', 'attachmentID']),
+    requestFieldsDefined('params', ['id', 'attachmentID']),
     verifyReqBody.attachment,
     noteAttachmentsController.editAttachment
 )
@@ -139,7 +137,7 @@ router.put(
  */
 router.delete(
     '/:id/attachments/:attachmentID',
-    checkParams(['id', 'attachmentID']),
+    requestFieldsDefined('params', ['id', 'attachmentID']),
     noteAttachmentsController.deleteAttachment
 )
 
