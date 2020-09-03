@@ -81,17 +81,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         const user = await userQuery.getById(getAuthUser(res)?._id)
         if (!user) return createResponse(res, 400)
         if (user.validPassword(oldPassword)) {
-            const newUser = await userQuery.setUserState(
-                getAuthUser(res)?._id,
-                State.DELETING
-            )
-            if (!newUser) return createResponse(res, 400)
-            await sendEmailUtil.sendNotice(newUser, 'delete')
-            const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
-            await jwtBlacklist.add(id, exp)
-            res.clearCookie('access_token')
-            setAuthCookie(res, newUser)
-            return createResponse(res, 200, 'Account is being deleted.')
+            return await handleDeleteOrRecover(res, req.cookies.access_token, 'delete')
         }
         return createResponse(res, 401, 'Wrong credentials.')
     } catch (err) { return next(err) }
@@ -99,18 +89,26 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 
 const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const newUser = await userQuery.setUserState(
-            getAuthUser(res)?._id,
-            State.ACTIVE
-        )
-        if (!newUser) return createResponse(res, 400)
-        await sendEmailUtil.sendNotice(newUser, 'recover')
-        const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
-        await jwtBlacklist.add(id, exp)
-        res.clearCookie('access_token')
-        setAuthCookie(res, newUser)
-        return createResponse(res, 200, 'Account is now active.')
+        return await handleDeleteOrRecover(res, req.cookies.access_token, 'recover')
     } catch (err) { return next(err) }
+}
+
+const handleDeleteOrRecover = async (res: Response, authCookie: string, type: 'delete' | 'recover') => {
+    const dynamicData = type === 'delete'
+        ? { state: State.DELETING, message: 'Account is being deleted.' }
+        : { state: State.ACTIVE, message: 'Account is now active.' }
+
+    const newUser = await userQuery.setUserState(
+        getAuthUser(res)?._id,
+        dynamicData.state
+    )
+    if (!newUser) return createResponse(res, 400)
+    await sendEmailUtil.sendNotice(newUser, type)
+    const { id, exp } = authJWT.getIDAndExp(authCookie)
+    await jwtBlacklist.add(id, exp)
+    res.clearCookie('access_token')
+    setAuthCookie(res, newUser)
+    return createResponse(res, 200, dynamicData.message)
 }
 
 export default { getMe, login, logout, register, deleteUser, recoverUser }
