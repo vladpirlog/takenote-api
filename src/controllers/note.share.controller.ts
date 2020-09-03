@@ -60,18 +60,23 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
     try {
         const { id } = req.params
         const { user, type } = req.body
-        const collabUser = await userQuery.getByUsernameOrEmail(user)
-        if (!collabUser) return createResponse(res, 400)
 
-        const permissionLevel = type === 'r'
-            ? PermissionLevel.read : type === 'rw'
-                ? PermissionLevel.readWrite : null
-        if (permissionLevel === null) {
+        const collabUser = await userQuery.getByUsernameOrEmail(user)
+        const doesNotExceedLimit = await checkLimits.forPermission(id, getAuthUser(res)?._id)
+        if (!collabUser || !doesNotExceedLimit) return createResponse(res, 400)
+
+        let permissionLevel: PermissionLevel
+        switch (type) {
+        case 'r':
+            permissionLevel = PermissionLevel.read
+            break
+        case 'rw':
+            permissionLevel = PermissionLevel.readWrite
+            break
+        default:
             return createResponse(res, 400, 'Invalid type. Should be \'r\' or \'rw\'.')
         }
-        if (!(await checkLimits.forPermission(id, getAuthUser(res)?._id))) {
-            return createResponse(res, 400)
-        }
+
         const newNote = await noteShareQuery.addPermission(
             id,
             getAuthUser(res)?._id,
