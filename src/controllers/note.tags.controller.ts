@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteTagsQuery from '../queries/note.tags.query'
-import parseStringToArray from '../utils/parseStringToArray.util'
+import splitTagsString from '../utils/splitTagsString.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import checkLimits from '../utils/checkLimits.util'
 
@@ -19,18 +19,21 @@ const getByTag = async (req: Request, res: Response, next: NextFunction) => {
 const addTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const tags = parseStringToArray(req.query.tags as string)
-        if (
-            !Array.isArray(tags) ||
-            tags.length === 0 ||
-            tags.includes('')
-        ) { return createResponse(res, 400, 'Tags field invalid.') }
+        const { tags } = req.query
 
-        if (!(await checkLimits.forTag(id, getAuthUser(res)?._id, tags))) {
+        if (!tags) return createResponse(res, 400)
+        const tagsArray = splitTagsString(tags as string)
+        if (
+            !Array.isArray(tagsArray) ||
+            tagsArray.length === 0 ||
+            tagsArray.includes('')
+        ) { return createResponse(res, 400) }
+
+        if (!(await checkLimits.forTag(id, getAuthUser(res)?._id, tagsArray))) {
             return createResponse(res, 400, 'Tags limit exceeded.')
         }
         const newNote = await noteTagsQuery.add(
-            id, getAuthUser(res)?._id, tags
+            id, getAuthUser(res)?._id, tagsArray
         )
         return newNote
             ? createResponse(res, 200, 'Tags added.', {
@@ -42,7 +45,7 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
 const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const tags = parseStringToArray(req.query.tags as string)
+        const tags = splitTagsString(req.query.tags as string)
 
         if (
             !Array.isArray(tags) ||
