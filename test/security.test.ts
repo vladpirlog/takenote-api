@@ -10,71 +10,62 @@ describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
     const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
     let createdNoteID: INoteSchema['_id']
+    let authCookie: string
+
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         await redisConfig.connect()
-    })
 
-    test('jwt blacklisting', async () => {
         const res = await request
             .post('/auth/login')
             .field('email', constants.test.persistentUser.username)
             .field('password', constants.test.persistentUser.password)
-        const authCookie = res.header['set-cookie'][0]
+        authCookie = res.header['set-cookie'][0]
 
-        await request
-            .post('/auth/logout')
-
-        const res2 = await request
-            .post('/auth/me')
-            .set('Cookie', [authCookie])
-        expect(res2.status).toBe(500)
-    }, 20000)
+        const res2 = await request.post('/notes')
+        createdNoteID = res2.body.note._id
+    })
 
     test('limit for # of tags per note', async () => {
-        await request
-            .post('/auth/login')
-            .field('email', constants.test.persistentUser.username)
-            .field('password', constants.test.persistentUser.password)
-        const res = await request.post('/notes')
-        createdNoteID = res.body.note._id
-
-        const res2 = await request
+        const res = await request
             .post(`/notes/${createdNoteID}/tags`)
             .query({ tags: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20' })
-        expect(res2.status).toBe(200)
-        const res3 = await request
+        expect(res.status).toBe(200)
+        const res2 = await request
             .post(`/notes/${createdNoteID}/tags`)
             .query({ tags: '21' })
-        expect(res3.status).toBe(400)
+        expect(res2.status).toBe(400)
     }, 20000)
 
     test('limit for # of attachments per note', async () => {
-        await request
-            .post('/auth/login')
-            .field('email', constants.test.persistentUser.username)
-            .field('password', constants.test.persistentUser.password)
-        const res = await request.post('/notes')
-        createdNoteID = res.body.note._id
-
         const statuses: number[] = []
         for (let i = 0; i < 10; ++i) {
-            const res2 = await request
+            const res = await request
                 .post(`/notes/${createdNoteID}/attachments`)
                 .field('title', 'my-title')
                 .field('description', 'my-description')
                 .attach('photo', pngTestImage, { contentType: 'image/png' })
-            statuses.push(res2.status)
+            statuses.push(res.status)
         }
         expect(statuses).toEqual(new Array(statuses.length).fill(200))
 
-        const res3 = await request
+        const res2 = await request
             .post(`/notes/${createdNoteID}/attachments`)
             .field('title', 'my-title')
             .field('description', 'my-description')
             .attach('photo', pngTestImage, { contentType: 'image/png' })
-        expect(res3.status).toBe(400)
+        expect(res2.status).toBe(400)
     }, 50000)
+
+    test('jwt blacklisting', async () => {
+        await request
+            .post('/auth/logout')
+
+        const res = await request
+            .post('/auth/me')
+            .set('Cookie', [authCookie])
+        expect(res.status).toBe(500)
+    }, 20000)
 
     // this test should be run independently from the others, because it would
     // deplete the requests allowed in the time frame; all the other
