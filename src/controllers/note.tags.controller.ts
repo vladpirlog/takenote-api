@@ -23,11 +23,7 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
 
         if (!tags) return createResponse(res, 400)
         const tagsArray = splitTagsString(tags as string)
-        if (
-            !Array.isArray(tagsArray) ||
-            tagsArray.length === 0 ||
-            tagsArray.includes('')
-        ) { return createResponse(res, 400) }
+        if (!tagsArray) return createResponse(res, 400)
 
         if (!(await checkLimits.forTag(id, getAuthUser(res)?._id, tagsArray))) {
             return createResponse(res, 400, 'Tags limit exceeded.')
