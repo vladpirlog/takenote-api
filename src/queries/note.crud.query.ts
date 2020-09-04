@@ -5,45 +5,37 @@ import { PermissionLevel } from '../models/Permission'
 /**
  * Fetches all the notes belonging to the user.
  * @param userID id of the user
+ * @param archived if not null, only notes with the matching archived field are returned, else all the notes
+ * @param collaborations if true, fetch user's own and collaborating notes, else only user's own
  * @param skip number of notes to skip
  * @param limit maximum number of notes to return
  */
-const getAllOwn = (
-    userID: IUserSchema['_id'],
-    archived: boolean | null,
-    skip?: number,
-    limit?: number
-) => {
-    let filter: any = { owner: userID }
-    if (archived === true || archived === false) {
-        filter = {
-            owner: userID, archived
-        }
+const getAll = (userID: IUserSchema['_id'], options: {
+        archived: boolean | null,
+        collaborations: boolean,
+        skip?: number,
+        limit?: number
     }
-    let query = Note.find(filter)
-    if (skip) query = query.skip(skip)
-    if (limit) query = query.limit(limit)
-    return query.exec()
-}
-
-/**
- * Fetches all the notes where the user is a collaborator.
- * @param userID id of the user
- */
-const getAllCollab = async (
-    userID: INoteSchema['permissions'][0]['subject']
 ) => {
-    const notes = await Note.find({
-        'permissions.subject._id': userID
-    }).exec()
-    notes.forEach(n => { n.permissions = n.permissions.filter(p => p.subject._id === userID) })
-    return notes
+    let completeFilter: any
+    const ownNotesFilter: any = { owner: userID }
+    const collabNotesFilter = { 'permissions.subject._id': userID }
+    if (options.archived !== null) ownNotesFilter.archived = options.archived
+
+    if (options.collaborations) {
+        completeFilter = { $or: [ownNotesFilter, collabNotesFilter] }
+    } else completeFilter = ownNotesFilter
+
+    let query = Note.find(completeFilter)
+    if (options.skip) query = query.skip(options.skip)
+    if (options.limit) query = query.limit(options.limit)
+    return query.exec()
 }
 
 /**
  * Fetches a note by the id property.
  * @param noteID id of the note
- * @param userID id of the note's owner or a user with reading permission
+ * @param userID id of the note's owner or collaborator
  */
 const getOneByID = async (
     noteID: INoteSchema['_id'],
@@ -76,7 +68,7 @@ const getOneByShareCode = (
  * Creates a new note with the specified properties.
  * @param props object containing the note properties and the owner
  */
-const createNewNote = (props: {
+const createOne = (props: {
   title?: INoteSchema['title'];
   content?: INoteSchema['content'];
   archived?: INoteSchema['archived'];
@@ -88,18 +80,36 @@ const createNewNote = (props: {
 }
 
 /**
- * Removes one of the user's notes.
+ * Delete a note where the user is the owner. If user is only a collab, only the matching
+ * permission is deleted.
  * @param noteID id of the note
- * @param userID id of the note's owner
+ * @param userID id of the note's owner or collaborator
  */
-const deleteOneOwn = (
+const deleteOneByID = async (
     noteID: INoteSchema['_id'],
     userID: IUserSchema['_id']
 ) => {
-    return Note.findOneAndDelete({
+    const note = await Note.findOneAndDelete({
         _id: noteID,
         owner: userID
     }).exec()
+    if (note) { return note }
+
+    return Note.findOneAndUpdate(
+        {
+            _id: noteID,
+            'permissions.subject._id': userID
+        },
+        {
+            $pull: {
+                permissions: {
+                    // @ts-ignore (it throws a type error, but the query works)
+                    'subject._id': userID
+                }
+            }
+        },
+        { new: true }
+    ).exec()
 }
 
 /**
@@ -146,11 +156,10 @@ const updateOneByID = async (
 }
 
 export default {
-    getAllOwn,
-    getAllCollab,
+    getAll,
     getOneByID,
     getOneByShareCode,
-    createNewNote,
-    deleteOneOwn,
+    createOne,
+    deleteOneByID,
     updateOneByID
 }
