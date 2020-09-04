@@ -19,18 +19,11 @@ describe('test note-related operations', () => {
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         await redisConfig.connect()
-    })
-
-    test('successful username-pw login', (done) => {
-        request
+        await request
             .post('/auth/login')
             .field('email', constants.test.persistentUser.username)
             .field('password', constants.test.persistentUser.password)
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
-    }, 20000)
+    })
 
     test('create note', (done) => {
         request

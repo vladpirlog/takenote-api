@@ -2,7 +2,7 @@ import Note, { INoteSchema } from '../models/Note'
 import { IUserSchema } from '../models/User'
 
 const note = (userID: IUserSchema['_id']) => {
-    return Note.find({ owner: userID }).count().exec()
+    return Note.find({ owner: userID }).countDocuments().exec()
 }
 
 const tag = async (
