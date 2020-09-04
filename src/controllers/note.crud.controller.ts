@@ -6,6 +6,8 @@ import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 import checkLimits from '../utils/checkLimits.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import { INoteBody } from '../models/Note'
+import splitNotesByOwnership from '../utils/splitNotesByOwnership.util'
+import isPositiveInteger from '../utils/isPositiveInteger.util'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -20,35 +22,33 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { collaborations, skip, limit, archived } = req.query
 
-        const archivedOption = archived ? stringToBoolean(archived as string) : null
-
-        const skipOption = parseInt(skip as string, 10)
-        const limitOption = parseInt(limit as string, 10)
-
-        if (limitOption && (limitOption < 0 || !Number.isSafeInteger(limitOption))) {
-            return createResponse(res, 422, 'The limit param is invalid.')
-        }
-
-        if (skipOption && (skipOption < 0 || !Number.isSafeInteger(skipOption))) {
+        if (skip && !isPositiveInteger(skip as string)) {
             return createResponse(res, 422, 'The skip param is invalid.')
         }
 
-        const notes = await noteQuery.getAllOwn(
+        if (limit && !isPositiveInteger(limit as string)) {
+            return createResponse(res, 422, 'The limit param is invalid.')
+        }
+
+        const notes = await noteQuery.getAll(
             getAuthUser(res)?._id,
-            archivedOption,
-            skipOption,
-            limitOption
+            removeUndefinedProps({
+                archived: archived ? stringToBoolean(archived as string) : null,
+                collaborations: collaborations !== 'false',
+                skip,
+                limit
+            })
         )
-        if (collaborations === 'true') {
-            const collabNotes = await noteQuery.getAllCollab(
-                getAuthUser(res)?._id
-            )
+
+        const { ownNotes, collabNotes } = splitNotesByOwnership(notes, getAuthUser(res)?._id)
+
+        if (collaborations !== 'false') {
             return createResponse(res, 200, 'Notes fetched.', {
-                notes,
+                notes: ownNotes,
                 collaboratingNotes: collabNotes
             })
         }
-        return createResponse(res, 200, 'Notes fetched.', { notes })
+        return createResponse(res, 200, 'Notes fetched.', { notes: ownNotes })
     } catch (err) { return next(err) }
 }
 
@@ -58,7 +58,7 @@ const addNote = async (req: Request, res: Response, next: NextFunction) => {
         if (!(await checkLimits.forNote(getAuthUser(res)?._id))) {
             return createResponse(res, 400, 'Notes limit exceeded.')
         }
-        const newNote = await noteQuery.createNewNote({
+        const newNote = await noteQuery.createOne({
             title,
             content,
             color,
@@ -110,7 +110,7 @@ const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
-        const note = await noteQuery.deleteOneOwn(id, getAuthUser(res)?._id)
+        const note = await noteQuery.deleteOneByID(id, getAuthUser(res)?._id)
         return note ? createResponse(res, 200, 'Note deleted.')
             : createResponse(res, 400, 'Couldn\'t delete note.')
     } catch (err) { return next(err) }
@@ -123,7 +123,7 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
         const note = await noteQuery.getOneByID(id, getAuthUser(res)?._id)
         if (!note) return createResponse(res, 400, 'Couldn\'t duplicate note.')
 
-        const newNote = await noteQuery.createNewNote({
+        const newNote = await noteQuery.createOne({
             title: note.title,
             content: note.content,
             color: note.color,
