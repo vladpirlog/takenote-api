@@ -6,7 +6,7 @@ import deleteFile from '../utils/deleteFile.util'
 /**
  * Middleware function that checks if the attachment photo exists in the request and if it meets the size and mimetype requirements
  */
-const checkAttachmentInfo = (req: Request, res: Response, next: NextFunction) => {
+const attachmentMetadata = (req: Request, res: Response, next: NextFunction) => {
     try {
         if (!req.files || !req.files.photo) { return createResponse(res, 404, 'File not found.') }
         const file: UploadedFile | UploadedFile[] = req.files.photo
@@ -27,4 +27,4 @@ const checkAttachmentInfo = (req: Request, res: Response, next: NextFunction) =>
     } catch (err) { return next(err) }
 }
 
-export default checkAttachmentInfo
+export default attachmentMetadata

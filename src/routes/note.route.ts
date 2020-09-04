@@ -5,7 +5,7 @@ import checkUserState from '../middlewares/checkUserState.middleware'
 import noteShareController from '../controllers/note.share.controller'
 import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
-import checkAttachmentInfo from '../middlewares/attachmentInfo.middleware'
+import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import { State } from '../interfaces/state.enum'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import { Role } from '../interfaces/role.enum'
@@ -114,7 +114,7 @@ router.post(
     '/:id/attachments',
     requestFieldsDefined('params', ['id']),
     regexTest.attachment,
-    checkAttachmentInfo,
+    attachmentMetadata,
     noteAttachmentsController.addAttachment
 )
 
