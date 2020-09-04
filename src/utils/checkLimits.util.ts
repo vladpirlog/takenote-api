@@ -26,7 +26,7 @@ const forTag = async (
     tags: string[]
 ): Promise<boolean> => {
     const length = await limitsQuery.tag(noteID, userID)
-    return length ? length + tags.length <= constants.limits.perNote.tags : false
+    return length !== undefined ? length + tags.length <= constants.limits.perNote.tags : false
 }
 
 /**
@@ -36,7 +36,7 @@ const forTag = async (
 const forPermissionOrAttachment = (type: 'attachments' | 'permissions') => {
     return async (noteID: INoteSchema['_id'], userID: IUserSchema['_id']) => {
         const length = await limitsQuery.permissionOrAttachment(type)(noteID, userID)
-        return length ? length + 1 <= constants.limits.perNote[type] : false
+        return length !== undefined ? length + 1 <= constants.limits.perNote[type] : false
     }
 }
 
