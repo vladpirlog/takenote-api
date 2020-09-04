@@ -15,6 +15,7 @@ const router = Router()
 
 // Current user handler
 router.get('/me', checkAuthStatus(true), authController.getMe)
+
 // Login handler
 router.post(
     '/login',
@@ -100,6 +101,7 @@ router.get(
     validateToken('any', true)
 )
 
+// Check user existence handler
 router.post(
     '/check_credentials',
     checkAuthStatus(false),
