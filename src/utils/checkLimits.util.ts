@@ -1,7 +1,7 @@
 import { INoteSchema } from '../models/Note'
 import constants from '../config/constants.config'
-import noteCrudQuery from '../queries/note.crud.query'
 import { IUserSchema } from '../models/User'
+import limitsQuery from '../queries/limits.query'
 
 /**
  * Returns true if the number of notes does not exceed the limit per user.
@@ -10,10 +10,8 @@ import { IUserSchema } from '../models/User'
 const forNote = async (
     userID: IUserSchema['_id']
 ): Promise<boolean> => {
-    const notes = await noteCrudQuery.getAllOwn(userID, null)
-    return notes
-        ? notes.length + 1 <= constants.limits.perUser.notes
-        : false
+    const length = await limitsQuery.note(userID)
+    return length + 1 <= constants.limits.perUser.notes
 }
 
 /**
@@ -27,22 +25,18 @@ const forTag = async (
     userID: IUserSchema['_id'],
     tags: string[]
 ): Promise<boolean> => {
-    const note = await noteCrudQuery.getOneByID(noteID, userID)
-    return note
-        ? note.tags.length + tags.length <= constants.limits.perNote.tags
-        : false
+    const length = await limitsQuery.tag(noteID, userID)
+    return length ? length + tags.length <= constants.limits.perNote.tags : false
 }
 
 /**
- * Returns a function that checks if the number of attachments/permissions does not exceed the limit per note.
+ * Higher order function. Checks if the number of attachments/permissions does not exceed the limit per note.
  * @param type a string representing the type of objects to be checked
  */
 const forPermissionOrAttachment = (type: 'attachments' | 'permissions') => {
     return async (noteID: INoteSchema['_id'], userID: IUserSchema['_id']) => {
-        const note = await noteCrudQuery.getOneByID(noteID, userID)
-        return note
-            ? note[type].length + 1 <= constants.limits.perNote[type]
-            : false
+        const length = await limitsQuery.permissionOrAttachment(type)(noteID, userID)
+        return length ? length + 1 <= constants.limits.perNote[type] : false
     }
 }
 
