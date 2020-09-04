@@ -36,7 +36,8 @@ export default {
             title: /^[ -~]{0,100}$/,
             content: /^[ -~\s]{0,10000}$/,
             color: /^#[0-9a-fA-F]{6}$/
-        }
+        },
+        tag: /^[ -~]{1,20}$/
     },
     idInfo: {
         user: { prefix: 'u', length: 24 },
