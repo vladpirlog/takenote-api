@@ -1,4 +1,4 @@
-import parseStringToArray from '../src/utils/parseStringToArray.util'
+import splitTagsString from '../src/utils/splitTagsString.util'
 
 describe('string parsing testing', () => {
     const stringsAndArrays: [string, string[]][] = [
@@ -10,6 +10,6 @@ describe('string parsing testing', () => {
     ]
 
     test.each(stringsAndArrays)('%j should equal %j', (s, arr) => {
-        expect(parseStringToArray(s)).toEqual(arr)
+        expect(splitTagsString(s)).toEqual(arr)
     })
 })
