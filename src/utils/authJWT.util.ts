@@ -1,21 +1,15 @@
-import { IUserSchema } from '../models/User'
 import jwt from 'jsonwebtoken'
 import constants from '../config/constants.config'
 import jwtBlacklistUtil from './jwtBlacklist.util'
 import { IDecodedJWT } from '../interfaces/decodedJWT.interface'
 import createID from './createID.util'
-
-interface IJWTPayload {
-    _id: IUserSchema['_id']
-    role: IUserSchema['role']
-    state: IUserSchema['state']
-}
+import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interface'
 
 /**
  * Generates a JWT using the info in the payload. Returns a string token.
  * @param payload object containing id, role and state of the user
  */
-const generate = (payload: IJWTPayload) => {
+const generate = (payload: IAuthenticatedUserInfo) => {
     const token = jwt.sign(
         { _info: payload.role, _state: payload.state },
         constants.authentication.jwtSecret,
@@ -38,7 +32,7 @@ const generate = (payload: IJWTPayload) => {
  * Async returns the user info stored in the JWT payload.
  * @param token JWT to check and decode
  */
-const verify = async (token: string): Promise<IJWTPayload> => {
+const verify = async (token: string): Promise<IAuthenticatedUserInfo> => {
     const decoded: IDecodedJWT = jwt.verify(
         token,
         constants.authentication.jwtSecret

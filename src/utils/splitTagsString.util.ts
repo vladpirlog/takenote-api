@@ -3,7 +3,7 @@ import constants from '../config/constants.config'
 import checkRegex from './checkRegex.util'
 
 /**
- * Splits a string by commas. Returns an array of lowercase strings.
+ * Splits and tests a tags string. Returns an array of tags.
  * @param str string to parse
  */
 const splitTagsString = (str: string): INoteSchema['tags'] | null => {
