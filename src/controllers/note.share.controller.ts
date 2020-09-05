@@ -65,7 +65,8 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const doesNotExceedLimit = await checkLimits.forPermission(id, getAuthUser(res)?._id)
         if (!collabUser ||
             collabUser.id === getAuthUser(res)?._id ||
-            !doesNotExceedLimit) return createResponse(res, 400)
+            !doesNotExceedLimit
+        ) return createResponse(res, 400)
 
         let permissionLevel: PermissionLevel
         switch (type) {
