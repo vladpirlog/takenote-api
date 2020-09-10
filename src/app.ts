@@ -5,7 +5,7 @@ import fileUpload from 'express-fileupload'
 import cors from 'cors'
 import compression from 'compression'
 import constants from './config/constants.config'
-import extractUserFromCookie from './middlewares/extractUserFromCookie.middleware'
+import extractUser from './middlewares/extractUser.middleware'
 import rateLimiting from './middlewares/rateLimiting.middleware'
 import send404 from './middlewares/send404.util'
 import authRoute from './routes/auth.route'
@@ -55,7 +55,7 @@ app.use(cors({
     methods: ['GET', 'PUT', 'POST', 'DELETE']
 }))
 
-app.use(extractUserFromCookie)
+app.use(extractUser.fromAuthCookie)
 app.use(rateLimiting.forRequests)
 
 app.use('/auth', authRoute)
