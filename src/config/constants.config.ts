@@ -21,8 +21,15 @@ export default {
         }
     },
     authentication: {
-        jwtSecret: process.env.JWT_SECRET || '',
-        expires: 2 * 60 * 60 * 1000 // time in ms
+        authJWTSecret: process.env.AUTH_JWT_SECRET || '',
+        tfaTempJWTSecret: process.env.TEMP_JWT_SECRET || '',
+        authCookieExpires: 2 * 60 * 60 * 1000, // time in ms
+        tfaTempCookieExpires: 15 * 60 * 1000, // time in ms
+        tfaRememberDuration: 30 * 24 * 60 * 60, // time in s
+        authCookieName: 'access_token',
+        tfaTempCookieName: 'temp_token',
+        numberOfBackupCodes: 8,
+        backupCodeLength: 10
     },
     regex: {
         username: /^[a-zA-Z0-9_-]{4,16}$/,
@@ -49,7 +56,7 @@ export default {
         reset: { prefix: 'rs', length: 24 },
         forgot: { prefix: 'fr', length: 24 },
         confirmation: { prefix: 'cn', length: 24 },
-        log: { prefix: 'log', length: 32 }
+        tfa: { prefix: 'tfa', length: 48 }
     },
     email: {
         user: process.env.EMAIL_USER || '',

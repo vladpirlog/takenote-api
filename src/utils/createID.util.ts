@@ -6,7 +6,7 @@ import constants from '../config/constants.config'
  * @param type the type of id to be created
  */
 const createID = (type: 'note' | 'permission' | 'attachment' | 'user' | 'jwt'
-| 'share' | 'reset' | 'forgot' | 'confirmation' | 'log') => {
+| 'share' | 'reset' | 'forgot' | 'confirmation' | 'tfa') => {
     return constants.idInfo[type].prefix + nanoid(constants.idInfo[type].length)
 }
 
