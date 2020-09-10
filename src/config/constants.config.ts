@@ -22,7 +22,6 @@ export default {
     },
     authentication: {
         authJWTSecret: process.env.AUTH_JWT_SECRET || '',
-        tfaTempJWTSecret: process.env.TEMP_JWT_SECRET || '',
         authCookieExpires: 2 * 60 * 60 * 1000, // time in ms
         tfaTempCookieExpires: 15 * 60 * 1000, // time in ms
         tfaRememberDuration: 30 * 24 * 60 * 60, // time in s
