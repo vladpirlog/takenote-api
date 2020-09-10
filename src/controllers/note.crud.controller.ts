@@ -33,7 +33,7 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
         const notes = await noteQuery.getAll(
             getAuthUser(res)?._id,
             removeUndefinedProps({
-                archived: archived ? stringToBoolean(archived as string) : null,
+                archived: stringToBoolean(archived as string | undefined),
                 collaborations: collaborations !== 'false',
                 skip,
                 limit
