@@ -112,12 +112,12 @@ const disable2fa = async (req: Request, res: Response, next: NextFunction) => {
 
         const user = await userQuery.getById(getAuthUser(res)?._id)
         if (!user || !user.twoFactorAuth.secret || !user.twoFactorAuth.active) {
-            return createResponse(res, 400)
+            return createResponse(res, 401)
         }
 
         const ok = twoFactorAuth.verifyCode(code as string, user.twoFactorAuth.secret)
 
-        if (!ok) return createResponse(res, 401)
+        if (!ok) return createResponse(res, 403)
 
         await userQuery.remove2faData(getAuthUser(res)?._id)
         return createResponse(res, 200)
