@@ -152,6 +152,33 @@ const setNewPassword = (
     ).exec()
 }
 
+const set2faData = (userID: IUserSchema['_id'], data: {
+    active?: IUserSchema['twoFactorAuth']['active'],
+    nextCheck?: IUserSchema['twoFactorAuth']['nextCheck'],
+    secret?: IUserSchema['twoFactorAuth']['secret'],
+    backupCodes?: IUserSchema['twoFactorAuth']['backupCodes']
+}) => {
+    const updateQuery: any = {}
+    if (data.active !== undefined) updateQuery['twoFactorAuth.active'] = data.active
+    if (data.nextCheck !== undefined) updateQuery['twoFactorAuth.nextCheck'] = data.nextCheck
+    if (data.secret !== undefined) updateQuery['twoFactorAuth.secret'] = data.secret
+    if (data.backupCodes !== undefined) updateQuery['twoFactorAuth.backupCodes'] = data.backupCodes
+
+    return User.findByIdAndUpdate(
+        userID,
+        updateQuery,
+        { new: true }
+    ).exec()
+}
+
+const remove2faData = (userID: IUserSchema['_id']) => {
+    return User.findByIdAndUpdate(
+        userID,
+        { twoFactorAuth: { nextCheck: 0, active: false, backupCodes: [] } },
+        { new: true }
+    ).exec()
+}
+
 export default {
     getById,
     getByUsernameOrEmail,
@@ -159,5 +186,7 @@ export default {
     createNewUser,
     setUserState,
     setNewToken,
-    setNewPassword
+    setNewPassword,
+    set2faData,
+    remove2faData
 }

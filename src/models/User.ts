@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt'
 import { State } from '../interfaces/state.enum'
 import createID from '../utils/createID.util'
 import getUnixTime from '../utils/getUnixTime.util'
+import IPublicUserInfo from '../interfaces/publicUserInfo.interface'
 
 export interface IUserSchema extends Document {
     username: string
@@ -16,11 +17,23 @@ export interface IUserSchema extends Document {
     role: Role
     resetToken: ITokenSchema
     forgotToken: ITokenSchema
+    twoFactorAuth: {
+        secret?: string,
+        active: boolean,
+        nextCheck: number,
+        backupCodes: {
+            _id: string,
+            active: boolean
+        }[]
+    }
     createdAt: Date
     updatedAt: Date
+    getPublicUserInfo(): IPublicUserInfo
     hasConfirmed(): boolean
     validPassword(hash: string): boolean
     isConfirmationTokenExpired(): boolean
+    is2faInitialSetup(): boolean
+    is2faRequired(): boolean
 }
 
 export const UserSchema: Schema = new Schema(
@@ -76,6 +89,36 @@ export const UserSchema: Schema = new Schema(
         forgotToken: {
             type: TokenSchema,
             required: false
+        },
+        twoFactorAuth: {
+            secret: {
+                type: String,
+                required: false
+            },
+            active: {
+                type: Boolean,
+                default: false,
+                required: true
+            },
+            nextCheck: {
+                type: Number,
+                default: 0,
+                required: true
+            },
+            backupCodes: {
+                type: [{
+                    _id: {
+                        type: String,
+                        required: true
+                    },
+                    active: {
+                        type: Boolean,
+                        required: true,
+                        default: true
+                    }
+                }],
+                required: true
+            }
         }
     },
     { timestamps: true, writeConcern: { w: 'majority', wtimeout: 1000 } }
@@ -90,7 +133,22 @@ UserSchema.pre('save', function (next) {
 })
 
 /**
- * A function that checks if the given argument(an unhashed string) matches the user's actual password; returns a boolean
+ * Returns public data that can be viewed by the frontend.
+ */
+UserSchema.methods.getPublicUserInfo = function () {
+    return {
+        _id: this._id,
+        username: this.username,
+        email: this.email,
+        twoFactorAuth: {
+            active: this.twoFactorAuth.active,
+            nextCheck: this.twoFactorAuth.nextCheck
+        }
+    }
+}
+
+/**
+ * Checks if the given argument(an unhashed string) matches the user's actual password; returns a boolean
  * @param password an unhashed string
  */
 UserSchema.methods.validPassword = function (password: string): boolean {
@@ -98,14 +156,31 @@ UserSchema.methods.validPassword = function (password: string): boolean {
 }
 
 /**
- * A function that checks if the user has confirmed their email address
+ * Checks if the user has confirmed their email address
  */
 UserSchema.methods.hasConfirmed = function (): boolean {
-    return this.status !== 'unconfirmed'
+    return this.state !== 'unconfirmed'
 }
 
+/**
+ * Checks if the confirmation token has expired
+ */
 UserSchema.methods.isConfirmationTokenExpired = function (): boolean {
     return getUnixTime() > this.confirmationToken.exp
+}
+
+/**
+ * Checks if 2fa setup needs initial code validation
+ */
+UserSchema.methods.is2faInitialSetup = function (): boolean {
+    return !this.twoFactorAuth.active && this.twoFactorAuth.secret
+}
+
+/**
+ * Checks if 2fa verification is required for the login
+ */
+UserSchema.methods.is2faRequired = function (): boolean {
+    return this.twoFactorAuth.active && getUnixTime() > this.twoFactorAuth.nextCheck
 }
 
 export default mongoose.model<IUserSchema>('User', UserSchema)
