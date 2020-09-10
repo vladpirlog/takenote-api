@@ -65,10 +65,10 @@ describe('id creation testing', () => {
         expect(/^cn[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
-    test('create log id', () => {
-        const id = createID('log')
-        expect(id).toHaveLength(constants.idInfo.log.length +
-            constants.idInfo.log.prefix.length)
-        expect(/log[a-zA-Z0-9_-]{32}$/.test(id)).toBeTruthy()
+    test('create tfa cookie token', () => {
+        const id = createID('tfa')
+        expect(id).toHaveLength(constants.idInfo.tfa.length +
+            constants.idInfo.tfa.prefix.length)
+        expect(/tfa[a-zA-Z0-9_-]{48}$/.test(id)).toBeTruthy()
     })
 })
