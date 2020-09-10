@@ -9,13 +9,13 @@ import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interfac
  * Generates a JWT using the info in the payload. Returns a string token.
  * @param payload object containing id, role and state of the user
  */
-const generate = (payload: IAuthenticatedUserInfo) => {
+const generateAuthJWT = (payload: IAuthenticatedUserInfo) => {
     const token = jwt.sign(
         { _info: payload.role, _state: payload.state },
-        constants.authentication.jwtSecret,
+        constants.authentication.authJWTSecret,
         {
             expiresIn: `${
-                constants.authentication.expires / (60 * 60 * 1000)
+                constants.authentication.authCookieExpires / (60 * 60 * 1000)
             }h`,
             issuer: constants.domain.baseDomain,
             audience: [constants.domain.baseDomain],
@@ -35,7 +35,7 @@ const generate = (payload: IAuthenticatedUserInfo) => {
 const verify = async (token: string): Promise<IAuthenticatedUserInfo> => {
     const decoded: IDecodedJWT = jwt.verify(
         token,
-        constants.authentication.jwtSecret
+        constants.authentication.authJWTSecret
     ) as IDecodedJWT
     const valid = await jwtBlacklistUtil.check(decoded.jti)
     if (!valid) throw new Error('Blacklisted JWT.')
@@ -53,9 +53,9 @@ const verify = async (token: string): Promise<IAuthenticatedUserInfo> => {
 const getIDAndExp = (token: string): { id: string; exp: number } => {
     const decoded: IDecodedJWT = jwt.verify(
         token,
-        constants.authentication.jwtSecret
+        constants.authentication.authJWTSecret
     ) as IDecodedJWT
     return { id: decoded.jti, exp: decoded.exp }
 }
 
-export default { generate, verify, getIDAndExp }
+export default { generateAuthJWT, verify, getIDAndExp }
