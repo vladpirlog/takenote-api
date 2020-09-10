@@ -11,6 +11,7 @@ import checkUserRole from '../middlewares/checkUserRole.middleware'
 import { Role } from '../interfaces/role.enum'
 import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
+import { AuthStatus } from '../interfaces/authStatus.enum'
 
 const router = Router()
 
@@ -19,7 +20,7 @@ const router = Router()
  */
 router.all(
     '*',
-    checkAuthStatus(true),
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
     checkUserRole([Role.USER]),
     checkUserState([State.ACTIVE])
 )
