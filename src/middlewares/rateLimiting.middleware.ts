@@ -28,7 +28,12 @@ const setHeaders = (res: Response, data: IRateLimiting) => {
 
 const writeToDatabase = async (key: string, data: IRateLimiting) => {
     const redisClient = await redisConfig.getClient()
-    redisClient.setex(key, 60, JSON.stringify(data))
+    await new Promise((resolve, reject) => {
+        redisClient.setex(key, 60, JSON.stringify(data), (err, res) => {
+            if (err) return reject(err)
+            return resolve(res)
+        })
+    })
 }
 
 const createNewEntry = async (res: Response, key: string, type: 'request' | 'email') => {
