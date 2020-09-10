@@ -61,10 +61,12 @@ A set of environment variables must be provided in order for the app to run.
 * NODE_ENV - NodeJS environment; defaults to `development`
 * MONGODB_URI - MongoDB connection string for a local or cloud-hosted database
 * MONGODB_TESTING_URI - MongoDB connection string for testing purposes
-* JWT_SECRET - key for symmetrically encrypting the JWTs
+* AUTH_JWT_SECRET - key for symmetrically encrypting the JWTs
 * CLOUDINARY_API_KEY - API key provided by the Cloudinary platform
 * CLOUDINARY_API_SECRET - API secret provided by the Cloudinary platform
 * CLOUDINARY_CLOUD_NAME - cloud name provided by the Cloudinary platform
+* GOOGLE_APPLICATION_CREDENTIALS - path to key for GCP service account with Storage Object Creator role
+* GOOGLE_BUCKET_NAME - name of the Google Cloud Storage bucket
 * EMAIL_USER - email address to send emails from
 * EMAIL_PASS - email password associated to that address
 
@@ -102,8 +104,8 @@ npm test
 ## Features
 
 * rate limiting for throttling requests
-* role-based access
 * JWT cookie and OAuth 2.0 (soon) authentication flows
+* two-factor authentication using app-generated OTP
 * email confirmation when registering or resetting password
 
 ## Authors
