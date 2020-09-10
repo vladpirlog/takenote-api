@@ -10,28 +10,31 @@ import checkUserState from '../middlewares/checkUserState.middleware'
 import rateLimiting from '../middlewares/rateLimiting.middleware'
 import { State } from '../interfaces/state.enum'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
+import auth2faController from '../controllers/auth.2fa.controller'
+import extractUser from '../middlewares/extractUser.middleware'
+import { AuthStatus } from '../interfaces/authStatus.enum'
 
 const router = Router()
 
 // Current user handler
-router.get('/me', checkAuthStatus(true), authController.getMe)
+router.get('/me', checkAuthStatus([AuthStatus.LOGGED_IN]), authController.getMe)
 
 // Login handler
 router.post(
     '/login',
-    checkAuthStatus(false),
+    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     requestFieldsDefined('body', ['email', 'password']),
     regexTest.login,
     authController.login
 )
 
 // Logout handler
-router.post('/logout', checkAuthStatus(true), authController.logout)
+router.post('/logout', checkAuthStatus([AuthStatus.LOGGED_IN]), authController.logout)
 
 // Register handler
 router.post(
     '/register',
-    checkAuthStatus(false),
+    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     requestFieldsDefined('body', ['username', 'email', 'password', 'confirm_password']),
     regexTest.register,
     checkUniqueUser(false),
@@ -42,7 +45,7 @@ router.post(
 // Confirmation handler
 router.post(
     '/request_confirmation',
-    checkAuthStatus(true),
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
     checkUserState([State.UNCONFIRMED]),
     rateLimiting.forEmail,
     authConfirmationController.requestConfirmationToken
@@ -57,7 +60,7 @@ router.post(
 // Password reset handler
 router.post(
     '/reset_password',
-    checkAuthStatus(true),
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
     requestFieldsDefined('body', ['old_password']),
     regexTest.oldPassword,
     rateLimiting.forEmail,
@@ -66,7 +69,7 @@ router.post(
 
 router.post(
     '/rpassword',
-    checkAuthStatus(true),
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
     requestFieldsDefined('query', ['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     regexTest.newPassword,
@@ -77,7 +80,7 @@ router.post(
 // Password forgot handler
 router.post(
     '/forgot_password',
-    checkAuthStatus(false),
+    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     requestFieldsDefined('body', ['email']),
     regexTest.email,
     rateLimiting.forEmail,
@@ -86,7 +89,7 @@ router.post(
 
 router.post(
     '/fpassword',
-    checkAuthStatus(false),
+    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     requestFieldsDefined('query', ['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     regexTest.newPassword,
@@ -104,7 +107,7 @@ router.get(
 // Check user existence handler
 router.post(
     '/check_credentials',
-    checkAuthStatus(false),
+    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     regexTest.checkCredentials,
     checkUniqueUser(true)
 )
@@ -112,7 +115,7 @@ router.post(
 // Delete user handler
 router.post(
     '/delete',
-    checkAuthStatus(true),
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
     checkUserState([State.ACTIVE, State.UNCONFIRMED]),
     requestFieldsDefined('body', ['old_password']),
     regexTest.oldPassword,
@@ -122,9 +125,31 @@ router.post(
 // Recover user handler
 router.post(
     '/recover',
-    checkAuthStatus(true),
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
     checkUserState([State.DELETING]),
     authController.recoverUser
+)
+
+// Two factor authentication handler
+router.post(
+    '/2fa',
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
+    auth2faController.generate2faSecret
+)
+
+router.post(
+    '/2fa/verify',
+    extractUser.fromTfaTempCookie,
+    checkAuthStatus([AuthStatus.LOGGED_IN, AuthStatus.TFA_LOGGED_IN]),
+    requestFieldsDefined('query', ['code']),
+    auth2faController.verify2faCode
+)
+
+router.delete(
+    '/2fa',
+    checkAuthStatus([AuthStatus.LOGGED_IN]),
+    requestFieldsDefined('query', ['code']),
+    auth2faController.disable2fa
 )
 
 export default router
