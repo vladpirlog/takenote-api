@@ -33,7 +33,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
 
         // If the 'active' query param exists and resolves to true or false, the new active state
         // becomes that value.
-        const activeParamResolved = stringToBoolean(active as string || '')
+        const activeParamResolved = stringToBoolean(active as string | undefined)
         if (activeParamResolved !== null) {
             newActiveState = activeParamResolved
         }
