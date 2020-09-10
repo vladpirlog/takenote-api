@@ -89,7 +89,7 @@ const handleInitial2faSetup = async (
     await userQuery.set2faData(getAuthUser(res)?._id, {
         active: true, nextCheck: newNextCheckTime, backupCodes
     })
-    return createResponse(res, 200, 'Two-factor authentication enabled.', { backupCodes })
+    return createResponse(res, 201, 'Two-factor authentication enabled.', { backupCodes })
 }
 
 /**
