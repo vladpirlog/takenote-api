@@ -18,16 +18,20 @@ servers:
 tags:
   - name: auth
     description: Everything related to the users and authentication
+  - name: 2fa
+    description: Endpoints related to two-factor authentication
   - name: notes
     description: Everything related to the users' notes
   - name: collaborators
     description: Other users with the ability to read (and write to) some user's note
   - name: attachments
     description: Images, alongside a title and a description, attached to a note
-  - name: tokens
-    description: A string id with an expiration time, which grant a user the ability to reset password or confirm the email
+  - name: tags
+    description: Words used for grouping notes around a theme
+  - name: password
+    description: Password-related operations
 paths:
-  /status:
+  /:
     get:
       summary: Get server status
       responses:
@@ -50,7 +54,7 @@ paths:
       summary: Get authenticated user
       operationId: getMe
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -77,24 +81,7 @@ paths:
                     pattern: /^[a-zA-Z0-9_\-.,]*$/
                     maxLength: 1000
                   user:
-                    additionalProperties: false
-                    type: object
-                    properties:
-                      userID:
-                        type: string
-                        pattern: /^u[a-zA-Z0-9_-]{24}$/
-                        maxLength: 25
-                        minLength: 25
-                      username:
-                        type: string
-                        pattern: /^[a-zA-Z0-9_-]{4,16}$/
-                        maxLength: 16
-                        minLength: 4
-                      email:
-                        type: string
-                        pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-                        maxLength: 254
-                        minLength: 3
+                    $ref: "#/components/schemas/User"
   /auth/login:
     post:
       tags:
@@ -108,6 +95,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+        "202":
+          description: Partial authentication successful, but two-factor authentication required for a full authentication
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
         "200":
           description: Authentication successful
           content:
@@ -126,11 +119,8 @@ paths:
                     type: string
                     pattern: /^[a-zA-Z0-9_\-.,]*$/
                     maxLength: 1000
-                  userID:
-                    type: string
-                    pattern: /^u[a-zA-Z0-9_-]{24}$/
-                    maxLength: 25
-                    minLength: 25
+                  user:
+                    $ref: "#/components/schemas/User"
       requestBody:
         $ref: "#/components/requestBodies/Login"
   /auth/logout:
@@ -140,7 +130,7 @@ paths:
       summary: Logout
       operationId: logout
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -185,18 +175,15 @@ paths:
                     type: string
                     pattern: /^[a-zA-Z0-9_\-.,]*$/
                     maxLength: 1000
-                  userID:
-                    type: string
-                    pattern: /^u[a-zA-Z0-9_-]{24}$/
-                    maxLength: 25
-                    minLength: 25
+                  user:
+                    $ref: "#/components/schemas/User"
       requestBody:
         $ref: "#/components/requestBodies/Register"
   /auth/confirm:
     post:
       tags:
         - auth
-        - tokens
+        - password
       summary: Confirm email address
       operationId: confirm
       parameters:
@@ -232,11 +219,11 @@ paths:
     post:
       tags:
         - auth
-        - tokens
+        - password
       summary: Request a new confirmation token
       operationId: requestConfirmationToken
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -254,11 +241,11 @@ paths:
     post:
       tags:
         - auth
-        - tokens
+        - password
       summary: Request pw reset token
       operationId: resetPassword
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -278,11 +265,11 @@ paths:
     post:
       tags:
         - auth
-        - tokens
+        - password
       summary: Submit reset token
       operationId: submitResetToken
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: token
           in: query
@@ -312,7 +299,7 @@ paths:
     post:
       tags:
         - auth
-        - tokens
+        - password
       summary: Request pw forgot token
       operationId: requestForgotToken
       responses:
@@ -334,7 +321,7 @@ paths:
     post:
       tags:
         - auth
-        - tokens
+        - password
       summary: Submit forgot token
       operationId: submitForgotToken
       parameters:
@@ -366,8 +353,8 @@ paths:
     get:
       tags:
         - auth
-        - tokens
-      summary: Check token
+        - password
+      summary: Check token for expiration
       operationId: checkToken
       parameters:
         - name: token
@@ -399,7 +386,7 @@ paths:
       summary: Delete account
       operationId: deleteMe
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -422,7 +409,7 @@ paths:
       summary: Recover account
       operationId: recoverMe
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -436,6 +423,175 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
+  /auth/2fa:
+    post:
+      tags:
+        - auth
+        - 2fa
+      summary: Enable 2fa
+      operationId: enable2fa
+      security:
+        - cookieAccessToken: []
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Image data fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                required:
+                  - status
+                  - message
+                  - image
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  image:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-]*$/
+                    maxLength: 10000
+                    description: Base64-encoded image which needs to be scanned by the user with an Authenticator app
+    delete:
+      tags:
+        - auth
+        - 2fa
+      summary: Disable 2fa
+      operationId: disable2fa
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: code
+          in: query
+          description: The code generated by the Authenticator app or one of the backup codes
+          required: true
+          schema:
+            type: string
+            pattern: /^([0-9]{6}|[a-zA-Z0-9_-]{10})$/
+            maxLength: 10
+            minLength: 6
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: 2fa disabled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
+  /auth/2fa/verify:
+    post:
+      tags:
+        - auth
+        - 2fa
+      summary: Verify 2fa code (initial or login verification)
+      operationId: verify2fa
+      security:
+        - cookieAccessToken: []
+        - cookie2faTempToken: []
+      parameters:
+        - name: code
+          in: query
+          description: The code generated by the Authenticator app or one of the backup codes
+          required: true
+          schema:
+            type: string
+            pattern: /^([0-9]{6}|[a-zA-Z0-9_-]{10})$/
+            maxLength: 10
+            minLength: 6
+        - name: remember
+          in: query
+          description: If true, 2fa will not be required on login for 30 days, else will be required on every login
+          required: true
+          schema:
+            type: string
+            enum:
+              - "true"
+              - "false"
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: 2fa is now fully enabled
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                required:
+                  - status
+                  - message
+                  - backupCodes
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  backupCodes:
+                    description: The backup codes which can be used instead of the regular OTP. Each code is single-use.
+                    type: array
+                    items:
+                      type: object
+                      required:
+                        - _id
+                        - active
+                      properties:
+                        _id:
+                          type: string
+                          pattern: /^[a-zA-Z0-9_-]{10}$/
+                          maxLength: 10
+                        active:
+                          type: boolean
+                    minItems: 8
+                    maxItems: 8
+        "200":
+          description: Full authentication successful
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  user:
+                    $ref: "#/components/schemas/User"
   /notes:
     get:
       tags:
@@ -443,7 +599,7 @@ paths:
       summary: Get all the user's notes
       operationId: allNotes
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: collaborations
           in: query
@@ -451,6 +607,7 @@ paths:
           schema:
             type: boolean
             description: Specifies whether the notes where the user is collaborating should be included
+            default: false
         - name: skip
           in: query
           required: false
@@ -465,6 +622,12 @@ paths:
             type: integer
             format: int32
             description: The maximum number of notes to return
+        - name: archived
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: Specifies whether the notes archived/not archived should be sent; if undefined, all the notes are sent
       responses:
         default:
           description: Error
@@ -508,7 +671,7 @@ paths:
       summary: Add note
       operationId: addNote
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       responses:
         default:
           description: Error
@@ -542,10 +705,11 @@ paths:
     get:
       tags:
         - notes
+        - tags
       summary: Get the user's notes by a tag
       operationId: allNotesByTag
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: tag
           in: query
@@ -599,7 +763,7 @@ paths:
       summary: One user's note
       operationId: oneNote
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -643,7 +807,7 @@ paths:
       summary: Update note
       operationId: updateNote
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -689,7 +853,7 @@ paths:
       summary: Delete note
       operationId: deleteNote
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -720,7 +884,7 @@ paths:
       summary: Duplicate a note
       operationId: duplicate
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -765,7 +929,7 @@ paths:
       summary: Get sharing URL for a note
       operationId: shareLink
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -827,7 +991,7 @@ paths:
       summary: Add note collaborator
       operationId: addCollaborator
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -875,7 +1039,7 @@ paths:
       summary: Delete note collaborator
       operationId: deleteCollaborator
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -912,10 +1076,11 @@ paths:
     post:
       tags:
         - notes
+        - tags
       summary: Add tags
       operationId: addTags
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -931,9 +1096,9 @@ paths:
           description: Tags to add to the note, separated with commas
           schema:
             type: string
-            pattern: /^.*$/
-            maxLength: 1000
-            minLength: 0
+            pattern: /^[ -~]{1,400}$/
+            maxLength: 400
+            minLength: 1
       responses:
         default:
           description: Error
@@ -961,15 +1126,17 @@ paths:
                     maxLength: 1000
                   tags:
                     type: array
+                    maxItems: 20
                     items:
                       $ref: "#/components/schemas/Tag"
     delete:
       tags:
         - notes
+        - tags
       summary: Delete tags
       operationId: deleteTags
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -1000,7 +1167,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResponseBody"
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  tags:
+                    type: array
+                    maxItems: 20
+                    items:
+                      $ref: "#/components/schemas/Tag"
   "/notes/{noteID}/attachments":
     post:
       tags:
@@ -1009,7 +1193,7 @@ paths:
       summary: Add attachment
       operationId: addAttachment
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -1057,7 +1241,7 @@ paths:
       summary: Update attachment
       operationId: updateAttachment
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -1113,7 +1297,7 @@ paths:
       summary: Delete attachment
       operationId: deleteAttachment
       security:
-        - cookieAuth: []
+        - cookieAccessToken: []
       parameters:
         - name: noteID
           in: path
@@ -1161,10 +1345,7 @@ components:
           maxLength: 25
           minLength: 25
         subject:
-          type: string
-          pattern: /^u[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
+          $ref: "#/components/schemas/User"
         level:
           type: integer
           format: int32
@@ -1198,89 +1379,9 @@ components:
           minLength: 0
     Tag:
       type: string
-      pattern: /^.*$/
-      maxLength: 100
-    Token:
-      additionalProperties: false
-      type: object
-      properties:
-        _id:
-          type: string
-          pattern: /^(rs|fr|cn)[a-zA-Z0-9_-]{24}$/
-          maxLength: 26
-          minLength: 26
-        exp:
-          type: integer
-          format: int32
-          minimum: 1000000000
-          maximum: 2147483647
-    User:
-      additionalProperties: false
-      type: object
-      required:
-        - _id
-        - username
-        - password
-        - email
-        - salt
-        - state
-        - role
-        - createdAt
-        - updatedAt
-      properties:
-        _id:
-          type: string
-          pattern: /^u[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
-        username:
-          type: string
-          pattern: /^[a-zA-Z0-9_-]{4,16}$/
-          maxLength: 16
-          minLength: 4
-        email:
-          type: string
-          pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-          maxLength: 254
-          minLength: 3
-        password:
-          type: string
-          pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
-          maxLength: 24
-          minLength: 8
-        salt:
-          type: string
-          pattern: /^.*$/
-          maxLength: 32
-        state:
-          type: string
-          enum:
-            - unconfirmed
-            - active
-            - deleting
-            - deleted
-        confirmationToken:
-          $ref: "#/components/schemas/Token"
-        role:
-          type: integer
-          format: int32
-          enum:
-            - -1
-            - 0
-            - 1
-            - 2
-        resetToken:
-          $ref: "#/components/schemas/Token"
-        forgotToken:
-          $ref: "#/components/schemas/Token"
-        createdAt:
-          type: string
-          format: date-time
-          maxLength: 100
-        updatedAt:
-          type: string
-          format: date-time
-          maxLength: 100
+      pattern: /^[ -~]{1,20}$/
+      maxLength: 20
+      minLength: 1
     Note:
       additionalProperties: false
       type: object
@@ -1373,6 +1474,44 @@ components:
           type: string
           pattern: /^[a-zA-Z0-9_\-.,]*$/
           maxLength: 1000
+    User:
+      additionalProperties: false
+      type: object
+      required:
+        - _id
+        - username
+        - email
+      properties:
+        _id:
+          type: string
+          pattern: /^u[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
+        username:
+          type: string
+          pattern: /^[a-zA-Z0-9_-]{4,16}$/
+          maxLength: 16
+          minLength: 4
+        email:
+          type: string
+          pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+          maxLength: 254
+          minLength: 3
+        twoFactorAuth:
+          additionalProperties: false
+          type: object
+          required:
+            - active
+            - nextCheck
+          properties:
+            active:
+              type: boolean
+            nextCheck:
+              type: integer
+              format: int64
+              minimum: 0
+              maximum: 9999999999
+              description: 0 if 2fa is required at each login, otherwise a UNIX timestamp representing the next time for a 2fa check
     Error:
       additionalProperties: false
       type: object
@@ -1394,6 +1533,26 @@ components:
   requestBodies:
     Login:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - email
+              - password
+            properties:
+              email:
+                type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
+                description: The user's email or username
+              password:
+                type: string
+                format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
+                description: The user's password
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1418,6 +1577,42 @@ components:
       required: true
     Register:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - username
+              - email
+              - password
+              - confirm_password
+            properties:
+              username:
+                type: string
+                pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                maxLength: 16
+                minLength: 4
+                description: The chosen username
+              email:
+                type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
+                minLength: 3
+                description: The user's email
+              password:
+                type: string
+                format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
+                description: The user's password
+              confirm_password:
+                type: string
+                format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
+                description: The user's password entered again
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1457,6 +1652,20 @@ components:
       description: The user's info required for registration
     OldPassword:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - old_password
+            properties:
+              old_password:
+                type: string
+                format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
+                description: The user's password
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1474,6 +1683,18 @@ components:
       description: The user's old password required for changing it to a new one
     ForgotPassword:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - email
+            properties:
+              email:
+                type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
+                description: The user's email or username
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1490,6 +1711,28 @@ components:
       required: true
     NewPassword:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - new_password
+              - confirm_new_password
+            properties:
+              new_password:
+                type: string
+                format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
+                description: The user's password
+              confirm_new_password:
+                type: string
+                format: password
+                pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/
+                maxLength: 24
+                minLength: 8
+                description: The user's password again
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1515,6 +1758,31 @@ components:
       description: The user's old password required for changing it to a new one
     AddOrUpdateNote:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            properties:
+              title:
+                type: string
+                pattern: /^[a-zA-Z0-9_\-.,]{0,100}$/
+                maxLength: 100
+                minLength: 0
+              content:
+                type: string
+                pattern: /^[a-zA-Z0-9_\-.,]{0,10000}$/
+                maxLength: 10000
+                minLength: 0
+              archived:
+                type: string
+                enum:
+                  - "true"
+                  - "false"
+              color:
+                type: string
+                pattern: /^#[0-9abcdef]{6}$/
+                maxLength: 7
+                minLength: 7
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1542,6 +1810,25 @@ components:
                 minLength: 7
     AddCollaborator:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - user
+              - type
+            properties:
+              user:
+                type: string
+                pattern: /^([a-zA-Z0-9_-]{4,16})|((([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,})))|((?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24})$/
+                maxLength: 254
+                minLength: 3
+                description: Username, email or id of the user to make collab
+              type:
+                type: string
+                enum:
+                  - r
+                  - rw
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1586,6 +1873,21 @@ components:
                 minLength: 0
     UpdateAttachment:
       content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            properties:
+              title:
+                type: string
+                pattern: /^[ -~]{0,32}$/
+                maxLength: 32
+                minLength: 0
+              description:
+                type: string
+                pattern: /^[ -~]{0,256}$/
+                maxLength: 256
+                minLength: 0
         multipart/formdata:
           schema:
             additionalProperties: false
@@ -1602,8 +1904,13 @@ components:
                 maxLength: 256
                 minLength: 0
   securitySchemes:
-    cookieAuth:
+    cookieAccessToken:
       type: apiKey
       description: JWT signed token used for authentication
       name: access_token
+      in: cookie
+    cookie2faTempToken:
+      type: apiKey
+      description: a temporary id used between the first step of the 2fa and the full authentication
+      name: temp_token
       in: cookie
