@@ -6,18 +6,15 @@ import userQuery from '../queries/user.query'
 import createNewToken from '../utils/createNewToken.util'
 import { State } from '../interfaces/state.enum'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
-import setAuthCookie from '../utils/setAuthCookie.util'
+import cookie from '../utils/cookie.util'
 import getAuthUser from '../utils/getAuthUser.util'
+import constants from '../config/constants.config'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const user = await userQuery.getById(getAuthUser(res)?._id)
         return user ? createResponse(res, 200, 'User found.', {
-            user: {
-                _id: user.id,
-                username: user.username,
-                email: user.email
-            }
+            user: user.getPublicUserInfo()
         }) : createResponse(res, 404, 'User not found.')
     } catch (err) { return next(err) }
 }
@@ -25,27 +22,27 @@ const getMe = async (req: Request, res: Response, next: NextFunction) => {
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body
+
         const user = await userQuery.getByUsernameOrEmail(email)
-        if (!user) return createResponse(res, 401)
-        if (user.validPassword(password)) {
-            setAuthCookie(res, user)
-            return createResponse(res, 200, 'Authentication successful.', {
-                user: {
-                    _id: user.id,
-                    email: user.email,
-                    username: user.username
-                }
-            })
+        if (!user || !user.validPassword(password)) return createResponse(res, 401)
+
+        if (user.is2faRequired()) {
+            await cookie.set2faTempCookie(res, user)
+            return createResponse(res, 202, 'First authentication step successful.')
         }
-        return createResponse(res, 401)
+
+        cookie.setAuthCookie(res, user)
+        return createResponse(res, 200, 'Authentication successful.', {
+            user: user.getPublicUserInfo()
+        })
     } catch (err) { return next(err) }
 }
 
 const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id, exp } = authJWT.getIDAndExp(req.cookies.access_token)
+        const { id, exp } = authJWT.getIDAndExp(req.cookies[constants.authentication.authCookieName])
         await jwtBlacklist.add(id, exp)
-        res.clearCookie('access_token')
+        cookie.clearAuthCookie(res)
         return createResponse(res, 200, 'User logged out.')
     } catch (err) { return next(err) }
 }
@@ -54,22 +51,18 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { username, email, password } = req.body
         const confirmationToken = createNewToken('confirmation')
-        const newUser = await userQuery.createNewUser({
+        const user = await userQuery.createNewUser({
             username,
             email,
             password,
             confirmationToken
         })
-        if (!newUser) {
+        if (!user) {
             return createResponse(res, 400, 'Couldn\'t create user.')
         }
-        await sendEmailUtil.sendToken(newUser, 'confirmation')
+        await sendEmailUtil.sendToken(user, 'confirmation')
         return createResponse(res, 201, 'User created successfully.', {
-            user: {
-                _id: newUser.id,
-                email: newUser.email,
-                username: newUser.username
-            }
+            user: user.getPublicUserInfo()
         })
     } catch (err) { return next(err) }
 }
@@ -81,7 +74,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
         const user = await userQuery.getById(getAuthUser(res)?._id)
         if (!user) return createResponse(res, 400)
         if (user.validPassword(oldPassword)) {
-            return await handleDeleteOrRecover(res, req.cookies.access_token, 'delete')
+            return await handleDeleteOrRecover(res, req.cookies[constants.authentication.authCookieName], 'delete')
         }
         return createResponse(res, 401)
     } catch (err) { return next(err) }
@@ -89,7 +82,7 @@ const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
 
 const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        return await handleDeleteOrRecover(res, req.cookies.access_token, 'recover')
+        return await handleDeleteOrRecover(res, req.cookies[constants.authentication.authCookieName], 'recover')
     } catch (err) { return next(err) }
 }
 
@@ -104,10 +97,12 @@ const handleDeleteOrRecover = async (res: Response, authCookie: string, type: 'd
     )
     if (!newUser) return createResponse(res, 400)
     await sendEmailUtil.sendNotice(newUser, type)
+
     const { id, exp } = authJWT.getIDAndExp(authCookie)
     await jwtBlacklist.add(id, exp)
-    res.clearCookie('access_token')
-    setAuthCookie(res, newUser)
+
+    cookie.clearAuthCookie(res)
+    cookie.setAuthCookie(res, newUser)
     return createResponse(res, 200, dynamicData.message)
 }
 
