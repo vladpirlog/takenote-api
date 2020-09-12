@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import fileUpload from 'express-fileupload'
 import noteCrudController from '../controllers/note.crud.controller'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
@@ -113,6 +114,10 @@ router.delete(
  */
 router.post(
     '/:id/attachments',
+    fileUpload({
+        tempFileDir: './temp/',
+        useTempFiles: true
+    }),
     requestFieldsDefined('params', ['id']),
     regexTest.attachment,
     attachmentMetadata,

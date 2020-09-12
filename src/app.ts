@@ -1,7 +1,6 @@
 import express, { Application, Response, Request } from 'express'
 import cookieParser from 'cookie-parser'
 import morgan from 'morgan'
-import fileUpload from 'express-fileupload'
 import cors from 'cors'
 import compression from 'compression'
 import constants from './config/constants.config'
@@ -37,14 +36,8 @@ app.use(compression())
 app.use(morgan(app.get('env') === 'production' ? 'combined' : 'dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
-app.use(hpp())
 app.use(cookieParser())
-app.use(
-    fileUpload({
-        tempFileDir: './temp/',
-        useTempFiles: true
-    })
-)
+app.use(hpp())
 
 // Only needed when running the server and frontend on different (sub)domains.
 
