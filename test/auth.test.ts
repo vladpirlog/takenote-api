@@ -39,10 +39,12 @@ describe('test registration and authentication flows', () => {
     test('rejected registration', (done) => {
         request
             .post('/auth/register')
-            .field('email', constants.test.wrongCredentials.email)
-            .field('username', constants.test.wrongCredentials.username)
-            .field('password', constants.test.wrongCredentials.password)
-            .field('confirm_password', constants.test.wrongCredentials.password)
+            .send({
+                email: constants.test.wrongCredentials.email,
+                username: constants.test.wrongCredentials.username,
+                password: constants.test.wrongCredentials.password,
+                confirm_password: constants.test.wrongCredentials.password
+            })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
                 return done()
@@ -52,13 +54,12 @@ describe('test registration and authentication flows', () => {
     test('successful registration', (done) => {
         request
             .post('/auth/register')
-            .field('email', constants.test.acceptedCredentials.email)
-            .field('username', constants.test.acceptedCredentials.username)
-            .field('password', constants.test.acceptedCredentials.password)
-            .field(
-                'confirm_password',
-                constants.test.acceptedCredentials.password
-            )
+            .send({
+                email: constants.test.acceptedCredentials.email,
+                username: constants.test.acceptedCredentials.username,
+                password: constants.test.acceptedCredentials.password,
+                confirm_password: constants.test.acceptedCredentials.password
+            })
             .then((res) => {
                 expect(res.status).toBe(201)
                 expect(res.body).toHaveProperty('user')
@@ -81,8 +82,10 @@ describe('test registration and authentication flows', () => {
     test('rejected login', (done) => {
         request
             .post('/auth/login')
-            .field('email', constants.test.wrongCredentials.username)
-            .field('password', constants.test.wrongCredentials.password)
+            .send({
+                email: constants.test.wrongCredentials.username,
+                password: constants.test.wrongCredentials.password
+            })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
                 return done()
@@ -92,8 +95,10 @@ describe('test registration and authentication flows', () => {
     test('successful username-pw login', (done) => {
         request
             .post('/auth/login')
-            .field('email', constants.test.acceptedCredentials.username)
-            .field('password', constants.test.acceptedCredentials.password)
+            .send({
+                email: constants.test.acceptedCredentials.username,
+                password: constants.test.acceptedCredentials.password
+            })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body).toHaveProperty('user')
@@ -149,7 +154,7 @@ describe('test registration and authentication flows', () => {
     test('request account deletion with wrong pw', (done) => {
         request
             .post('/auth/delete')
-            .field('old_password', constants.test.wrongCredentials.password)
+            .send({ old_password: constants.test.wrongCredentials.password })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
                 return done()
@@ -159,7 +164,7 @@ describe('test registration and authentication flows', () => {
     test('request account deletion with correct pw', (done) => {
         request
             .post('/auth/delete')
-            .field('old_password', constants.test.acceptedCredentials.password)
+            .send({ old_password: constants.test.acceptedCredentials.password })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()

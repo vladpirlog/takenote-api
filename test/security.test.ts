@@ -18,8 +18,10 @@ describe('testing the security features of the api', () => {
 
         const res = await request
             .post('/auth/login')
-            .field('email', constants.test.persistentUser.username)
-            .field('password', constants.test.persistentUser.password)
+            .send({
+                email: constants.test.persistentUser.username,
+                password: constants.test.persistentUser.password
+            })
         authCookie = res.header['set-cookie'][0]
 
         const res2 = await request.post('/notes')

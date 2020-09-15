@@ -21,15 +21,19 @@ describe('test note-related operations', () => {
         await redisConfig.connect()
         await request
             .post('/auth/login')
-            .field('email', constants.test.persistentUser.username)
-            .field('password', constants.test.persistentUser.password)
+            .send({
+                email: constants.test.persistentUser.email,
+                password: constants.test.persistentUser.password
+            })
     })
 
     test('create note', (done) => {
         request
             .post('/notes')
-            .field('title', 'my-title')
-            .field('content', 'my-content')
+            .send({
+                title: 'my-title',
+                content: 'my-content'
+            })
             .then((res) => {
                 createdNoteID = res.body.note._id
                 expect(res.status).toBe(201)
@@ -47,9 +51,11 @@ describe('test note-related operations', () => {
     test('edit note title, content and color', (done) => {
         request
             .put(`/notes/${createdNoteID}`)
-            .field('title', 'my-new-title')
-            .field('content', 'my-new-content')
-            .field('color', Color.RED)
+            .send({
+                title: 'my-new-title',
+                content: 'my-new-content',
+                color: Color.RED
+            })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body.note.title).toBe('my-new-title')
@@ -62,7 +68,7 @@ describe('test note-related operations', () => {
     test('archive note', (done) => {
         request
             .put(`/notes/${createdNoteID}`)
-            .field('archived', 'true')
+            .send({ archived: 'true' })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body.note.archived).toBe(true)
@@ -73,7 +79,7 @@ describe('test note-related operations', () => {
     test('unarchive note', (done) => {
         request
             .put(`/notes/${createdNoteID}`)
-            .field('archived', 'false')
+            .send({ archived: 'false' })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body.note.archived).toBe(false)
@@ -161,8 +167,10 @@ describe('test note-related operations', () => {
     test('add collaborator', (done) => {
         request
             .post(`/notes/${createdNoteID}/share/collaborators`)
-            .field('user', constants.test.persistentUser2.username)
-            .field('type', 'r')
+            .send({
+                user: constants.test.persistentUser2.username,
+                type: 'r'
+            })
             .then((res) => {
                 permissionID = res.body.permission._id
                 expect(res.status).toBe(200)
@@ -176,8 +184,10 @@ describe('test note-related operations', () => {
     test('edit collaborator', (done) => {
         request
             .post(`/notes/${createdNoteID}/share/collaborators`)
-            .field('user', constants.test.persistentUser2.email)
-            .field('type', 'rw')
+            .send({
+                user: constants.test.persistentUser2.email,
+                type: 'rw'
+            })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body.permission.level).toBe(PermissionLevel.readWrite)
@@ -190,8 +200,10 @@ describe('test note-related operations', () => {
     test('delete collaborator', (done) => {
         request
             .delete(`/notes/${createdNoteID}/share/collaborators/${permissionID}`)
-            .field('user', constants.test.persistentUser2.email)
-            .field('type', 'rw')
+            .send({
+                user: constants.test.persistentUser2.email,
+                type: 'rw'
+            })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -254,8 +266,10 @@ describe('test note-related operations', () => {
     test('edit attachment', (done) => {
         request
             .put(`/notes/${createdNoteID}/attachments/${attachmentID}`)
-            .field('title', 'my-new-title')
-            .field('description', 'my-new-description')
+            .send({
+                title: 'my-new-title',
+                description: 'my-new-description'
+            })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(res.body.attachment.title).toBe('my-new-title')
