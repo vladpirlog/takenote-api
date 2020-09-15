@@ -6,6 +6,7 @@ import { State } from '../interfaces/state.enum'
 import createID from '../utils/createID.util'
 import getUnixTime from '../utils/getUnixTime.util'
 import IPublicUserInfo from '../interfaces/publicUserInfo.interface'
+import { OAuthProvider } from '../interfaces/oauth.interface'
 
 export interface IUserSchema extends Document {
     username: string
@@ -17,6 +18,10 @@ export interface IUserSchema extends Document {
     role: Role
     resetToken: ITokenSchema
     forgotToken: ITokenSchema
+    oauth?: {
+        provider: OAuthProvider
+        refreshToken: string
+    }
     twoFactorAuth: {
         secret?: string,
         active: boolean,
@@ -28,6 +33,7 @@ export interface IUserSchema extends Document {
     }
     createdAt: Date
     updatedAt: Date
+    isOAuthUser(): boolean
     getPublicUserInfo(): IPublicUserInfo
     hasConfirmed(): boolean
     validPassword(hash: string): boolean
@@ -36,7 +42,7 @@ export interface IUserSchema extends Document {
     is2faRequired(): boolean
 }
 
-export const UserSchema: Schema = new Schema(
+export const UserSchema = new Schema<IUserSchema>(
     {
         _id: {
             type: String,
@@ -55,7 +61,7 @@ export const UserSchema: Schema = new Schema(
         },
         password: {
             type: String,
-            required: true
+            required: false
         },
         salt: {
             type: String,
@@ -89,6 +95,17 @@ export const UserSchema: Schema = new Schema(
         forgotToken: {
             type: TokenSchema,
             required: false
+        },
+        oauth: {
+            provider: {
+                type: String,
+                required: false,
+                enum: [OAuthProvider.GOOGLE]
+            },
+            refreshToken: {
+                type: String,
+                required: false
+            }
         },
         twoFactorAuth: {
             secret: {
@@ -125,12 +142,24 @@ export const UserSchema: Schema = new Schema(
 )
 
 UserSchema.pre('save', function (next) {
-    const salt = bcrypt.genSaltSync(12)
-    const hash = bcrypt.hashSync((<any> this).password, salt);
-    (<any> this).password = hash;
-    (<any> this).salt = salt
+    if (!(<IUserSchema> this).isOAuthUser()) {
+        const salt = bcrypt.genSaltSync(12)
+        const hash = bcrypt.hashSync((<IUserSchema> this).password, salt);
+        (<IUserSchema> this).password = hash;
+        (<IUserSchema> this).salt = salt
+    }
     next()
 })
+
+/**
+ * Returns true if user was created using the OAuth 2.0 flow.
+ */
+UserSchema.methods.isOAuthUser = function () {
+    if (this.oauth && this.oauth.provider) {
+        return true
+    }
+    return false
+}
 
 /**
  * Returns public data that can be viewed by the frontend.
@@ -140,6 +169,7 @@ UserSchema.methods.getPublicUserInfo = function () {
         _id: this._id,
         username: this.username,
         email: this.email,
+        isOAuthUser: this.isOAuthUser(),
         twoFactorAuth: {
             active: this.twoFactorAuth.active,
             nextCheck: this.twoFactorAuth.nextCheck
@@ -173,7 +203,10 @@ UserSchema.methods.isConfirmationTokenExpired = function (): boolean {
  * Checks if 2fa setup needs initial code validation
  */
 UserSchema.methods.is2faInitialSetup = function (): boolean {
-    return !this.twoFactorAuth.active && this.twoFactorAuth.secret
+    if (!this.twoFactorAuth.active && this.twoFactorAuth.secret) {
+        return true
+    }
+    return false
 }
 
 /**
