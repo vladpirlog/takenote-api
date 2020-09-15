@@ -25,7 +25,7 @@ describe('test pw reset and pw forgotten flows', () => {
     test('request pw forgot with wrong email', (done) => {
         request
             .post('/auth/forgot_password')
-            .field('email', constants.test.wrongCredentials.email)
+            .send({ email: constants.test.wrongCredentials.email })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
                 return done()
@@ -35,7 +35,7 @@ describe('test pw reset and pw forgotten flows', () => {
     test('request pw forgot with correct email', (done) => {
         request
             .post('/auth/forgot_password')
-            .field('email', constants.test.persistentUser.email)
+            .send({ email: constants.test.persistentUser.email })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -60,11 +60,10 @@ describe('test pw reset and pw forgotten flows', () => {
     test('submit wrong forgot token', (done) => {
         request
             .post('/auth/fpassword')
-            .field('new_password', constants.test.persistentUser.password)
-            .field(
-                'confirm_new_password',
-                constants.test.persistentUser.password
-            )
+            .send({
+                new_password: constants.test.persistentUser.password,
+                confirm_new_password: constants.test.persistentUser.password
+            })
             .query({ token: '123456' })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
@@ -80,11 +79,10 @@ describe('test pw reset and pw forgotten flows', () => {
             .exec()
         request
             .post('/auth/fpassword')
-            .field('new_password', constants.test.persistentUser.password)
-            .field(
-                'confirm_new_password',
-                constants.test.persistentUser.password
-            )
+            .send({
+                new_password: constants.test.persistentUser.password,
+                confirm_new_password: constants.test.persistentUser.password
+            })
             .query({ token: info.forgotToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
@@ -95,8 +93,10 @@ describe('test pw reset and pw forgotten flows', () => {
     test('successful username-pw login', (done) => {
         request
             .post('/auth/login')
-            .field('email', constants.test.persistentUser.username)
-            .field('password', constants.test.persistentUser.password)
+            .send({
+                email: constants.test.persistentUser.username,
+                password: constants.test.persistentUser.password
+            })
             .then((res) => {
                 expect(res.status).toBe(200)
                 expect(typeof res.body.user).toBe('object')
@@ -107,7 +107,7 @@ describe('test pw reset and pw forgotten flows', () => {
     test('request pw reset with wrong pw', (done) => {
         request
             .post('/auth/reset_password')
-            .field('old_password', constants.test.wrongCredentials.password)
+            .send({ old_password: constants.test.wrongCredentials.password })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
                 return done()
@@ -117,7 +117,7 @@ describe('test pw reset and pw forgotten flows', () => {
     test('request pw reset with correct pw', (done) => {
         request
             .post('/auth/reset_password')
-            .field('old_password', constants.test.persistentUser.password)
+            .send({ old_password: constants.test.persistentUser.password })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -142,11 +142,10 @@ describe('test pw reset and pw forgotten flows', () => {
     test('submit wrong reset token', (done) => {
         request
             .post('/auth/rpassword')
-            .field('new_password', constants.test.persistentUser.password)
-            .field(
-                'confirm_new_password',
-                constants.test.persistentUser.password
-            )
+            .send({
+                new_password: constants.test.persistentUser.password,
+                confirm_new_password: constants.test.persistentUser.password
+            })
             .query({ token: '123456' })
             .then((res) => {
                 expect(res.status).toBeGreaterThanOrEqual(400)
@@ -162,11 +161,10 @@ describe('test pw reset and pw forgotten flows', () => {
             .exec()
         request
             .post('/auth/rpassword')
-            .field('new_password', constants.test.persistentUser.password)
-            .field(
-                'confirm_new_password',
-                constants.test.persistentUser.password
-            )
+            .send({
+                new_password: constants.test.persistentUser.password,
+                confirm_new_password: constants.test.persistentUser.password
+            })
             .query({ token: info.resetToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
