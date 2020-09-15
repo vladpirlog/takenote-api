@@ -3,7 +3,6 @@ import createResponse from '../utils/createResponse.util'
 import noteQuery from '../queries/note.crud.query'
 import getAuthUser from '../utils/getAuthUser.util'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
-import checkLimits from '../utils/checkLimits.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import { INoteBody } from '../models/Note'
 import splitNotesByOwnership from '../utils/splitNotesByOwnership.util'
@@ -55,9 +54,7 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
 const addNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, content, color } = req.body
-        if (!(await checkLimits.forNote(getAuthUser(res)?._id))) {
-            return createResponse(res, 400, 'Notes limit exceeded.')
-        }
+
         const newNote = await noteQuery.createOne({
             title,
             content,

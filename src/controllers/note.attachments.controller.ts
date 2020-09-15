@@ -4,7 +4,6 @@ import uploadFile from '../utils/uploadFile.util'
 import { UploadedFile } from 'express-fileupload'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
 import getAuthUser from '../utils/getAuthUser.util'
-import checkLimits from '../utils/checkLimits.util'
 import deleteFile from '../utils/deleteFile.util'
 
 const addAttachment = async (req: Request, res: Response, next: NextFunction) => {
@@ -17,15 +16,8 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
             return createResponse(res, 400, 'File not found.')
         }
 
-        if (!(await checkLimits.forAttachment(id, getAuthUser(res)?._id))) {
-            deleteFile(file)
-            return createResponse(res, 400, 'Attachments limit exceeded.')
-        }
-
         const url = await uploadFile(
-            file as UploadedFile,
-            getAuthUser(res)?._id,
-            id
+            file as UploadedFile, getAuthUser(res)?._id, id
         )
 
         const newNote = await noteAttachmentsQuery.addAttachment(
@@ -36,7 +28,10 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
             ? createResponse(res, 200, 'Attachment added.', {
                 attachment: newNote.attachments[newNote.attachments.length - 1]
             }) : createResponse(res, 400, 'Couldn\'t add attachment.')
-    } catch (err) { return next(err) }
+    } catch (err) {
+        if (req.files?.photo) deleteFile(req.files.photo)
+        return next(err)
+    }
 }
 
 const editAttachment = async (req: Request, res: Response, next: NextFunction) => {
@@ -63,9 +58,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
         const { id, attachmentID } = req.params
 
         const newNote = await noteAttachmentsQuery.deleteAttachment(
-            id,
-            getAuthUser(res)?._id,
-            attachmentID
+            id, getAuthUser(res)?._id, attachmentID
         )
         return newNote
             ? createResponse(res, 200, 'Attachment deleted.')

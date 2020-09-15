@@ -13,6 +13,7 @@ import { Role } from '../interfaces/role.enum'
 import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
+import checkLimits from '../middlewares/checkLimits.middleware'
 
 const router = Router()
 
@@ -44,7 +45,7 @@ router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.ge
 /**
  * ADD a note
  */
-router.post('/', regexTest.note, noteCrudController.addNote)
+router.post('/', regexTest.note, checkLimits.forNote, noteCrudController.addNote)
 
 /**
  * UPDATE a note
@@ -77,6 +78,7 @@ router.post(
     '/:id/share/collaborators',
     requestFieldsDefined('params', ['id']),
     requestFieldsDefined('body', ['user', 'type']),
+    checkLimits.forPermission,
     noteShareController.addCollaborator
 )
 
@@ -96,6 +98,7 @@ router.post(
     '/:id/tags',
     requestFieldsDefined('params', ['id']),
     requestFieldsDefined('query', ['tags']),
+    checkLimits.forTag,
     noteTagsController.addTags
 )
 
@@ -121,6 +124,7 @@ router.post(
     requestFieldsDefined('params', ['id']),
     regexTest.attachment,
     attachmentMetadata,
+    checkLimits.forAttachment,
     noteAttachmentsController.addAttachment
 )
 

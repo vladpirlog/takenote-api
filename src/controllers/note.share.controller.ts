@@ -7,7 +7,6 @@ import userQuery from '../queries/user.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthUser from '../utils/getAuthUser.util'
-import checkLimits from '../utils/checkLimits.util'
 import { INoteSchema } from '../models/Note'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
@@ -62,11 +61,9 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const { user, type } = req.body
 
         const collabUser = await userQuery.getByUsernameOrEmail(user)
-        const doesNotExceedLimit = await checkLimits.forPermission(id, getAuthUser(res)?._id)
-        if (!collabUser ||
-            collabUser.id === getAuthUser(res)?._id ||
-            !doesNotExceedLimit
-        ) return createResponse(res, 400)
+        if (!collabUser || collabUser.id === getAuthUser(res)?._id) {
+            return createResponse(res, 400)
+        }
 
         let permissionLevel: PermissionLevel
         switch (type) {
