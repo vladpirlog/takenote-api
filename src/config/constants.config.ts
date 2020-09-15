@@ -36,6 +36,11 @@ export default {
                 clientID: process.env.GOOGLE_CLIENT_ID || '',
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
             }
+        },
+        recaptcha: {
+            siteKey: process.env.RECAPTCHA_SITE_KEY || '',
+            secretKey: process.env.RECAPTCHA_SECRET_KEY || '',
+            verificationEndpoint: 'https://www.google.com/recaptcha/api/siteverify'
         }
     },
     regex: {
