@@ -13,6 +13,7 @@ import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware
 import auth2faController from '../controllers/auth.2fa.controller'
 import extractUser from '../middlewares/extractUser.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
+import authOauthController from '../controllers/auth.oauth.controller'
 
 const router = Router()
 
@@ -150,6 +151,14 @@ router.delete(
     checkAuthStatus([AuthStatus.LOGGED_IN]),
     requestFieldsDefined('query', ['code']),
     auth2faController.disable2fa
+)
+
+// Google OAuth handler
+router.get(
+    '/google',
+    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
+    requestFieldsDefined('query', ['code']),
+    authOauthController.google
 )
 
 export default router
