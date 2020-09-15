@@ -1,0 +1,16 @@
+import { NextFunction, Request, Response } from 'express'
+import createResponse from '../utils/createResponse.util'
+import recaptchaUtil from '../utils/recaptcha.util'
+
+const recaptcha = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { 'g-recaptcha-response': recaptchaCode } = req.body
+        if (!recaptchaCode) return createResponse(res, 422, 'ReCAPTCHA code missing from body.')
+
+        const ok = await recaptchaUtil.verify(recaptchaCode, req.ip)
+        if (!ok) return createResponse(res, 401)
+        return next()
+    } catch (err) { return next(err) }
+}
+
+export default recaptcha

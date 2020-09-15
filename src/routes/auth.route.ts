@@ -14,6 +14,7 @@ import auth2faController from '../controllers/auth.2fa.controller'
 import extractUser from '../middlewares/extractUser.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import authOauthController from '../controllers/auth.oauth.controller'
+import recaptcha from '../middlewares/recaptcha.middleware'
 
 const router = Router()
 
@@ -26,6 +27,7 @@ router.post(
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     requestFieldsDefined('body', ['email', 'password']),
     regexTest.login,
+    recaptcha,
     authController.login
 )
 
