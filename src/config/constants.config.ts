@@ -28,7 +28,15 @@ export default {
         authCookieName: 'access_token',
         tfaTempCookieName: 'temp_token',
         numberOfBackupCodes: 8,
-        backupCodeLength: 10
+        backupCodeLength: 10,
+        oauth: {
+            google: {
+                redirectURI: 'http://localhost:3000/oauth/google',
+                discoveryDocument: 'https://accounts.google.com/.well-known/openid-configuration',
+                clientID: process.env.GOOGLE_CLIENT_ID || '',
+                clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
+            }
+        }
     },
     regex: {
         username: /^[a-zA-Z0-9_-]{4,16}$/,

@@ -2,6 +2,7 @@ import User, { IUserSchema } from '../models/User'
 import createNewToken from '../utils/createNewToken.util'
 import bcrypt from 'bcrypt'
 import { MongooseUpdateQuery } from 'mongoose'
+import { State } from '../interfaces/state.enum'
 
 /**
  * Searches for and returns a user using its id.
@@ -15,6 +16,8 @@ const getById = (
 
 /**
  * Searches for and returns a user using its username, email or both.
+ * If both arguments are provided, the first will be treated as the username and the second as email.
+ * Otherwise, the first argument will be treated as email or username.
  * @param username username of a user
  * @param email email of a user
  */
@@ -63,7 +66,7 @@ const getByToken = (
 }
 
 /**
- * Creates a new user with the properties given as argument.
+ * Creates a new user with the properties given.
  * @param props object representing basic user info to be added to the database
  */
 const createNewUser = (props: {
@@ -73,6 +76,21 @@ const createNewUser = (props: {
     confirmationToken: IUserSchema['confirmationToken'];
 }) => {
     const newUser = new User(props)
+    return newUser.save()
+}
+
+/**
+ * Creates a new OAuth user with the properties given.
+ * @param props object representing basic user info and OAuth data to be added to the database
+ */
+const createNewOAuthUser = (props: {
+    username: IUserSchema['username'],
+    email: IUserSchema['email'],
+    oauth: IUserSchema['oauth']
+}) => {
+    const newUser = new User({
+        ...props, state: State.ACTIVE
+    })
     return newUser.save()
 }
 
@@ -184,6 +202,7 @@ export default {
     getByUsernameOrEmail,
     getByToken,
     createNewUser,
+    createNewOAuthUser,
     setUserState,
     setNewToken,
     setNewPassword,
