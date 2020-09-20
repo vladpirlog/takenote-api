@@ -28,7 +28,7 @@ const sendToken = async (
     const mailOptions = makeMailOptions(user, tokenMailContent)
     const mailTransport = makeMailTransport()
 
-    if (constants.nodeEnv === 'production') await mailTransport.sendMail(mailOptions)
+    await mailTransport.sendMail(mailOptions)
 }
 
 /**
@@ -41,7 +41,7 @@ const sendNotice = async (user: IUserSchema, type: 'delete' | 'recover') => {
     const noticeMailContent = makeNoticeMailContent(user, type === 'delete')
     const mailOptions = makeMailOptions(user, noticeMailContent)
 
-    if (constants.nodeEnv === 'production') await mailTransport.sendMail(mailOptions)
+    await mailTransport.sendMail(mailOptions)
 }
 
 /**
@@ -49,8 +49,8 @@ const sendNotice = async (user: IUserSchema, type: 'delete' | 'recover') => {
  */
 const makeMailTransport = () => {
     return nodemailer.createTransport({
-        host: 'smtp.mailtrap.io',
-        port: 2525,
+        host: constants.email.host,
+        port: constants.email.port,
         auth: {
             user: constants.email.user,
             pass: constants.email.pass
@@ -67,7 +67,7 @@ const makeCompleteURL = (data: {token: string, path: string}) => {
         query: {
             token: data.token
         },
-        protocol: 'http', // TODO: change to https
+        protocol: constants.protocol,
         host: constants.domain.baseDomain,
         pathname: data.path
     })
