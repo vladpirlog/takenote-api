@@ -115,6 +115,9 @@ const attachment = (req: Request, res: Response, next: NextFunction) => {
     return next()
 }
 
+/**
+ * Middleware function that tests the attachment title and description against the RegExp.
+ */
 const checkCredentials = (req: Request, res: Response, next: NextFunction) => {
     const { username, email } = req.body
     if (username && !checkRegex(constants.regex.username, username)) {
