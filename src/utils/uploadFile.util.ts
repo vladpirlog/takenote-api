@@ -26,15 +26,14 @@ const uploadFile = async (
                 metadata: {
                     cacheControl: 'public, max-age=31536000'
                 },
-                destination: `images/${userID}/${noteID}/${new Date().getTime().toString()}-${file.name}`
+                destination: `${userID}/${noteID}/${new Date().getTime().toString()}-${file.name}`
             }
 
             const [result] = await storage.bucket(constants.storage.google.bucketName).upload(file.tempFilePath, options)
             const [metadata] = await result.getMetadata()
             deleteFile(file)
 
-            return encodeURI(`http://storage.googleapis.com/${metadata.bucket}/${metadata.name}`)
-            // return encodeURI(`/${metadata.name}`)
+            return encodeURI(`${constants.domain.staticURL}/${metadata.name}`)
         } else {
             const result = await cloudinary.uploader.upload(file.tempFilePath, {
                 folder: `${userID}/`

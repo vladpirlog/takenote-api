@@ -42,7 +42,7 @@ app.use(hpp())
 // Only needed when running the server and frontend on different (sub)domains.
 
 app.use(cors({
-    origin: /* constants.domain.whitelist */ 'http://localhost:3000',
+    origin: constants.domain.whitelist,
     optionsSuccessStatus: 200,
     credentials: true,
     methods: ['GET', 'PUT', 'POST', 'DELETE']

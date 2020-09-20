@@ -1,14 +1,25 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
+const protocol = process.env.PROTOCOL || 'http'
+const baseDomain = process.env.BASE_DOMAIN || 'localhost'
+const apiDomain = process.env.API_DOMAIN || 'api.localhost'
+const staticDomain = process.env.STATIC_DOMAIN || 'static.localhost'
+const domain = {
+    baseDomain,
+    baseURL: `${protocol}://${baseDomain}`,
+    apiDomain,
+    apiURL: `${protocol}://${apiDomain}`,
+    staticDomain,
+    staticURL: `${protocol}://${staticDomain}`,
+    whitelist: [`${protocol}://${baseDomain}`, `${protocol}://www.${baseDomain}`]
+}
+
 export default {
     port: process.env.PORT || '8000',
     nodeEnv: process.env.NODE_ENV || 'development',
-    domain: {
-        baseDomain: process.env.BASE_DOMAIN || 'localhost',
-        apiDomain: process.env.API_DOMAIN || 'api.localhost',
-        whitelist: ['http://localhost', 'http://www.localhost']
-    },
+    protocol,
+    domain,
     mongodbURI: process.env.MONGODB_URI || '',
     storage: {
         cloudinary: {
@@ -31,7 +42,7 @@ export default {
         backupCodeLength: 10,
         oauth: {
             google: {
-                redirectURI: 'http://localhost:3000/oauth/google',
+                redirectURI: `${domain.baseURL}/oauth/google`,
                 discoveryDocument: 'https://accounts.google.com/.well-known/openid-configuration',
                 clientID: process.env.GOOGLE_CLIENT_ID || '',
                 clientSecret: process.env.GOOGLE_CLIENT_SECRET || ''
@@ -72,7 +83,9 @@ export default {
     },
     email: {
         user: process.env.EMAIL_USER || '',
-        pass: process.env.EMAIL_PASS || ''
+        pass: process.env.EMAIL_PASS || '',
+        host: process.env.EMAIL_HOST || 'smtp.mailtrap.io',
+        port: parseInt(process.env.EMAIL_PORT || '2525')
     },
     limits: {
         perUser: {

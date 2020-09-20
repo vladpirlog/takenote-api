@@ -22,9 +22,8 @@ const setAuthCookie = (res: Response, user: IUserSchema): Response => {
             Date.now() + constants.authentication.authCookieExpires
         ),
         httpOnly: true,
-        sameSite: 'lax'
-        // secure: true,
-        // TODO: add secure flag
+        sameSite: 'lax',
+        secure: constants.protocol === 'https'
     })
     return res
 }
@@ -61,9 +60,8 @@ const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Respo
             Date.now() + constants.authentication.tfaTempCookieExpires
         ),
         httpOnly: true,
-        sameSite: 'lax'
-        // secure: true,
-        // TODO: add secure flag
+        sameSite: 'lax',
+        secure: constants.protocol === 'https'
     })
     return res
 }
