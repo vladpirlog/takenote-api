@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import { IUserSchema } from '../models/User'
 import { State } from '../interfaces/state.enum'
+import getAuthUser from '../utils/getAuthUser.util'
 
 const mustConfirmEmail = (userState: State, states: IUserSchema['state'][]) => {
     return userState === State.UNCONFIRMED &&
@@ -25,7 +26,9 @@ const isInAcceptedState = (userState: State, states: IUserSchema['state'][]) => 
 const checkUserState = (states: IUserSchema['state'][]) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userState = res.locals.user.state
+            const userState = getAuthUser(res)?.state
+            if (!userState) return createResponse(res, 403)
+
             if (mustConfirmEmail(userState, states)) {
                 return createResponse(res, 403, 'User has not confirmed the email address.')
             }

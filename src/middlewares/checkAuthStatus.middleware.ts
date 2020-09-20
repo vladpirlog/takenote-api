@@ -3,7 +3,7 @@ import createResponse from '../utils/createResponse.util'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 
 /**
- * Function that returns a middleware function that checks authentication state of the user.
+ * Higher-order function that checks the authentication state of the user.
  * @param status an array of AuthStatus elements; the user must be in one of those states
  */
 const checkAuthStatus = (status: AuthStatus[]) => {
