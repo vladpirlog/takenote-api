@@ -7,7 +7,7 @@ import cookie from '../utils/cookie.util'
 import { IUserSchema } from '../models/User'
 
 /**
- * Controller for generating a qrcode image with the totp secret.abs
+ * Controller for generating a qrcode image with the totp secret.
  * Will be displayed and scanned by the user.
  */
 const generate2faSecret = async (req: Request, res: Response, next: NextFunction) => {
