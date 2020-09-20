@@ -69,6 +69,10 @@ A set of environment variables must be provided in order for the app to run.
 * GOOGLE_BUCKET_NAME - name of the Google Cloud Storage bucket
 * EMAIL_USER - email address to send emails from
 * EMAIL_PASS - email password associated to that address
+* GOOGLE_CLIENT_ID - the OAuth client ID provided by Google
+* GOOGLE_CLIENT_SECRET - the OAuth client secret provided by Google
+* RECAPTCHA_SITE_KEY - reCAPTCHA site key provided by Google
+* RECAPTCHA_SITE_SECRET - reCAPTCHA site secret provided by Google
 
 ## Documentation
 
@@ -104,8 +108,9 @@ npm test
 ## Features
 
 * rate limiting for throttling requests
-* JWT cookie and OAuth 2.0 (soon) authentication flows
+* JWT cookie and Google OAuth 2.0 authentication flows
 * two-factor authentication using app-generated OTP
+* validation for reCAPTCHA v2 invisible
 * email confirmation when registering or resetting password
 
 ## Authors
