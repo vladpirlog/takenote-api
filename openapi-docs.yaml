@@ -18,6 +18,8 @@ servers:
 tags:
   - name: auth
     description: Everything related to the users and authentication
+  - name: oauth
+    description: OAuth-related endpoints
   - name: 2fa
     description: Endpoints related to two-factor authentication
   - name: notes
@@ -379,6 +381,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
+  /auth/check_credentials:
+    post:
+      tags:
+        - auth
+      summary: Check if the credentials are taken
+      operationId: checkCredentials
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Credentials are not taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
+      requestBody:
+        $ref: "#/components/requestBodies/CheckCredentials"
   /auth/delete:
     post:
       tags:
@@ -423,6 +446,48 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
+  /auth/google:
+    get:
+      tags:
+        - auth
+        - oauth
+      summary: Login with Goole
+      operationId: oauthGoogle
+      parameters:
+        - name: code
+          in: query
+          description: The authorization code given by Google
+          required: true
+          schema:
+            type: string
+            pattern: /^.*$/
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Authenticated user fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  user:
+                    $ref: "#/components/schemas/User"
   /auth/2fa:
     post:
       tags:
@@ -1345,7 +1410,28 @@ components:
           maxLength: 25
           minLength: 25
         subject:
-          $ref: "#/components/schemas/User"
+          additionalProperties: false
+          type: object
+          required:
+            - _id
+            - username
+            - email
+          properties:
+            _id:
+              type: string
+              pattern: /^u[a-zA-Z0-9_-]{24}$/
+              maxLength: 25
+              minLength: 25
+            username:
+              type: string
+              pattern: /^[a-zA-Z0-9_-]{4,16}$/
+              maxLength: 16
+              minLength: 4
+            email:
+              type: string
+              pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+              maxLength: 254
+              minLength: 3
         level:
           type: integer
           format: int32
@@ -1481,6 +1567,8 @@ components:
         - _id
         - username
         - email
+        - isOAuthUser
+        - twoFactorAuth
       properties:
         _id:
           type: string
@@ -1497,6 +1585,8 @@ components:
           pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
           maxLength: 254
           minLength: 3
+        isOAuthUser:
+          type: boolean
         twoFactorAuth:
           additionalProperties: false
           type: object
@@ -1553,6 +1643,10 @@ components:
                 maxLength: 24
                 minLength: 8
                 description: The user's password
+              g-recaptcha-response:
+                type: string
+                description: reCAPTCHA token used to verify the user's interaction; only used in the production environment
+                pattern: /^.*$/
         application/json:
           schema:
             additionalProperties: false
@@ -1650,6 +1744,43 @@ components:
                 minLength: 8
                 description: The user's password entered again
       description: The user's info required for registration
+    CheckCredentials:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            properties:
+              username:
+                type: string
+                pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                maxLength: 16
+                minLength: 4
+                description: The username to be checked
+              email:
+                type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
+                minLength: 3
+                description: The email to be checked
+        application/json:
+          schema:
+            additionalProperties: false
+            type: object
+            properties:
+              username:
+                type: string
+                pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                maxLength: 16
+                minLength: 4
+                description: The username to be checked
+              email:
+                type: string
+                pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                maxLength: 254
+                minLength: 3
+                description: The email to be checked
+      description: The username and/or email to be checked if taken
     OldPassword:
       content:
         application/x-www-form-urlencoded:
