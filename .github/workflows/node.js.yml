@@ -37,3 +37,5 @@ jobs:
         AUTH_JWT_SECRET: ${{ secrets.AUTH_JWT_SECRET }}
         EMAIL_USER: ${{ secrets.EMAIL_USER }}
         EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+        EMAIL_PORT: ${{ secrets.EMAIL_PORT }}

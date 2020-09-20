@@ -84,8 +84,8 @@ export default {
     email: {
         user: process.env.EMAIL_USER || '',
         pass: process.env.EMAIL_PASS || '',
-        host: process.env.EMAIL_HOST || 'smtp.mailtrap.io',
-        port: parseInt(process.env.EMAIL_PORT || '2525')
+        host: process.env.EMAIL_HOST || '',
+        port: parseInt(process.env.EMAIL_PORT || '')
     },
     limits: {
         perUser: {
