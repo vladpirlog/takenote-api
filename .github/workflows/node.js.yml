@@ -39,3 +39,10 @@ jobs:
         EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
         EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
         EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+    - name: deploying changes to remote server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DEPLOYMENT_HOST }}
+        username: ${{ secrets.DEPLOYMENT_USERNAME }}
+        key: ${{ secrets.DEPLOYMENT_KEY }}
+        script: sh ~/scripts/deploy.sh
