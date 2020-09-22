@@ -40,6 +40,7 @@ router.post(
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
     requestFieldsDefined('body', ['username', 'email', 'password', 'confirm_password']),
     regexTest.register,
+    recaptcha,
     checkUniqueUser(false),
     rateLimiting.forEmail,
     authController.register
