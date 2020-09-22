@@ -24,7 +24,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const { email, password } = req.body
 
         const user = await userQuery.getByUsernameOrEmail(email)
-        if (!user || !user.validPassword(password)) return createResponse(res, 401)
+        if (!user || user.isOAuthUser() || !user.validPassword(password)) {
+            return createResponse(res, 401)
+        }
 
         if (user.is2faRequired()) {
             await cookie.set2faTempCookie(res, user)

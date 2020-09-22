@@ -65,7 +65,8 @@ const isValidOTPOrBackupCode = (
     code: string, user: IUserSchema
 ) => {
     const isValidOTP = twoFactorAuth.verifyCode(code as string, user.twoFactorAuth.secret as string)
-    const isValidBackupCode = user.twoFactorAuth.backupCodes?.find(b => b.active && b._id === code)
+    const isValidBackupCode = user.twoFactorAuth.backupCodes &&
+        user.twoFactorAuth.backupCodes.find(b => b.active && b._id === code) !== undefined
     return isValidOTP || isValidBackupCode
 }
 
