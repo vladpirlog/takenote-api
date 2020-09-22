@@ -54,7 +54,8 @@ const makeMailTransport = () => {
         auth: {
             user: constants.email.user,
             pass: constants.email.pass
-        }
+        },
+        secure: true
     })
 }
 
