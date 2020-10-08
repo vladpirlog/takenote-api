@@ -17,7 +17,6 @@ export interface IUserSchema extends Document {
     confirmationToken: ITokenSchema
     role: Role
     resetToken: ITokenSchema
-    forgotToken: ITokenSchema
     oauth?: {
         provider: OAuthProvider
         refreshToken: string
@@ -89,10 +88,6 @@ export const UserSchema = new Schema<IUserSchema>(
             ]
         },
         resetToken: {
-            type: TokenSchema,
-            required: false
-        },
-        forgotToken: {
             type: TokenSchema,
             required: false
         },

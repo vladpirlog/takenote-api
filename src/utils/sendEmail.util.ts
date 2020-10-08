@@ -11,11 +11,10 @@ import Mail from 'nodemailer/lib/mailer'
  */
 const sendToken = async (
     user: IUserSchema,
-    type: 'reset' | 'forgot' | 'confirmation'
+    type: 'reset' | 'confirmation'
 ) => {
     const data = {
-        reset: { token: user?.resetToken?.id, path: '/rpassword' },
-        forgot: { token: user?.forgotToken?.id, path: '/fpassword' },
+        reset: { token: user?.resetToken?.id, path: '/new_password' },
         confirmation: { token: user?.confirmationToken?.id, path: '/confirm' }
     }
 

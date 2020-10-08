@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose'
 
 /**
- * Schema describing a token(can be of type reset, forgot or confirmation).
+ * Schema describing a token(can be of type reset or confirmation).
  */
 export interface ITokenSchema extends Document {
     exp: number

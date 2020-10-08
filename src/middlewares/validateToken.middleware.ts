@@ -11,7 +11,7 @@ import { ITokenSchema } from '../models/Token'
  * @param isFinalMiddleware if true will send a 200 response, else will call the next middleware
  */
 const validateToken = (
-    tokenType: 'reset' | 'forgot' | 'confirmation' | 'any',
+    tokenType: 'reset' | 'confirmation' | 'any',
     isFinalMiddleware: boolean
 ) => {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -26,8 +26,6 @@ const validateToken = (
             let expirationTime: number
             if (user.resetToken?.id === token) {
                 expirationTime = user.resetToken.exp
-            } else if (user.forgotToken?.id === token) {
-                expirationTime = user.forgotToken.exp
             } else expirationTime = user.confirmationToken.exp
 
             if (getUnixTime() <= expirationTime) {

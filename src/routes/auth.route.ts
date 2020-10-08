@@ -68,17 +68,7 @@ router.post(
     requestFieldsDefined('body', ['old_password']),
     regexTest.oldPassword,
     rateLimiting.forEmail,
-    authPasswordController.requestResetToken
-)
-
-router.post(
-    '/rpassword',
-    checkAuthStatus([AuthStatus.LOGGED_IN]),
-    requestFieldsDefined('query', ['token']),
-    requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
-    regexTest.newPassword,
-    validateToken('reset', false),
-    authPasswordController.submitResetToken
+    authPasswordController.requestResetTokenWithPassword
 )
 
 // Password forgot handler
@@ -88,17 +78,15 @@ router.post(
     requestFieldsDefined('body', ['email']),
     regexTest.email,
     rateLimiting.forEmail,
-    authPasswordController.requestForgotToken
+    authPasswordController.requestResetTokenWithEmail
 )
 
 router.post(
-    '/fpassword',
-    checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
+    '/new_password',
     requestFieldsDefined('query', ['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     regexTest.newPassword,
-    validateToken('forgot', false),
-    authPasswordController.submitForgotToken
+    authPasswordController.submitToken
 )
 
 // Token validation handler
