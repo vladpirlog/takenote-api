@@ -12,7 +12,6 @@ export interface IUserSchema extends Document {
     username: string
     email: string
     password: string
-    salt: string
     state: State
     confirmationToken: ITokenSchema
     role: Role
@@ -35,7 +34,7 @@ export interface IUserSchema extends Document {
     isOAuthUser(): boolean
     getPublicUserInfo(): IPublicUserInfo
     hasConfirmed(): boolean
-    validPassword(hash: string): boolean
+    validPassword(hash: string): Promise<boolean>
     isConfirmationTokenExpired(): boolean
     is2faInitialSetup(): boolean
     is2faRequired(): boolean
@@ -59,10 +58,6 @@ export const UserSchema = new Schema<IUserSchema>(
             unique: true
         },
         password: {
-            type: String,
-            required: false
-        },
-        salt: {
             type: String,
             required: false
         },
@@ -138,12 +133,11 @@ export const UserSchema = new Schema<IUserSchema>(
 
 UserSchema.pre('save', function (next) {
     if (!(<IUserSchema> this).isOAuthUser()) {
-        const salt = bcrypt.genSaltSync(12)
-        const hash = bcrypt.hashSync((<IUserSchema> this).password, salt);
-        (<IUserSchema> this).password = hash;
-        (<IUserSchema> this).salt = salt
-    }
-    next()
+        bcrypt.hash((<IUserSchema> this).password, 12).then(hash => {
+            (<IUserSchema> this).password = hash
+            return next()
+        })
+    } else { return next() }
 })
 
 /**
@@ -176,8 +170,8 @@ UserSchema.methods.getPublicUserInfo = function () {
  * Checks if the given argument(an unhashed string) matches the user's actual password; returns a boolean
  * @param password an unhashed string
  */
-UserSchema.methods.validPassword = function (password: string): boolean {
-    return this.password === bcrypt.hashSync(password, this.salt)
+UserSchema.methods.validPassword = function (password: string): Promise<boolean> {
+    return bcrypt.compare(password, this.password)
 }
 
 /**

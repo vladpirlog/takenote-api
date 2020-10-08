@@ -138,19 +138,17 @@ const setNewToken = (
  * @param newPassword the new password to be hashed and salted
  * @param token a reset token, used to identify the user
  */
-const setNewPassword = (
+const setNewPassword = async (
     newPassword: string,
     token: IUserSchema['resetToken']['_id']
 ) => {
-    const newSalt = bcrypt.genSaltSync(12)
-    const hash = bcrypt.hashSync(newPassword, newSalt)
+    const hash = await bcrypt.hash(newPassword, 12)
     return User.findOneAndUpdate(
         {
             'resetToken._id': token
         },
         {
             password: hash,
-            salt: newSalt,
             $unset: { resetToken: '' }
         },
         { new: true }
