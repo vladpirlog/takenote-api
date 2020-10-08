@@ -6,8 +6,8 @@ import redisConfig from '../config/redis.config'
 
 /**
  * Middleware function that identifies the user making the request based on the JWT cookie.
- * It saves user info in res.locals.user (_id, role, state).
- * Sets the res.locals.isFullAuth to true.
+ * Saves user info in res.locals.user (_id, role, state).
+ * Sets the res.locals.isFullAuth flag to true.
  */
 const fromAuthCookie = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -25,7 +25,7 @@ const fromAuthCookie = async (req: Request, res: Response, next: NextFunction) =
 
 /**
  * Middleware function that identifies the user making the request based on the tfa temporary cookie.
- * It saves user info in res.locals.user (_id, role, state).
+ * Saves user info in res.locals.user (_id, role, state).
  * Sets the res.locals.isFullAuth flag to false.
  */
 const fromTfaTempCookie = async (req: Request, res: Response, next: NextFunction) => {
