@@ -26,7 +26,7 @@ describe('testing the security features of the api', () => {
 
         const res2 = await request.post('/notes')
         createdNoteID = res2.body.note._id
-    })
+    }, 30000)
 
     test('limit for # of tags per note', async () => {
         const res = await request

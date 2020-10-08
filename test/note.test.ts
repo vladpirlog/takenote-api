@@ -25,7 +25,7 @@ describe('test note-related operations', () => {
                 email: constants.test.persistentUser.email,
                 password: constants.test.persistentUser.password
             })
-    })
+    }, 30000)
 
     test('create note', (done) => {
         request
