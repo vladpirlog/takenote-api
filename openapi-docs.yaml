@@ -244,7 +244,7 @@ paths:
       tags:
         - auth
         - password
-      summary: Request pw reset token
+      summary: Request reset token using old password
       operationId: resetPassword
       security:
         - cookieAccessToken: []
@@ -263,47 +263,13 @@ paths:
                 $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/OldPassword"
-  /auth/rpassword:
-    post:
-      tags:
-        - auth
-        - password
-      summary: Submit reset token
-      operationId: submitResetToken
-      security:
-        - cookieAccessToken: []
-      parameters:
-        - name: token
-          in: query
-          description: The token to be checked against the user's ResetToken
-          required: true
-          schema:
-            type: string
-            pattern: /^rs[a-zA-Z0-9_-]{24}$/
-            maxLength: 26
-            minLength: 26
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "200":
-          description: Password changed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResponseBody"
-      requestBody:
-        $ref: "#/components/requestBodies/NewPassword"
   /auth/forgot_password:
     post:
       tags:
         - auth
         - password
-      summary: Request pw forgot token
-      operationId: requestForgotToken
+      summary: Request reset token using email or username
+      operationId: forgotPassword
       responses:
         default:
           description: Error
@@ -312,14 +278,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "200":
-          description: Forgot token sent
+          description: Reset token sent
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
       requestBody:
         $ref: "#/components/requestBodies/ForgotPassword"
-  /auth/fpassword:
+  /auth/new_password:
     post:
       tags:
         - auth
@@ -329,11 +295,11 @@ paths:
       parameters:
         - name: token
           in: query
-          description: The token to be checked against the user's ForgotToken
+          description: The token to be checked against the user's reset token
           required: true
           schema:
             type: string
-            pattern: /^fr[a-zA-Z0-9_-]{24}$/
+            pattern: /^rs[a-zA-Z0-9_-]{24}$/
             maxLength: 26
             minLength: 26
       responses:
@@ -365,7 +331,7 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^(rs|fr|cn)[a-zA-Z0-9_-]{24}$/
+            pattern: /^(rs|cn)[a-zA-Z0-9_-]{24}$/
             maxLength: 26
             minLength: 26
       responses:
@@ -451,7 +417,7 @@ paths:
       tags:
         - auth
         - oauth
-      summary: Login with Goole
+      summary: Login with Google
       operationId: oauthGoogle
       parameters:
         - name: code
