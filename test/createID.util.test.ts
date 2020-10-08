@@ -51,13 +51,6 @@ describe('id creation testing', () => {
         expect(/^rs[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
-    test('create forgot token id', () => {
-        const id = createID('forgot')
-        expect(id).toHaveLength(constants.idInfo.forgot.length +
-            constants.idInfo.forgot.prefix.length)
-        expect(/^fr[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
-    })
-
     test('create confirmation token id', () => {
         const id = createID('confirmation')
         expect(id).toHaveLength(constants.idInfo.confirmation.length +

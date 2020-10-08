@@ -5,7 +5,7 @@ import redisConfig from '../src/config/redis.config'
 import constants from '../src/config/constants.config'
 import User from '../src/models/User'
 
-describe('test pw reset and pw forgotten flows', () => {
+describe('test pw reset flows', () => {
     const request = supertest.agent(app)
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
@@ -22,7 +22,7 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('request pw forgot with wrong email', (done) => {
+    test('request reset token with wrong email', (done) => {
         request
             .post('/auth/forgot_password')
             .send({ email: constants.test.wrongCredentials.email })
@@ -32,7 +32,7 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('request pw forgot with correct email', (done) => {
+    test('request reset token with correct email', (done) => {
         request
             .post('/auth/forgot_password')
             .send({ email: constants.test.persistentUser.email })
@@ -42,24 +42,24 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('check forgot token for expiration', async (done) => {
+    test('check reset token for expiration', async (done) => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
-            .select('forgotToken')
+            .select('resetToken')
             .exec()
         request
             .get('/auth/check_token')
-            .query({ token: info.forgotToken.id })
+            .query({ token: info.resetToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
             })
     }, 20000)
 
-    test('submit wrong forgot token', (done) => {
+    test('submit wrong reset token', (done) => {
         request
-            .post('/auth/fpassword')
+            .post('/auth/new_password')
             .send({
                 new_password: constants.test.persistentUser.password,
                 confirm_new_password: constants.test.persistentUser.password
@@ -71,19 +71,19 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('submit correct forgot token', async (done) => {
+    test('submit correct reset token #1', async (done) => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
-            .select('forgotToken')
+            .select('resetToken')
             .exec()
         request
-            .post('/auth/fpassword')
+            .post('/auth/new_password')
             .send({
                 new_password: constants.test.persistentUser.password,
                 confirm_new_password: constants.test.persistentUser.password
             })
-            .query({ token: info.forgotToken.id })
+            .query({ token: info.resetToken.id })
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -104,7 +104,7 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('request pw reset with wrong pw', (done) => {
+    test('request reset token with wrong old password', (done) => {
         request
             .post('/auth/reset_password')
             .send({ old_password: constants.test.wrongCredentials.password })
@@ -114,7 +114,7 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('request pw reset with correct pw', (done) => {
+    test('request reset token with correct old password', (done) => {
         request
             .post('/auth/reset_password')
             .send({ old_password: constants.test.persistentUser.password })
@@ -139,28 +139,14 @@ describe('test pw reset and pw forgotten flows', () => {
             })
     }, 20000)
 
-    test('submit wrong reset token', (done) => {
-        request
-            .post('/auth/rpassword')
-            .send({
-                new_password: constants.test.persistentUser.password,
-                confirm_new_password: constants.test.persistentUser.password
-            })
-            .query({ token: '123456' })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
-    }, 20000)
-
-    test('submit correct reset token', async (done) => {
+    test('submit correct reset token #2', async (done) => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
             .select('resetToken')
             .exec()
         request
-            .post('/auth/rpassword')
+            .post('/auth/new_password')
             .send({
                 new_password: constants.test.persistentUser.password,
                 confirm_new_password: constants.test.persistentUser.password

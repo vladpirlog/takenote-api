@@ -15,19 +15,6 @@ describe('token creation testing', () => {
             .toBe(constants.idInfo.reset.prefix)
     })
 
-    test('generate forgot token', () => {
-        const token = createNewToken('forgot')
-        expect(typeof token.exp).toBe('number')
-        expect(token.exp.toString()).toHaveLength(10)
-
-        expect(typeof token.id).toBe('string')
-        expect(token.id).toHaveLength(
-            constants.idInfo.forgot.prefix.length + constants.idInfo.forgot.length
-        )
-        expect(token.id.substr(0, constants.idInfo.forgot.prefix.length))
-            .toBe(constants.idInfo.forgot.prefix)
-    })
-
     test('generate confirmation token', () => {
         const token = createNewToken('confirmation')
         expect(typeof token.exp).toBe('number')
