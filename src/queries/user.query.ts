@@ -38,17 +38,12 @@ const getByUsernameOrEmail = (
 const getByToken = (
     token:
         | IUserSchema['resetToken']['_id']
-        | IUserSchema['forgotToken']['_id']
         | IUserSchema['confirmationToken']['_id'],
-    type: 'reset' | 'forgot' | 'confirmation' | 'any'
+    type: 'reset' | 'confirmation' | 'any'
 ) => {
     if (type === 'reset') {
         return User.findOne({
             'resetToken._id': token
-        }).exec()
-    } else if (type === 'forgot') {
-        return User.findOne({
-            'forgotToken._id': token
         }).exec()
     } else if (type === 'confirmation') {
         return User.findOne({
@@ -58,7 +53,6 @@ const getByToken = (
         return User.findOne({
             $or: [
                 { 'resetToken._id': token },
-                { 'forgotToken._id': token },
                 { 'confirmationToken._id': token }
             ]
         }).exec()
@@ -120,11 +114,10 @@ const setNewToken = (
         | IUserSchema['email']
         | IUserSchema['username']
         | IUserSchema['_id'],
-    type: 'reset' | 'forgot' | 'confirmation'
+    type: 'reset' | 'confirmation'
 ) => {
     let updateQuery: MongooseUpdateQuery<IUserSchema>
     if (type === 'reset') updateQuery = { resetToken: createNewToken('reset') }
-    else if (type === 'forgot') updateQuery = { forgotToken: createNewToken('forgot') }
     else updateQuery = { confirmationToken: createNewToken('confirmation') }
 
     return User.findOneAndUpdate(
@@ -142,29 +135,23 @@ const setNewToken = (
 
 /**
  * Searches for a user based on a token and optionally its id, then changes the password to the one given.
- * @param identifier id of a user or null; if not null, it provides an additional way of identifying the user
  * @param newPassword the new password to be hashed and salted
- * @param token a reset or forgot token, used to identify the user
+ * @param token a reset token, used to identify the user
  */
 const setNewPassword = (
-    identifier: IUserSchema['_id'] | null,
     newPassword: string,
-    token:
-        | IUserSchema['resetToken']['_id']
-        | IUserSchema['forgotToken']['_id']
+    token: IUserSchema['resetToken']['_id']
 ) => {
     const newSalt = bcrypt.genSaltSync(12)
     const hash = bcrypt.hashSync(newPassword, newSalt)
     return User.findOneAndUpdate(
-        identifier
-            ? { _id: identifier, 'resetToken._id': token }
-            : { 'forgotToken._id': token },
+        {
+            'resetToken._id': token
+        },
         {
             password: hash,
             salt: newSalt,
-            $unset: identifier
-                ? { resetToken: '' }
-                : { forgotToken: '' }
+            $unset: { resetToken: '' }
         },
         { new: true }
     ).exec()

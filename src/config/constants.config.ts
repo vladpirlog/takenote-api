@@ -32,7 +32,7 @@ export default {
         }
     },
     authentication: {
-        authJWTSecret: process.env.AUTH_JWT_SECRET || '',
+        authJWTSecret: process.env.AUTH_JWT_SECRET || 'jwt_secret',
         authCookieExpires: 2 * 60 * 60 * 1000, // time in ms
         tfaTempCookieExpires: 15 * 60 * 1000, // time in ms
         tfaRememberDuration: 30 * 24 * 60 * 60, // time in s
@@ -77,7 +77,6 @@ export default {
         jwt: { prefix: 'j', length: 24 },
         share: { prefix: 's', length: 24 },
         reset: { prefix: 'rs', length: 24 },
-        forgot: { prefix: 'fr', length: 24 },
         confirmation: { prefix: 'cn', length: 24 },
         tfa: { prefix: 'tfa', length: 48 }
     },
