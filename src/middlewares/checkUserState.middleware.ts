@@ -9,12 +9,6 @@ const mustConfirmEmail = (userState: State, states: IUserSchema['state'][]) => {
         !states.includes(State.UNCONFIRMED)
 }
 
-const hasAlreadyConfirmedEmail = (userState: State, states: IUserSchema['state'][]) => {
-    return states.length === 1 &&
-        states.includes(State.UNCONFIRMED) &&
-        userState !== State.UNCONFIRMED
-}
-
 const isInAcceptedState = (userState: State, states: IUserSchema['state'][]) => {
     return states.includes(userState)
 }
@@ -31,10 +25,6 @@ const checkUserState = (states: IUserSchema['state'][]) => {
 
             if (mustConfirmEmail(userState, states)) {
                 return createResponse(res, 403, 'User has not confirmed the email address.')
-            }
-
-            if (hasAlreadyConfirmedEmail(userState, states)) {
-                return createResponse(res, 403, 'The user has already confirmed the email address.')
             }
 
             if (!isInAcceptedState(userState, states)) {

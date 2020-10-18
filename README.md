@@ -79,7 +79,7 @@ A set of environment variables must be provided in order for the app to run.
 
 ## Documentation
 
-The full OpenAPI 3.0 documentation is available on [SwaggerHub](https://app.swaggerhub.com/apis/vladpirlog/takenote-api/1.0.0) or as a [YAML](openapi-docs.yaml) file.
+The full OpenAPI 3.0 documentation is available on [SwaggerHub](https://app.swaggerhub.com/apis/vladpirlog/takenote-api/1.0.0) or as a [YAML](42c-conf.yaml) file.
 
 ## Using a web server
 
