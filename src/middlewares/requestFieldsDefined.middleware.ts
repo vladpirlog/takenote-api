@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import isPropertyOfObject from '../utils/isPropertyOfObject.util'
-import deleteFile from '../utils/deleteFile.util'
 import isString from '../utils/isString.util'
 
 /**
@@ -15,7 +14,6 @@ const requestFieldsDefined = (location: 'body' | 'params' | 'query', fields: str
         if (fields.every(f => isPropertyOfObject(f, req[location]) && isString(req[location][f]))) {
             return next()
         }
-        if (req.files?.photo) deleteFile(req.files.photo)
         return createResponse(res, 422)
     }
 }

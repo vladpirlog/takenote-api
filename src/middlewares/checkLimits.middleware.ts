@@ -4,7 +4,6 @@ import { NextFunction, Request, Response } from 'express'
 import getAuthUser from '../utils/getAuthUser.util'
 import createResponse from '../utils/createResponse.util'
 import splitTagsString from '../utils/splitTagsString.util'
-import deleteFile from '../utils/deleteFile.util'
 
 /**
  * Middleware function for checking the note limit.
@@ -43,11 +42,9 @@ const forPermissionOrAttachment = (type: 'attachments' | 'permissions') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params
-            const file = req.files?.photo
 
             const length = await limitsQuery.permissionOrAttachment(type)(id, getAuthUser(res)?._id)
             if (length === undefined || length + 1 > constants.limits.perNote[type]) {
-                if (file) deleteFile(file)
                 return createResponse(res, 400, `Limit for ${type} exceeded.`)
             }
             return next()
