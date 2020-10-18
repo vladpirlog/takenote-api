@@ -2,6 +2,11 @@ import { IUserSchema } from '../models/User'
 import mongoose, { Schema, Document } from 'mongoose'
 import createID from '../utils/createID.util'
 
+export enum PermissionLevel {
+    read = 0,
+    readWrite = 1,
+}
+
 /**
  * Schema describing a permission, containing a subject and a level (read or read-write).
  */
@@ -12,11 +17,6 @@ export interface IPermissionSchema extends Document {
         email: IUserSchema['email']
     },
     level: PermissionLevel
-}
-
-export enum PermissionLevel {
-    read = 0,
-    readWrite = 1,
 }
 
 export const PermissionSchema: Schema = new Schema({
