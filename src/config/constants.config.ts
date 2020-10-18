@@ -31,6 +31,9 @@ export default {
             bucketName: process.env.GOOGLE_BUCKET_NAME || ''
         }
     },
+    moesif: {
+        apiKey: process.env.MOESIF_API_KEY || ''
+    },
     authentication: {
         authJWTSecret: process.env.AUTH_JWT_SECRET || 'jwt_secret',
         authCookieExpires: 2 * 60 * 60 * 1000, // time in ms
@@ -57,7 +60,7 @@ export default {
     regex: {
         username: /^[a-zA-Z0-9_-]{4,16}$/,
         email: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/,
-        password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&-_.,/\\])[A-Za-z\d@$!%*?&-_.,/\\]{8,24}$/,
+        password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&\-_.,/\\])[A-Za-z\d@$!%*?&\-_.,/\\]{8,24}$/,
         attachment: {
             title: /^[ -~]{0,32}$/,
             description: /^[ -~]{0,256}$/

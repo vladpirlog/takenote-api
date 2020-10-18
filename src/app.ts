@@ -14,6 +14,7 @@ import createResponse from './utils/createResponse.util'
 import helmet from 'helmet'
 import errorHandler from './middlewares/errorHandler.middleware'
 import hpp from 'hpp'
+import moesifLoggingMiddleware from './config/moesif.config'
 const cloudinary = require('cloudinary').v2
 
 /**
@@ -49,6 +50,7 @@ app.use(cors({
 }))
 
 app.use(extractUser.fromAuthCookie)
+if (app.get('env') === 'production') app.use(moesifLoggingMiddleware)
 app.use(rateLimiting.forRequests)
 
 app.use('/auth', authRoute)
