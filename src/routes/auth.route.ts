@@ -86,6 +86,7 @@ router.post(
     requestFieldsDefined('query', ['token']),
     requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
     regexTest.newPassword,
+    recaptcha,
     authPasswordController.submitToken
 )
 
