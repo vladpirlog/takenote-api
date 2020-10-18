@@ -14,6 +14,7 @@ import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import checkLimits from '../middlewares/checkLimits.middleware'
+import deleteFile from '../middlewares/deleteFile.middleware'
 
 const router = Router()
 
@@ -121,6 +122,7 @@ router.post(
         tempFileDir: './temp/',
         useTempFiles: true
     }),
+    deleteFile,
     requestFieldsDefined('params', ['id']),
     regexTest.attachment,
     attachmentMetadata,

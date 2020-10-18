@@ -1,6 +1,5 @@
 import { UploadedFile } from 'express-fileupload'
 import { IUserSchema } from '../models/User'
-import deleteFile from './deleteFile.util'
 import constants from '../config/constants.config'
 import { INoteSchema } from '../models/Note'
 const cloudinary = require('cloudinary').v2
@@ -18,32 +17,25 @@ const uploadFile = async (
     userID: IUserSchema['_id'],
     noteID: INoteSchema['_id']
 ): Promise<INoteSchema['attachments'][0]['url']> => {
-    try {
-        if (constants.nodeEnv === 'production') {
-            const storage = new Storage()
-            const options = {
-                gzip: true,
-                metadata: {
-                    cacheControl: 'public, max-age=31536000'
-                },
-                destination: `${userID}/${noteID}/${new Date().getTime().toString()}-${file.name}`
-            }
-
-            const [result] = await storage.bucket(constants.storage.google.bucketName).upload(file.tempFilePath, options)
-            const [metadata] = await result.getMetadata()
-            deleteFile(file)
-
-            return encodeURI(`${constants.domain.staticURL}/${metadata.name}`)
-        } else {
-            const result = await cloudinary.uploader.upload(file.tempFilePath, {
-                folder: `${userID}/`
-            })
-            deleteFile(file)
-            return result.secure_url
+    if (constants.nodeEnv === 'production') {
+        const storage = new Storage()
+        const options = {
+            gzip: true,
+            metadata: {
+                cacheControl: 'public, max-age=31536000'
+            },
+            destination: `${userID}/${noteID}/${new Date().getTime().toString()}-${file.name}`
         }
-    } catch (err) {
-        deleteFile(file)
-        throw err
+
+        const [result] = await storage.bucket(constants.storage.google.bucketName).upload(file.tempFilePath, options)
+        const [metadata] = await result.getMetadata()
+
+        return encodeURI(`${constants.domain.staticURL}/${metadata.name}`)
+    } else {
+        const result = await cloudinary.uploader.upload(file.tempFilePath, {
+            folder: `${userID}/`
+        })
+        return result.secure_url
     }
 }
 
