@@ -93,7 +93,7 @@ export default {
     limits: {
         perUser: {
             request: 100, // # of requests per minute from an IP addr
-            email: 8, // # of emails per minute sent to an IP addr
+            email: 4, // # of emails per minute sent to an IP addr
             notes: 1000
         },
         perNote: {
