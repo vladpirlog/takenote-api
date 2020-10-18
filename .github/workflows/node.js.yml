@@ -35,6 +35,7 @@ jobs:
           EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
           EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
           EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          MOESIF_API_KEY: ${{ secrets.MOESIF_API_KEY }}
 
   deploy:
 
