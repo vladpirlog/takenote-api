@@ -8,7 +8,7 @@ const getByTag = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { tag, match } = req.query
         const notes = await noteTagsQuery.get(
-            getAuthUser(res)?._id,
+            getAuthUser(res).id,
             tag as string,
             match === 'true')
         return createResponse(res, 200, 'Notes fetched.', { notes })
@@ -24,11 +24,11 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
         if (!tagsArray) return createResponse(res, 400)
 
         const newNote = await noteTagsQuery.add(
-            id, getAuthUser(res)?._id, tagsArray
+            id, getAuthUser(res).id, tagsArray
         )
         return newNote
             ? createResponse(res, 200, 'Tags added.', {
-                tags: newNote.tags
+                tags: newNote.getPublicInfo(getAuthUser(res).id).tags || []
             }) : createResponse(res, 400, 'Couldn\'t add tags.')
     } catch (err) { return next(err) }
 }
@@ -36,19 +36,18 @@ const addTags = async (req: Request, res: Response, next: NextFunction) => {
 const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const tagsArray = splitTagsString(req.query.tags as string)
+        const { tags } = req.query
 
-        if (
-            !Array.isArray(tagsArray) ||
-            tagsArray.length === 0 ||
-            tagsArray.includes('')
-        ) { return createResponse(res, 400, 'Tags field invalid.') }
+        const tagsArray = splitTagsString(tags as string)
+        if (!tagsArray) return createResponse(res, 400)
 
         const newNote = await noteTagsQuery.delete(
-            id, getAuthUser(res)?._id, tagsArray
+            id, getAuthUser(res).id, tagsArray
         )
         return newNote
-            ? createResponse(res, 200, 'Tags deleted.', { tags: newNote.tags })
+            ? createResponse(res, 200, 'Tags deleted.', {
+                tags: newNote.getPublicInfo(getAuthUser(res).id).tags || []
+            })
             : createResponse(res, 400, 'Couldn\'t delete tags.')
     } catch (err) { return next(err) }
 }

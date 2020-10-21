@@ -1,69 +1,75 @@
-import Note, { INoteSchema } from '../models/Note'
+import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
-import Attachment from '../models/Attachment'
+import Attachment, { IAttachmentSchema } from '../models/Attachment'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
+import getNoteRole from './getNoteRole.query'
 
 /**
- * Adds an attachment(title, description, url) to a note.
+ * Adds an attachment (title, description, url) to a note.
  * @param noteID id of the note
- * @param userID id of the note's owner
- * @param data object of type attachment
+ * @param userID id of the note's owner or editor
+ * @param data object of mandatory url field and optional title and description fields
  */
-const addAttachment = (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    data: {
-        url: INoteSchema['attachments'][0]['url'],
-        title?: INoteSchema['attachments'][0]['title'],
-        description?: INoteSchema['attachments'][0]['description'],
-    }
+const addAttachment = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    data: Pick<IAttachmentSchema, 'url'> & Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
+    const role = await getNoteRole(noteID, userID)
+    if (role !== NoteRole.OWNER && role !== NoteRole.EDITOR) return null
+
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        { $push: { attachments: new Attachment({ ...removeUndefinedProps(data) }) } },
+        { id: noteID },
+        { $push: { attachments: new Attachment(removeUndefinedProps(data)) } },
         { new: true }
     ).exec()
 }
 
 /**
- * Updated an attachment of a note.
+ * Updates a note's attachment.
  * @param noteID id of the note
- * @param userID id of the note's owner
- * @param newAttachment object of type Attachment
+ * @param userID id of the note's owner or editor
+ * @param attachmentID id of the attachment to be updated
+ * @param data object with optional properties of title and description
  */
-const editAttachment = (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    attachmentID: INoteSchema['attachments'][0]['_id'],
-    data: {
-        title?: INoteSchema['attachments'][0]['title'],
-        description?: INoteSchema['attachments'][0]['description']
-    }
+const editAttachment = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    attachmentID: IAttachmentSchema['id'],
+    data: Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
+    const role = await getNoteRole(noteID, userID)
+    if (role !== NoteRole.OWNER && role !== NoteRole.EDITOR) return null
+
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID, 'attachments._id': attachmentID },
-        removeUndefinedProps({
-            'attachments.$.title': data.title,
-            'attachments.$.description': data.description
-        }),
+        { id: noteID, 'attachments.id': attachmentID },
+        {
+            $set: removeUndefinedProps({
+                'attachments.$.title': data.title,
+                'attachments.$.description': data.description
+            })
+        },
         { new: true }
     ).exec()
 }
 
 /**
- * Remove an attachment from a note.
+ * Removes an attachment from a note.
  * @param noteID id of the note
- * @param userID id of the note's owner
- * @param attachmentURL the url of the attachment to be removed
+ * @param userID id of the note's owner or editor
+ * @param attachmentID the id of the attachment to be removed
  */
-const deleteAttachment = (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    attachmentID: INoteSchema['attachments'][0]['_id']
+const deleteAttachment = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    attachmentID: INoteSchema['attachments'][0]['id']
 ) => {
+    const role = await getNoteRole(noteID, userID)
+    if (role !== NoteRole.OWNER && role !== NoteRole.EDITOR) return null
+
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        { $pull: { attachments: { _id: attachmentID } } },
+        { id: noteID },
+        { $pull: { attachments: { id: attachmentID } } },
         { new: true }
     ).exec()
 }

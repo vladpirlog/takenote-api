@@ -8,13 +8,17 @@ import { IUserSchema } from '../models/User'
  * @param exactMatch if true, no RegExp pattern search will be made
  */
 const getByTag = (
-    userID: IUserSchema['_id'],
-    tag: INoteSchema['tags'][0],
+    userID: IUserSchema['id'],
+    tag: string,
     exactMatch: boolean
 ) => {
     return Note.find({
-        owner: userID,
-        tags: (exactMatch ? tag : new RegExp(tag))
+        users: {
+            $elemMatch: {
+                'subject.id': userID,
+                tags: (exactMatch ? tag : new RegExp(tag))
+            }
+        }
     }).exec()
 }
 
@@ -24,15 +28,15 @@ const getByTag = (
  */
 const addDeleteTags = (type: 'add' | 'delete') => {
     return (
-        noteID: INoteSchema['_id'],
-        userID: IUserSchema['_id'],
-        tags: INoteSchema['tags']
+        noteID: INoteSchema['id'],
+        userID: IUserSchema['id'],
+        tags: string[]
     ) => {
         return Note.findOneAndUpdate(
-            { _id: noteID, owner: userID },
+            { id: noteID, 'users.subject.id': userID },
             type === 'add'
-                ? { $addToSet: { tags: { $each: tags } } }
-                : { $pull: { tags: { $in: tags } } },
+                ? { $addToSet: { 'users.$.tags': { $each: tags } } }
+                : { $pull: { 'users.$.tags': { $in: tags } } },
             { new: true }
         ).exec()
     }
