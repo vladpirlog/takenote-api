@@ -13,7 +13,7 @@ import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interfac
  */
 const setAuthCookie = (res: Response, user: IUserSchema): Response => {
     const token = authJWT.generateAuthJWT({
-        _id: user.id,
+        id: user.id,
         role: user.role,
         state: user.state
     })
@@ -23,7 +23,8 @@ const setAuthCookie = (res: Response, user: IUserSchema): Response => {
         ),
         httpOnly: true,
         sameSite: 'lax',
-        secure: constants.protocol === 'https'
+        secure: constants.protocol === 'https',
+        domain: constants.nodeEnv === 'production' ? constants.domain.baseDomain : ''
     })
     return res
 }
@@ -41,7 +42,7 @@ const clearAuthCookie = (res: Response): Response => {
 const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Response> => {
     const tfaCookieID = createID('tfa')
     const userData: IAuthenticatedUserInfo = {
-        _id: user.id, state: user.state, role: user.role
+        id: user.id, state: user.state, role: user.role
     }
     const redisClient = await redisConfig.getClient()
     await new Promise((resolve, reject) => {
@@ -61,7 +62,8 @@ const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Respo
         ),
         httpOnly: true,
         sameSite: 'lax',
-        secure: constants.protocol === 'https'
+        secure: constants.protocol === 'https',
+        domain: constants.nodeEnv === 'production' ? constants.domain.baseDomain : ''
     })
     return res
 }
