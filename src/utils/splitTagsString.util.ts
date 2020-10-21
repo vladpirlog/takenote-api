@@ -1,4 +1,3 @@
-import { INoteSchema } from '../models/Note'
 import constants from '../config/constants.config'
 import checkRegex from './checkRegex.util'
 
@@ -6,7 +5,7 @@ import checkRegex from './checkRegex.util'
  * Splits and tests a tags string. Returns an array of tags.
  * @param str string to parse
  */
-const splitTagsString = (str: string): INoteSchema['tags'] | null => {
+const splitTagsString = (str: string): string[] | null => {
     const tagsArray = str.toLowerCase().split(',')
     if (
         tagsArray.includes('') ||

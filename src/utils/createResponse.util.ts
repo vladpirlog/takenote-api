@@ -7,28 +7,17 @@ import httpErrors from 'http-errors'
  * @param res the Express response object used to send back data to the http request
  * @param statusCode the status code included in the response as the "status" field; defaults to 404
  * @param message a brief description of the response
- * @param others some other props to be included in the response
+ * @param others other props to be included in the response
  */
 const createResponse = (
     res: Response,
-    statusCode?: number,
+    statusCode: number = 404,
     message?: string,
     others?: object
-): Response => {
-    if (!message && !others && statusCode) {
-        return res.status(statusCode).json({
-            status: statusCode,
-            message: statusCode < 300 ? 'OK' : httpErrors(statusCode).message
-        })
-    }
-    if (!message && !others && !statusCode) {
-        return res
-            .status(404)
-            .json({ status: 404, message: httpErrors(404).message })
-    }
-    return res.status(statusCode || 404).json({
-        status: statusCode || 404,
-        message: message || 'Not Found',
+) => {
+    return res.status(statusCode).json({
+        status: statusCode,
+        message: message || (statusCode < 300 ? 'OK' : httpErrors(statusCode).message),
         ...others
     })
 }

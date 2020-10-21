@@ -5,12 +5,12 @@ import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interfac
  * Returns null or an object containing essential info about the user that made the request.
  * @param res object of type express.Response
  */
-const getAuthUser = (res: Response): IAuthenticatedUserInfo | null => {
+const getAuthUser = (res: Response): IAuthenticatedUserInfo => {
     return res.locals.user ? {
-        _id: res.locals.user._id,
+        id: res.locals.user.id,
         role: res.locals.user.role,
         state: res.locals.user.state
-    } : null
+    } : { id: '', role: '', state: '' }
 }
 
 export default getAuthUser

@@ -1,17 +1,18 @@
-import User, { IUserSchema } from '../models/User'
+import User, { IUserSchema, State } from '../models/User'
 import createNewToken from '../utils/createNewToken.util'
 import bcrypt from 'bcrypt'
 import { MongooseUpdateQuery } from 'mongoose'
-import { State } from '../interfaces/state.enum'
+import { ITokenSchema } from '../models/Token'
+import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 
 /**
  * Searches for and returns a user using its id.
  * @param userID id of a user
  */
 const getById = (
-    userID: IUserSchema['_id']
+    userID: IUserSchema['id']
 ) => {
-    return User.findById(userID).exec()
+    return User.findOne({ id: userID }).exec()
 }
 
 /**
@@ -36,24 +37,22 @@ const getByUsernameOrEmail = (
  * @param type the type of token given as argument
  */
 const getByToken = (
-    token:
-        | IUserSchema['resetToken']['_id']
-        | IUserSchema['confirmationToken']['_id'],
-    type: 'reset' | 'confirmation' | 'any'
+    token: ITokenSchema['id'],
+    type?: 'reset' | 'confirmation'
 ) => {
     if (type === 'reset') {
         return User.findOne({
-            'resetToken._id': token
+            'resetToken.id': token
         }).exec()
     } else if (type === 'confirmation') {
         return User.findOne({
-            'confirmationToken._id': token
+            'confirmationToken.id': token
         }).exec()
     } else {
         return User.findOne({
             $or: [
-                { 'resetToken._id': token },
-                { 'confirmationToken._id': token }
+                { 'resetToken.id': token },
+                { 'confirmationToken.id': token }
             ]
         }).exec()
     }
@@ -63,13 +62,8 @@ const getByToken = (
  * Creates a new user with the properties given.
  * @param props object representing basic user info to be added to the database
  */
-const createNewUser = (props: {
-    username: IUserSchema['username'];
-    email: IUserSchema['email'];
-    password: IUserSchema['password'];
-    confirmationToken: IUserSchema['confirmationToken'];
-}) => {
-    const newUser = new User(props)
+const createNewUser = (props: Pick<IUserSchema, 'username' | 'email' | 'password'>) => {
+    const newUser = new User({ ...props, confirmationToken: createNewToken('confirmation') })
     return newUser.save()
 }
 
@@ -77,11 +71,7 @@ const createNewUser = (props: {
  * Creates a new OAuth user with the properties given.
  * @param props object representing basic user info and OAuth data to be added to the database
  */
-const createNewOAuthUser = (props: {
-    username: IUserSchema['username'],
-    email: IUserSchema['email'],
-    oauth: IUserSchema['oauth']
-}) => {
+const createNewOAuthUser = (props: Pick<IUserSchema, 'username' | 'email' | 'oauth'>) => {
     const newUser = new User({
         ...props, state: State.ACTIVE
     })
@@ -94,11 +84,11 @@ const createNewOAuthUser = (props: {
  * @param state the state to be set for that user
  */
 const setUserState = (
-    userID: IUserSchema['_id'],
+    userID: IUserSchema['id'],
     state: IUserSchema['state']
 ) => {
-    return User.findByIdAndUpdate(
-        userID,
+    return User.findOneAndUpdate(
+        { id: userID },
         { $unset: { confirmationToken: '' }, state: state },
         { new: true }
     ).exec()
@@ -113,7 +103,7 @@ const setNewToken = (
     identifier:
         | IUserSchema['email']
         | IUserSchema['username']
-        | IUserSchema['_id'],
+        | IUserSchema['id'],
     type: 'reset' | 'confirmation'
 ) => {
     let updateQuery: MongooseUpdateQuery<IUserSchema>
@@ -125,7 +115,7 @@ const setNewToken = (
             $or: [
                 { username: identifier },
                 { email: identifier },
-                { _id: identifier }
+                { id: identifier }
             ]
         },
         updateQuery,
@@ -140,12 +130,12 @@ const setNewToken = (
  */
 const setNewPassword = async (
     newPassword: string,
-    token: IUserSchema['resetToken']['_id']
+    token: ITokenSchema['id']
 ) => {
     const hash = await bcrypt.hash(newPassword, 12)
     return User.findOneAndUpdate(
         {
-            'resetToken._id': token
+            'resetToken.id': token
         },
         {
             password: hash,
@@ -155,28 +145,36 @@ const setNewPassword = async (
     ).exec()
 }
 
-const set2faData = (userID: IUserSchema['_id'], data: {
+/**
+ * Sets new properties on the twoFactorAuth field of a user
+ * @param userID id of a user
+ * @param data 2fa data to be set
+ */
+const set2faData = (userID: IUserSchema['id'], data: {
     active?: IUserSchema['twoFactorAuth']['active'],
     nextCheck?: IUserSchema['twoFactorAuth']['nextCheck'],
     secret?: IUserSchema['twoFactorAuth']['secret'],
     backupCodes?: IUserSchema['twoFactorAuth']['backupCodes']
 }) => {
-    const updateQuery: any = {}
-    if (data.active !== undefined) updateQuery['twoFactorAuth.active'] = data.active
-    if (data.nextCheck !== undefined) updateQuery['twoFactorAuth.nextCheck'] = data.nextCheck
-    if (data.secret !== undefined) updateQuery['twoFactorAuth.secret'] = data.secret
-    if (data.backupCodes !== undefined) updateQuery['twoFactorAuth.backupCodes'] = data.backupCodes
-
-    return User.findByIdAndUpdate(
-        userID,
-        updateQuery,
+    return User.findOneAndUpdate(
+        { id: userID },
+        removeUndefinedProps({
+            'twoFactorAuth.active': data.active,
+            'twoFactorAuth.nextCheck': data.nextCheck,
+            'twoFactorAuth.secret': data.secret,
+            'twoFactorAuth.backupCodes': data.backupCodes
+        }),
         { new: true }
     ).exec()
 }
 
-const remove2faData = (userID: IUserSchema['_id']) => {
-    return User.findByIdAndUpdate(
-        userID,
+/**
+ * Returns the twoFactorAuth fields to their default values.
+ * @param userID id of a user
+ */
+const remove2faData = (userID: IUserSchema['id']) => {
+    return User.findOneAndUpdate(
+        { id: userID },
         { twoFactorAuth: { nextCheck: 0, active: false, backupCodes: [] } },
         { new: true }
     ).exec()

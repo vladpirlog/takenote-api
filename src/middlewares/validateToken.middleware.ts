@@ -5,37 +5,23 @@ import getUnixTime from '../utils/getUnixTime.util'
 import { ITokenSchema } from '../models/Token'
 
 /**
- * Higher order function for validating a user's token
- * @returns a middleware function
- * @param tokenType the type of token to verify
- * @param isFinalMiddleware if true will send a 200 response, else will call the next middleware
+ * Middleware used for checking the expiration time of a given token.
  */
-const validateToken = (
-    tokenType: 'reset' | 'confirmation' | 'any',
-    isFinalMiddleware: boolean
-) => {
-    return async (req: Request, res: Response, next: NextFunction) => {
-        try {
-            const { token } = req.query
-            const user = await userQuery.getByToken(
-                token as ITokenSchema['_id'],
-                tokenType
-            )
-            if (!user) { return createResponse(res, 401, 'Couldn\'t validate token.') }
+const validateToken = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { token } = req.query
+        const user = await userQuery.getByToken(token as ITokenSchema['id'])
 
-            let expirationTime: number
-            if (user.resetToken?.id === token) {
-                expirationTime = user.resetToken.exp
-            } else expirationTime = user.confirmationToken.exp
+        if (!user) { return createResponse(res, 401, 'Couldn\'t validate token.') }
 
-            if (getUnixTime() <= expirationTime) {
-                return isFinalMiddleware
-                    ? createResponse(res, 200, 'Token valid.')
-                    : next()
-            }
-            return createResponse(res, 401, 'Token expired.')
-        } catch (err) { return next(err) }
-    }
+        const expTime = [user.confirmationToken, user.resetToken]
+            .filter(elem => elem && elem.id === token)[0]?.exp
+
+        if (expTime && getUnixTime() <= expTime) {
+            return createResponse(res, 200, 'Token valid.')
+        }
+        return createResponse(res, 401, 'Token expired.')
+    } catch (err) { return next(err) }
 }
 
 export default validateToken

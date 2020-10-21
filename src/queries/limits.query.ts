@@ -1,44 +1,26 @@
-import Note, { INoteSchema } from '../models/Note'
+import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
 
-const note = (userID: IUserSchema['_id']) => {
-    return Note.find({ owner: userID }).countDocuments().exec()
+const note = (userID: IUserSchema['id']) => {
+    return Note.find({
+        'users.subject.id': userID, 'users.role': NoteRole.OWNER
+    }).countDocuments().exec()
 }
 
 const tag = async (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id']
-): Promise<number | undefined> => {
-    const output = await Note.aggregate([
-        {
-            $match: { _id: noteID, owner: userID }
-        },
-        {
-            $project: { tagsLength: { $size: '$tags' } }
-        }
-    ]).exec()
-    return output[0].tagsLength
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id']
+) => {
+    const note = await Note.findOne({ id: noteID, 'users.subject.id': userID }).exec()
+    return note?.users.find(u => u.subject.id === userID)?.tags.length || 0
 }
 
-const permissionOrAttachment = (type: 'permissions' | 'attachments') => {
-    return async (
-        noteID: INoteSchema['_id'],
-        userID: IUserSchema['_id']
-    ): Promise<number | undefined> => {
-        const output = await Note.aggregate([
-            {
-                $match: { _id: noteID, owner: userID }
-            },
-            {
-                $project: { length: { $size: `$${type}` } }
-            }
-        ]).exec()
-        return output[0].length
-    }
+const attachment = (noteID: INoteSchema['id']) => {
+    return Note.findOne({ id: noteID }).then(n => n?.attachments.length || 0)
 }
 
-export default {
-    note,
-    tag,
-    permissionOrAttachment
+const collaborator = (noteID: INoteSchema['id']) => {
+    return Note.findOne({ id: noteID }).then(n => n?.users.filter(u => u.role !== NoteRole.OWNER).length || 0)
 }
+
+export default { note, tag, attachment, collaborator }
