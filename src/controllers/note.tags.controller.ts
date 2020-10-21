@@ -15,41 +15,24 @@ const getByTag = async (req: Request, res: Response, next: NextFunction) => {
     } catch (err) { return next(err) }
 }
 
-const addTags = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params
-        const { tags } = req.query
+const addOrDeleteTags = (operation: 'add' | 'delete') => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id } = req.params
+            const { tags } = req.query
 
-        const tagsArray = splitTagsString(tags as string)
-        if (!tagsArray) return createResponse(res, 400)
+            const tagsArray = splitTagsString(tags as string)
+            if (!tagsArray) return createResponse(res, 400)
 
-        const newNote = await noteTagsQuery.add(
-            id, getAuthUser(res).id, tagsArray
-        )
-        return newNote
-            ? createResponse(res, 200, 'Tags added.', {
-                tags: newNote.getPublicInfo(getAuthUser(res).id).tags || []
-            }) : createResponse(res, 400, 'Couldn\'t add tags.')
-    } catch (err) { return next(err) }
+            const newNote = operation === 'add'
+                ? await noteTagsQuery.add(id, getAuthUser(res).id, tagsArray)
+                : await noteTagsQuery.delete(id, getAuthUser(res).id, tagsArray)
+            return newNote
+                ? createResponse(res, 200, operation === 'add' ? 'Tags added.' : 'Tags deleted.', {
+                    tags: newNote.getPublicInfo(getAuthUser(res).id).tags || []
+                }) : createResponse(res, 400, 'Couldn\'t add tags.')
+        } catch (err) { return next(err) }
+    }
 }
 
-const deleteTags = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params
-        const { tags } = req.query
-
-        const tagsArray = splitTagsString(tags as string)
-        if (!tagsArray) return createResponse(res, 400)
-
-        const newNote = await noteTagsQuery.delete(
-            id, getAuthUser(res).id, tagsArray
-        )
-        return newNote
-            ? createResponse(res, 200, 'Tags deleted.', {
-                tags: newNote.getPublicInfo(getAuthUser(res).id).tags || []
-            })
-            : createResponse(res, 400, 'Couldn\'t delete tags.')
-    } catch (err) { return next(err) }
-}
-
-export default { getByTag, addTags, deleteTags }
+export default { getByTag, addTags: addOrDeleteTags('add'), deleteTags: addOrDeleteTags('delete') }
