@@ -23,13 +23,6 @@ describe('id creation testing', () => {
         expect(/^j[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
-    test('create permission id', () => {
-        const id = createID('permission')
-        expect(id).toHaveLength(constants.idInfo.permission.length +
-            constants.idInfo.permission.prefix.length)
-        expect(/^p[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
-    })
-
     test('create attachment id', () => {
         const id = createID('attachment')
         expect(id).toHaveLength(constants.idInfo.attachment.length +
