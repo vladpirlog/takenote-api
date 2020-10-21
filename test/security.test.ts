@@ -9,7 +9,7 @@ import Note, { INoteSchema } from '../src/models/Note'
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
     const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
-    let createdNoteID: INoteSchema['_id']
+    let createdNoteID: INoteSchema['id']
     let authCookie: string
 
     beforeAll(async () => {
@@ -25,7 +25,7 @@ describe('testing the security features of the api', () => {
         authCookie = res.header['set-cookie'][0]
 
         const res2 = await request.post('/notes')
-        createdNoteID = res2.body.note._id
+        createdNoteID = res2.body.note.id
     }, 30000)
 
     test('limit for # of tags per note', async () => {
@@ -84,7 +84,7 @@ describe('testing the security features of the api', () => {
     })
 
     afterAll(async () => {
-        await Note.findByIdAndDelete(createdNoteID)
+        await Note.findOneAndDelete({ id: createdNoteID })
         await mongodbConfig.close()
         await redisConfig.close()
     })

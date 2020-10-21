@@ -3,19 +3,19 @@ import app from '../src/app'
 import mongodbConfig from '../src/config/mongodb.config'
 import redisConfig from '../src/config/redis.config'
 import constants from '../src/config/constants.config'
-import { INoteSchema } from '../src/models/Note'
-import { PermissionLevel } from '../src/models/Permission'
+import { INoteSchema, NoteRole } from '../src/models/Note'
 import path from 'path'
 import { Color } from '../src/interfaces/color.enum'
+import { IUserSchema } from '../src/models/User'
 
 describe('test note-related operations', () => {
     const request = supertest.agent(app)
 
     const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
-    let createdNoteID: INoteSchema['_id']
+    let createdNoteID: INoteSchema['id']
     let createdNoteShareObject: INoteSchema['share']
-    let permissionID: INoteSchema['permissions'][0]['_id']
-    let attachmentID: INoteSchema['attachments'][0]['_id']
+    let attachmentID: INoteSchema['attachments'][0]['id']
+    let collaboratorID: IUserSchema['id']
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         await redisConfig.connect()
@@ -35,11 +35,15 @@ describe('test note-related operations', () => {
                 content: 'my-content'
             })
             .then((res) => {
-                createdNoteID = res.body.note._id
+                createdNoteID = res.body.note.id
                 expect(res.status).toBe(201)
-                expect(res.body.note).toHaveProperty('_id')
-                expect(res.body.note).toHaveProperty('owner')
-                expect(res.body.note).toHaveProperty('archived')
+                expect(res.body.note).toHaveProperty('id')
+                expect(res.body.note.owner).toHaveProperty('id')
+                expect(res.body.note.owner).toHaveProperty('username')
+                expect(res.body.note.owner).toHaveProperty('email')
+                expect(res.body.note.archived).toBe(false)
+                expect(res.body.note.color).toBe(Color.DEFAULT)
+                expect(res.body.note.fixed).toBe(false)
                 expect(res.body.note).toHaveProperty('createdAt')
                 expect(res.body.note).toHaveProperty('updatedAt')
                 expect(res.body.note.title).toBe('my-title')
@@ -87,6 +91,28 @@ describe('test note-related operations', () => {
             })
     }, 20000)
 
+    test('fix note', (done) => {
+        request
+            .put(`/notes/${createdNoteID}`)
+            .send({ fixed: 'true' })
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.note.fixed).toBe(true)
+                return done()
+            })
+    }, 20000)
+
+    test('unfix note', (done) => {
+        request
+            .put(`/notes/${createdNoteID}`)
+            .send({ fixed: 'false' })
+            .then((res) => {
+                expect(res.status).toBe(200)
+                expect(res.body.note.fixed).toBe(false)
+                return done()
+            })
+    }, 20000)
+
     test('duplicate note', (done) => {
         request
             .post(`/notes/${createdNoteID}/duplicate`)
@@ -94,7 +120,7 @@ describe('test note-related operations', () => {
                 expect(res.status).toBe(200)
                 expect(res.body.note.title).toBe('my-new-title')
                 expect(res.body.note.content).toBe('my-new-content')
-                expect(res.body.note._id).not.toBe(createdNoteID)
+                expect(res.body.note.id).not.toBe(createdNoteID)
                 return done()
             })
     }, 20000)
@@ -164,7 +190,7 @@ describe('test note-related operations', () => {
             })
     }, 20000)
 
-    test('add collaborator', (done) => {
+    test('add collaborator using its username', (done) => {
         request
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
@@ -172,16 +198,17 @@ describe('test note-related operations', () => {
                 type: 'r'
             })
             .then((res) => {
-                permissionID = res.body.permission._id
+                collaboratorID = res.body.collaborator.subject.id
                 expect(res.status).toBe(200)
-                expect(res.body.permission.level).toBe(PermissionLevel.read)
-                expect(res.body.permission).toHaveProperty('subject')
-                expect(res.body.permission).toHaveProperty('_id')
+                expect(res.body.collaborator.role).toBe(NoteRole.VIEWER)
+                expect(res.body.collaborator.subject).toHaveProperty('id')
+                expect(res.body.collaborator.subject).toHaveProperty('username')
+                expect(res.body.collaborator.subject).toHaveProperty('email')
                 return done()
             })
     }, 20000)
 
-    test('edit collaborator', (done) => {
+    test('edit collaborator using its email', (done) => {
         request
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
@@ -190,20 +217,17 @@ describe('test note-related operations', () => {
             })
             .then((res) => {
                 expect(res.status).toBe(200)
-                expect(res.body.permission.level).toBe(PermissionLevel.readWrite)
-                expect(res.body.permission).toHaveProperty('subject')
-                expect(res.body.permission).toHaveProperty('_id')
+                expect(res.body.collaborator.role).toBe(NoteRole.EDITOR)
+                expect(res.body.collaborator.subject).toHaveProperty('id')
+                expect(res.body.collaborator.subject).toHaveProperty('username')
+                expect(res.body.collaborator.subject).toHaveProperty('email')
                 return done()
             })
     }, 20000)
 
     test('delete collaborator', (done) => {
         request
-            .delete(`/notes/${createdNoteID}/share/collaborators/${permissionID}`)
-            .send({
-                user: constants.test.persistentUser2.email,
-                type: 'rw'
-            })
+            .delete(`/notes/${createdNoteID}/share/collaborators/${collaboratorID}`)
             .then((res) => {
                 expect(res.status).toBe(200)
                 return done()
@@ -253,11 +277,11 @@ describe('test note-related operations', () => {
             .field('description', 'my-description')
             .attach('photo', pngTestImage, { contentType: 'image/png' })
             .then((res) => {
-                attachmentID = res.body.attachment._id
+                attachmentID = res.body.attachment.id
                 expect(res.status).toBe(200)
                 expect(res.body.attachment.title).toBe('my-title')
                 expect(res.body.attachment.description).toBe('my-description')
-                expect(res.body.attachment).toHaveProperty('_id')
+                expect(res.body.attachment).toHaveProperty('id')
                 expect(res.body.attachment).toHaveProperty('url')
                 return done()
             })
@@ -274,7 +298,7 @@ describe('test note-related operations', () => {
                 expect(res.status).toBe(200)
                 expect(res.body.attachment.title).toBe('my-new-title')
                 expect(res.body.attachment.description).toBe('my-new-description')
-                expect(res.body.attachment).toHaveProperty('_id')
+                expect(res.body.attachment).toHaveProperty('id')
                 expect(res.body.attachment).toHaveProperty('url')
                 return done()
             })
@@ -292,8 +316,7 @@ describe('test note-related operations', () => {
     test('get note', (done) => {
         request.get(`/notes/${createdNoteID}`).then((res) => {
             expect(res.status).toBe(200)
-            expect(res.body.note).toHaveProperty('_id')
-            expect(res.body.note).toHaveProperty('owner')
+            expect(res.body.note).toHaveProperty('id')
             expect(res.body.note).toHaveProperty('createdAt')
             expect(res.body.note).toHaveProperty('updatedAt')
             expect(res.body.note).toHaveProperty('tags')
@@ -305,6 +328,11 @@ describe('test note-related operations', () => {
             expect(res.body.note.share).toHaveProperty('code')
             expect(res.body.note.share).toHaveProperty('active')
             expect(res.body.note.archived).toBe(false)
+            expect(res.body.note.fixed).toBe(false)
+            expect(res.body.note.owner).toHaveProperty('id')
+            expect(res.body.note.owner).toHaveProperty('username')
+            expect(res.body.note.owner).toHaveProperty('email')
+            expect(res.body.note.collaborators).toEqual([])
             return done()
         })
     }, 20000)
