@@ -6,6 +6,17 @@ import createID from './createID.util'
 import redisConfig from '../config/redis.config'
 import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interface'
 
+const setCookie = (res: Response, key: string, value: string, age: number) => {
+    res.cookie(key, value, {
+        expires: new Date(Date.now() + age),
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: constants.protocol === 'https',
+        domain: constants.nodeEnv === 'production' ? constants.domain.baseDomain : ''
+    })
+    return res
+}
+
 /**
  * Sets a JWT as an authentication cookie for the given user
  * @param res object of type express.Response
@@ -17,16 +28,12 @@ const setAuthCookie = (res: Response, user: IUserSchema): Response => {
         role: user.role,
         state: user.state
     })
-    res.cookie(constants.authentication.authCookieName, token, {
-        expires: new Date(
-            Date.now() + constants.authentication.authCookieExpires
-        ),
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: constants.protocol === 'https',
-        domain: constants.nodeEnv === 'production' ? constants.domain.baseDomain : ''
-    })
-    return res
+    return setCookie(
+        res,
+        constants.authentication.authCookieName,
+        token,
+        constants.authentication.authCookieAge
+    )
 }
 
 const clearAuthCookie = (res: Response): Response => {
@@ -48,7 +55,7 @@ const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Respo
     await new Promise((resolve, reject) => {
         redisClient.setex(
             tfaCookieID,
-            Math.floor(constants.authentication.tfaTempCookieExpires / 1000),
+            Math.floor(constants.authentication.tfaTempCookieAge / 1000),
             JSON.stringify(userData),
             (err, res) => {
                 if (err) return reject(err)
@@ -56,16 +63,12 @@ const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Respo
             }
         )
     })
-    res.cookie(constants.authentication.tfaTempCookieName, tfaCookieID, {
-        expires: new Date(
-            Date.now() + constants.authentication.tfaTempCookieExpires
-        ),
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: constants.protocol === 'https',
-        domain: constants.nodeEnv === 'production' ? constants.domain.baseDomain : ''
-    })
-    return res
+    return setCookie(
+        res,
+        constants.authentication.tfaTempCookieName,
+        tfaCookieID,
+        constants.authentication.tfaTempCookieAge
+    )
 }
 
 const clearTfaTempCookie = async (req: Request, res: Response): Promise<Response> => {

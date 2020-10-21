@@ -36,8 +36,8 @@ export default {
     },
     authentication: {
         authJWTSecret: process.env.AUTH_JWT_SECRET || 'jwt_secret',
-        authCookieExpires: 2 * 60 * 60 * 1000, // time in ms
-        tfaTempCookieExpires: 15 * 60 * 1000, // time in ms
+        authCookieAge: 2 * 60 * 60 * 1000, // time in ms
+        tfaTempCookieAge: 15 * 60 * 1000, // time in ms
         tfaRememberDuration: 30 * 24 * 60 * 60, // time in s
         authCookieName: 'access_token',
         tfaTempCookieName: 'temp_token',
