@@ -35,38 +35,29 @@ const forTag = async (req: Request, res: Response, next: NextFunction) => {
 }
 
 /**
- * Middleware function for checking the attachments limit for a note.
+ * Higher-order function.
+ * Returns a middleware function for checking the attachments or collaborators limit for a note.
  */
-const forAttachment = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params
+const forAttachmentOrCollaborator = (type: 'attachment' | 'collaborator') => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id } = req.params
 
-        const length = await limitsQuery.attachment(id)
-        if (length + 1 > constants.limits.perNote.attachments) {
-            return createResponse(res, 400, 'Limit for attachments exceeded.')
-        }
-        return next()
-    } catch (err) { return next(err) }
-}
-
-/**
- * Middleware function for checking the collaborators limit for a note.
- */
-const forCollaborator = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params
-
-        const length = await limitsQuery.collaborator(id)
-        if (length + 1 > constants.limits.perNote.collaborators) {
-            return createResponse(res, 400, 'Limit for collaborators exceeded.')
-        }
-        return next()
-    } catch (err) { return next(err) }
+            const length = await limitsQuery[type](id)
+            const limit = type === 'attachment'
+                ? constants.limits.perNote.attachments
+                : constants.limits.perNote.collaborators
+            if (length + 1 > limit) {
+                return createResponse(res, 400, `Limit for ${type}s exceeded.`)
+            }
+            return next()
+        } catch (err) { return next(err) }
+    }
 }
 
 export default {
     forNote,
     forTag,
-    forAttachment,
-    forCollaborator
+    forAttachment: forAttachmentOrCollaborator('attachment'),
+    forCollaborator: forAttachmentOrCollaborator('collaborator')
 }
