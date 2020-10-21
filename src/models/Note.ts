@@ -1,36 +1,48 @@
 import mongoose, { Schema, Document } from 'mongoose'
 import { AttachmentSchema, IAttachmentSchema } from './Attachment'
-import { PermissionSchema, IPermissionSchema } from './Permission'
 import { Color } from '../interfaces/color.enum'
 import { IUserSchema } from './User'
 import createID from '../utils/createID.util'
 
 export interface INoteSchema extends Document {
+    id: string
     title: string
     content: string
-    owner: IUserSchema['_id']
-    permissions: IPermissionSchema[]
     attachments: IAttachmentSchema[]
-    tags: string[]
     share: { code: string, active: boolean }
+    users: {
+        subject: {
+            id: IUserSchema['id']
+            username: IUserSchema['username']
+            email: IUserSchema['email']
+        }
+        tags: string[]
+        archived: boolean
+        color: Color
+        role: NoteRole
+        fixed: boolean
+    }[]
     createdAt: Date
     updatedAt: Date
-    archived: boolean
-    color: Color
-    getShareURL(): string
+    getPublicInfo(userID?: IUserSchema['id']): PublicNoteInfo
 }
 
-export interface INoteBody {
-    title?: INoteSchema['title']
-    content?: INoteSchema['content']
-    archived?: INoteSchema['archived']
-    color?: INoteSchema['color']
-    share?: INoteSchema['share']
+export type PublicNoteInfo =
+    Pick<INoteSchema, 'id' | 'title' | 'content' | 'attachments' | 'share' | 'createdAt' | 'updatedAt'>
+    & { owner: INoteSchema['users'][0]['subject'] }
+    & Partial<Omit<INoteSchema['users'][0], 'subject'> & {
+        collaborators: Pick<INoteSchema['users'][0], 'subject' | 'role'>[],
+    }>
+
+export enum NoteRole {
+    OWNER = 'owner',
+    EDITOR = 'editor',
+    VIEWER = 'viewer'
 }
 
-export const NoteSchema: Schema = new Schema(
+export const NoteSchema = new Schema<INoteSchema>(
     {
-        _id: {
+        id: {
             type: String,
             required: true,
             default: () => createID('note')
@@ -43,23 +55,50 @@ export const NoteSchema: Schema = new Schema(
             type: String,
             required: false
         },
-        owner: {
-            type: String,
-            required: true,
-            ref: 'User'
-        },
         attachments: {
             type: [AttachmentSchema],
             required: false
         },
-        tags: {
-            type: [String],
-            required: false
-        },
-        permissions: {
-            type: [PermissionSchema],
-            required: false
-        },
+        users: [{
+            subject: {
+                id: {
+                    type: String,
+                    required: true,
+                    ref: 'User'
+                },
+                username: {
+                    type: String,
+                    required: true
+                },
+                email: {
+                    type: String,
+                    required: true
+                }
+            },
+            role: {
+                type: NoteRole,
+                required: true
+            },
+            tags: {
+                type: [String],
+                required: false
+            },
+            color: {
+                type: Color,
+                default: Color.DEFAULT,
+                required: true
+            },
+            archived: {
+                type: Boolean,
+                default: false,
+                required: true
+            },
+            fixed: {
+                type: Boolean,
+                default: false,
+                required: true
+            }
+        }],
         share: {
             code: {
                 type: String,
@@ -70,26 +109,51 @@ export const NoteSchema: Schema = new Schema(
                 default: false,
                 required: true
             }
-        },
-        color: {
-            type: String,
-            default: Color.DEFAULT,
-            required: true
-        },
-        archived: {
-            type: Boolean,
-            default: false,
-            required: true
         }
     },
-    { timestamps: true }
+    { timestamps: true, id: false }
 )
 
 /**
- * Returns the full path to a shared note, using the share code.
+ * Returns public note data that can be viewed by the frontend.
+ * @param userID id of the user which requests the note
  */
-NoteSchema.methods.getShareURL = function () {
-    return `/shared/${this.share.code}`
+NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
+    const owner = this.users.find(u => u.role === 'owner')
+    if (!owner) throw new Error('Note has no owner.')
+
+    const user = this.users.find(u => u.subject.id === userID)
+    if (!userID || !user) {
+        return {
+            id: this.id,
+            title: this.title,
+            content: this.content,
+            attachments: this.attachments,
+            createdAt: this.createdAt,
+            updatedAt: this.updatedAt,
+            share: this.share,
+            owner: owner.subject
+        }
+    }
+    return {
+        id: this.id,
+        title: this.title,
+        content: this.content,
+        attachments: this.attachments,
+        createdAt: this.createdAt,
+        updatedAt: this.updatedAt,
+        share: this.share,
+        owner: owner.subject,
+        archived: user.archived,
+        color: user.color,
+        fixed: user.fixed,
+        tags: user.tags,
+        collaborators: owner.subject.id === user.subject.id
+            ? this.users.filter(u => u.role !== 'owner').map(u => {
+                return { subject: u.subject, role: u.role }
+            })
+            : [{ subject: user.subject, role: user.role }]
+    }
 }
 
 export default mongoose.model<INoteSchema>('Note', NoteSchema)

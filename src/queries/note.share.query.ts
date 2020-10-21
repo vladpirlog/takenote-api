@@ -1,58 +1,110 @@
-import Note, { INoteSchema } from '../models/Note'
+import { Color } from '../interfaces/color.enum'
+import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
-import Permission from '../models/Permission'
+import getNoteRole from './getNoteRole.query'
+import userQuery from './user.query'
 
 /**
- * Adds a permission(subject and level) to a note.
+ * Adds a collaborator to a note.
  * @param noteID id of the note
  * @param userID id of the note's owner
- * @param permission object of type permission
+ * @param collaboratorIdentifier username or email of the collaborator user
+ * @param role the role to be assigned to that user (EDITOR or VIEWER)
  */
-const addPermission = async (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    permission: {
-        subject: INoteSchema['permissions'][0]['subject'],
-        level: INoteSchema['permissions'][0]['level']
-    }
+const addCollaborator = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    collaboratorIdentifier: IUserSchema['username'] | IUserSchema['email'],
+    role: NoteRole.EDITOR | NoteRole.VIEWER
 ) => {
-    const note = await Note.findOne(
-        { _id: noteID, owner: userID, 'permissions.subject._id': permission.subject._id }
-    ).exec()
+    if (await getNoteRole(noteID, userID) !== NoteRole.OWNER) return null
 
-    if (note) {
-        return Note.findOneAndUpdate(
-            { _id: noteID, owner: userID, 'permissions.subject._id': permission.subject._id },
-            { 'permissions.$.level': permission.level },
-            { new: true }
-        )
-    }
+    const collaborator = await userQuery.getByUsernameOrEmail(collaboratorIdentifier)
+    if (!collaborator || collaborator.id === userID) return null
+
+    await Note.findOneAndUpdate(
+        { id: noteID },
+        {
+            $pull: {
+                users: {
+                    // @ts-ignore
+                    'subject.id': collaborator.id
+                }
+            }
+        }
+    )
+
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        { $push: { permissions: new Permission({ ...permission }) } },
+        { id: noteID },
+        {
+            $push: {
+                users: {
+                    subject: {
+                        id: collaborator.id,
+                        username: collaborator.username,
+                        email: collaborator.email
+                    },
+                    role,
+                    tags: [],
+                    archived: false,
+                    color: Color.DEFAULT,
+                    fixed: false
+                }
+            }
+        },
         { new: true }
     ).exec()
 }
 
 /**
- * Remove a permission from a note.
+ * Remove a collaborator from a note.
  * @param noteID id of the note
  * @param userID id of the note's owner
  * @param collabUserID id of the collaborator to be removed
  */
-const deletePermission = (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    permissionID: INoteSchema['permissions'][0]['_id']
+const deleteCollaborator = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    collaboratorID: IUserSchema['id']
 ) => {
+    if (await getNoteRole(noteID, userID) !== NoteRole.OWNER) return null
+
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        { $pull: { permissions: { _id: permissionID } } },
+        { id: noteID },
+        {
+            $pull: {
+                users: {
+                    // @ts-ignore
+                    'subject.id': collaboratorID
+                }
+            }
+        },
+        { new: true }
+    ).exec()
+}
+
+/**
+ * Updates the sharing code and its state.
+ * @param noteID id of the note
+ * @param userID id of the note's owner
+ * @param newShare the new share object to be set (has active and code properties)
+ */
+const updateSharing = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    newShare: INoteSchema['share']
+) => {
+    if (await getNoteRole(noteID, userID) !== NoteRole.OWNER) return null
+
+    return Note.findOneAndUpdate(
+        { id: noteID },
+        { share: newShare },
         { new: true }
     ).exec()
 }
 
 export default {
-    addPermission,
-    deletePermission
+    addCollaborator,
+    deleteCollaborator,
+    updateSharing
 }

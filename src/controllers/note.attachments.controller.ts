@@ -16,17 +16,23 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         const url = await uploadFile(
-            file as UploadedFile, getAuthUser(res)?._id, id
+            file as UploadedFile, getAuthUser(res).id, id
         )
 
         const newNote = await noteAttachmentsQuery.addAttachment(
-            id, getAuthUser(res)?._id, { url, title, description }
+            id, getAuthUser(res).id, { url, title, description }
         )
+        if (!newNote) return createResponse(res, 400, 'Couldn\'t add attachment.')
 
-        return newNote
-            ? createResponse(res, 200, 'Attachment added.', {
-                attachment: newNote.attachments[newNote.attachments.length - 1]
-            }) : createResponse(res, 400, 'Couldn\'t add attachment.')
+        const insertedAttachment = newNote.attachments[newNote.attachments.length - 1]
+        return createResponse(res, 200, 'Attachment added.', {
+            attachment: {
+                id: insertedAttachment.id,
+                url: insertedAttachment.url,
+                title: insertedAttachment.title,
+                description: insertedAttachment.description
+            }
+        })
     } catch (err) { return next(err) }
 }
 
@@ -37,15 +43,22 @@ const editAttachment = async (req: Request, res: Response, next: NextFunction) =
 
         const newNote = await noteAttachmentsQuery.editAttachment(
             id,
-            getAuthUser(res)?._id,
+            getAuthUser(res).id,
             attachmentID,
             { title, description }
         )
 
-        return newNote
-            ? createResponse(res, 200, 'Attachment edited.', {
-                attachment: newNote.attachments.filter(a => a.id === attachmentID)[0]
-            }) : createResponse(res, 400, 'Couldn\'t edit attachment.')
+        const updatedAttachment = newNote?.attachments.find(a => a.id === attachmentID)
+        if (!newNote || !updatedAttachment) return createResponse(res, 400, 'Couldn\'t edit attachment.')
+
+        return createResponse(res, 200, 'Attachment edited.', {
+            attachment: {
+                id: updatedAttachment.id,
+                url: updatedAttachment.url,
+                title: updatedAttachment.title,
+                description: updatedAttachment.description
+            }
+        })
     } catch (err) { return next(err) }
 }
 
@@ -54,7 +67,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
         const { id, attachmentID } = req.params
 
         const newNote = await noteAttachmentsQuery.deleteAttachment(
-            id, getAuthUser(res)?._id, attachmentID
+            id, getAuthUser(res).id, attachmentID
         )
         return newNote
             ? createResponse(res, 200, 'Attachment deleted.')

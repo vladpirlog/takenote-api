@@ -2,12 +2,10 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import noteShareQuery from '../queries/note.share.query'
 import noteCrudQuery from '../queries/note.crud.query'
-import { PermissionLevel } from '../models/Permission'
-import userQuery from '../queries/user.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthUser from '../utils/getAuthUser.util'
-import { INoteSchema } from '../models/Note'
+import { INoteSchema, NoteRole } from '../models/Note'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -15,7 +13,7 @@ const getNote = async (req: Request, res: Response, next: NextFunction) => {
         const note = await noteCrudQuery.getOneByShareCode(code)
 
         return note && note.share.active
-            ? createResponse(res, 200, 'Note fetched.', { note })
+            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo() })
             : next()
     } catch (err) { return next(err) }
 }
@@ -24,7 +22,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
     try {
         const { id } = req.params
         const { active, get_new: getNew } = req.query
-        const note = await noteCrudQuery.getOneByID(id, getAuthUser(res)?._id)
+        const note = await noteCrudQuery.getOneByID(id, getAuthUser(res).id)
         if (!note) return next()
 
         // By default, the new active state will remain the same.
@@ -33,7 +31,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
         // If the 'active' query param exists and resolves to true or false, the new active state
         // becomes that value.
         const activeParamResolved = stringToBoolean(active as string | undefined)
-        if (activeParamResolved !== null) {
+        if (activeParamResolved !== undefined) {
             newActiveState = activeParamResolved
         }
 
@@ -42,13 +40,11 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
         const newShareCode = getNew !== 'true' && note.share.code
             ? note.share.code : createID('share')
 
-        const newNote = await noteCrudQuery.updateOneByID(
-            note.id, getAuthUser(res)?._id, {
-                share: {
-                    active: newActiveState,
-                    code: newShareCode
-                }
-            }, false)
+        const newNote = await noteShareQuery.updateSharing(
+            note.id, getAuthUser(res).id, {
+                active: newActiveState,
+                code: newShareCode
+            })
         return newNote ? createResponse(res, 200, 'Link fetched.', {
             share: newNote.share
         }) : createResponse(res, 400)
@@ -60,48 +56,34 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const { id } = req.params
         const { user, type } = req.body
 
-        const collabUser = await userQuery.getByUsernameOrEmail(user)
-        if (!collabUser || collabUser.id === getAuthUser(res)?._id) {
-            return createResponse(res, 400)
-        }
-
-        let permissionLevel: PermissionLevel
-        switch (type) {
-        case 'r':
-            permissionLevel = PermissionLevel.read
-            break
-        case 'rw':
-            permissionLevel = PermissionLevel.readWrite
-            break
-        default:
+        if (type !== 'rw' && type !== 'r') {
             return createResponse(res, 400, 'Invalid type. Should be \'r\' or \'rw\'.')
         }
 
-        const newNote = await noteShareQuery.addPermission(
+        const newNote = await noteShareQuery.addCollaborator(
             id,
-            getAuthUser(res)?._id,
-            {
-                subject: {
-                    _id: collabUser.id, username: collabUser.username, email: collabUser.email
-                },
-                level: permissionLevel
-            }
+            getAuthUser(res).id,
+            user,
+            type === 'rw' ? NoteRole.EDITOR : NoteRole.VIEWER
         )
-        return newNote
-            ? createResponse(res, 200, 'Collaborator added.', {
-                permission: newNote.permissions.find(p => p.subject._id === collabUser.id)
-            }) : createResponse(res, 400)
+        const newCollaborator = newNote?.users
+            .find(u => u.subject.email === user || u.subject.username === user)
+        if (!newNote || !newCollaborator) return createResponse(res, 400)
+
+        return createResponse(res, 200, 'Collaborator added.', {
+            collaborator: { role: newCollaborator.role, subject: newCollaborator.subject }
+        })
     } catch (err) { return next(err) }
 }
 
 const deleteCollaborator = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id, permissionID } = req.params
+        const { id, collaboratorID } = req.params
 
-        const newNote = await noteShareQuery.deletePermission(
+        const newNote = await noteShareQuery.deleteCollaborator(
             id,
-            getAuthUser(res)?._id,
-            permissionID
+            getAuthUser(res).id,
+            collaboratorID
         )
         return newNote
             ? createResponse(res, 200, 'Collaborator deleted.')

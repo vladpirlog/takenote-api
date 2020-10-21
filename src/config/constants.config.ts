@@ -75,7 +75,6 @@ export default {
     idInfo: {
         user: { prefix: 'u', length: 24 },
         note: { prefix: 'n', length: 24 },
-        permission: { prefix: 'p', length: 24 },
         attachment: { prefix: 'a', length: 24 },
         jwt: { prefix: 'j', length: 24 },
         share: { prefix: 's', length: 24 },
@@ -98,7 +97,7 @@ export default {
         },
         perNote: {
             attachments: 10,
-            permissions: 10,
+            collaborators: 10,
             tags: 20
         }
     },

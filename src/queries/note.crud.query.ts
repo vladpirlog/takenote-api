@@ -1,35 +1,30 @@
-import Note, { INoteSchema, INoteBody } from '../models/Note'
+import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
-import { PermissionLevel } from '../models/Permission'
+import constants from '../config/constants.config'
+import { Color } from '../interfaces/color.enum'
+import getNoteRole from './getNoteRole.query'
+import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 
 /**
  * Fetches all the notes belonging to the user.
  * @param userID id of the user
- * @param archived if not null, only notes with the matching archived field are returned, else all the notes
- * @param collaborations if true, fetch user's own and collaborating notes, else only user's own
- * @param skip number of notes to skip
- * @param limit maximum number of notes to return
+ * @param skip number of notes to skip; defaults to 0
+ * @param limit maximum number of notes to return; defaults to the note limit per user
+ * @param collaborations whether to fetch only the user's own notes; defaults to true
+ * @param archived if defined, only notes with the matching archived field are returned, else all the notes
  */
-const getAll = (userID: IUserSchema['_id'], options: {
-        archived: boolean | null,
-        collaborations: boolean,
-        skip?: number,
-        limit?: number
-    }
+const getAll = (
+    userID: IUserSchema['id'],
+    skip: number = 0,
+    limit: number = constants.limits.perUser.notes,
+    collaborations: boolean = true,
+    archived?: boolean
 ) => {
-    let completeFilter: any
-    const ownNotesFilter: any = { owner: userID }
-    const collabNotesFilter = { 'permissions.subject._id': userID }
-    if (options.archived !== null) ownNotesFilter.archived = options.archived
+    const query: any = { 'subject.id': userID }
+    if (!collaborations) query.role = 'owner'
+    if (archived !== undefined) query.archived = archived
 
-    if (options.collaborations) {
-        completeFilter = { $or: [ownNotesFilter, collabNotesFilter] }
-    } else completeFilter = ownNotesFilter
-
-    let query = Note.find(completeFilter)
-    if (options.skip) query = query.skip(options.skip)
-    if (options.limit) query = query.limit(options.limit)
-    return query.exec()
+    return Note.find({ users: { $elemMatch: query } }).skip(skip).limit(limit).exec()
 }
 
 /**
@@ -37,19 +32,8 @@ const getAll = (userID: IUserSchema['_id'], options: {
  * @param noteID id of the note
  * @param userID id of the note's owner or collaborator
  */
-const getOneByID = async (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id']
-) => {
-    const note = await Note.findOne({
-        _id: noteID,
-        $or: [{ owner: userID }, { 'permissions.subject._id': userID }]
-    }).exec()
-
-    if (!note || note.owner === userID) return note
-
-    note.permissions = note.permissions.filter(p => p.subject._id === userID)
-    return note
+const getOneByID = async (noteID: INoteSchema['id'], userID: IUserSchema['id']) => {
+    return Note.findOne({ id: noteID, 'users.subject.id': userID }).exec()
 }
 
 /**
@@ -57,25 +41,31 @@ const getOneByID = async (
  * The note does not include the permissions array.
  * @param code share code of the note
  */
-const getOneByShareCode = (
-    code: INoteSchema['share']['code']
-) => {
-    return Note.findOne({ 'share.code': code })
-        .select('-permissions').exec()
+const getOneByShareCode = (code: INoteSchema['share']['code']) => {
+    return Note.findOne({ 'share.code': code }).exec()
 }
 
 /**
  * Creates a new note with the specified properties.
  * @param props object containing the note properties and the owner
  */
-const createOne = (props: {
-  title?: INoteSchema['title'];
-  content?: INoteSchema['content'];
-  archived?: INoteSchema['archived'];
-  color?: INoteSchema['color'];
-  owner: INoteSchema['owner'];
-}) => {
-    const newNote = new Note(props)
+const createOne = (props: Partial<Pick<INoteSchema, 'title' | 'content'>
+    & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed'>>
+    & {owner: INoteSchema['users'][0]['subject']}) => {
+    const newNote = new Note({
+        title: props.title || '',
+        content: props.content || '',
+        users: [
+            {
+                archived: props.archived || false,
+                color: props.color || Color.DEFAULT,
+                fixed: props.fixed || false,
+                subject: props.owner,
+                tags: [],
+                role: NoteRole.OWNER
+            }
+        ]
+    })
     return newNote.save()
 }
 
@@ -86,25 +76,24 @@ const createOne = (props: {
  * @param userID id of the note's owner or collaborator
  */
 const deleteOneByID = async (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id']
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id']
 ) => {
-    const note = await Note.findOneAndDelete({
-        _id: noteID,
-        owner: userID
-    }).exec()
+    const note = await Note.findOneAndDelete(
+        { id: noteID, users: { $elemMatch: { 'subject.id': userID, role: NoteRole.OWNER } } }
+    ).exec()
     if (note) { return note }
 
     return Note.findOneAndUpdate(
         {
-            _id: noteID,
-            'permissions.subject._id': userID
+            id: noteID,
+            'users.subject.id': userID
         },
         {
             $pull: {
-                permissions: {
-                    // @ts-ignore (it throws a type error, but the query works)
-                    'subject._id': userID
+                users: {
+                    // @ts-ignore
+                    'subject.id': userID
                 }
             }
         },
@@ -118,39 +107,33 @@ const deleteOneByID = async (
  * @param noteID id of the note
  * @param userID id of the note's owner
  * @param props object containing the new note properties
- * @param allowForCollab allow collaborating notes to be updated
  */
 const updateOneByID = async (
-    noteID: INoteSchema['_id'],
-    userID: IUserSchema['_id'],
-    props: INoteBody,
-    allowForCollab: boolean
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    props: Partial<Pick<INoteSchema, 'title' | 'content'>
+        & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed'>>
 ) => {
-    if (allowForCollab) {
-        const note = await Note.findOneAndUpdate(
-            {
-                _id: noteID,
-                $or: [{ owner: userID }, {
-                    permissions: {
-                        $elemMatch: {
-                            'subject._id': userID,
-                            level: PermissionLevel.readWrite
-                        }
-                    }
-                }]
-            },
-            props,
+    if (await getNoteRole(noteID, userID) === NoteRole.VIEWER) {
+        return Note.findOneAndUpdate(
+            { id: noteID, 'users.subject.id': userID },
+            removeUndefinedProps({
+                'users.$.archived': props.archived,
+                'users.$.color': props.color,
+                'users.$.fixed': props.fixed
+            }),
             { new: true }
         ).exec()
-
-        if (!note || note.owner === userID) return note
-
-        note.permissions = note.permissions.filter(p => p.subject._id === userID)
-        return note
     }
     return Note.findOneAndUpdate(
-        { _id: noteID, owner: userID },
-        props,
+        { id: noteID, 'users.subject.id': userID },
+        removeUndefinedProps({
+            'users.$.archived': props.archived,
+            'users.$.color': props.color,
+            'users.$.fixed': props.fixed,
+            title: props.title,
+            content: props.content
+        }),
         { new: true }
     ).exec()
 }
