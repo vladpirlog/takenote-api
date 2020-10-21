@@ -1,21 +1,19 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { Role } from '../interfaces/role.enum'
 import { TokenSchema, ITokenSchema } from './Token'
 import bcrypt from 'bcrypt'
-import { State } from '../interfaces/state.enum'
 import createID from '../utils/createID.util'
 import getUnixTime from '../utils/getUnixTime.util'
-import IPublicUserInfo from '../interfaces/publicUserInfo.interface'
 import { OAuthProvider } from '../interfaces/oauth.interface'
 
 export interface IUserSchema extends Document {
+    id: string
     username: string
     email: string
     password: string
     state: State
-    confirmationToken: ITokenSchema
-    role: Role
-    resetToken: ITokenSchema
+    confirmationToken?: ITokenSchema
+    role: UserRole
+    resetToken?: ITokenSchema
     oauth?: {
         provider: OAuthProvider
         refreshToken: string
@@ -25,24 +23,43 @@ export interface IUserSchema extends Document {
         active: boolean,
         nextCheck: number,
         backupCodes: {
-            _id: string,
+            id: string,
             active: boolean
         }[]
     }
     createdAt: Date
     updatedAt: Date
     isOAuthUser(): boolean
-    getPublicUserInfo(): IPublicUserInfo
+    getPublicInfo(): PublicUserInfo
     hasConfirmed(): boolean
     validPassword(hash: string): Promise<boolean>
-    isConfirmationTokenExpired(): boolean
+    isTokenExpired(type: 'confirmation' | 'reset'): boolean
     is2faInitialSetup(): boolean
     is2faRequired(): boolean
 }
 
+export type PublicUserInfo = Pick<IUserSchema, 'id' | 'username' | 'email'>
+    & {
+        twoFactorAuth: Pick<IUserSchema['twoFactorAuth'], 'active' | 'nextCheck'>,
+        isOAuthUser: boolean
+    }
+
+export enum UserRole {
+    ADMIN = 0,
+    SECONDARY_ADMIN = 1,
+    USER = 2,
+    UNIDENTIFIED = -1,
+}
+
+export enum State {
+    UNCONFIRMED = 'unconfirmed',
+    ACTIVE = 'active',
+    DELETING = 'deleting',
+}
+
 export const UserSchema = new Schema<IUserSchema>(
     {
-        _id: {
+        id: {
             type: String,
             required: true,
             default: () => createID('user')
@@ -62,25 +79,18 @@ export const UserSchema = new Schema<IUserSchema>(
             required: false
         },
         state: {
-            type: String,
+            type: State,
             default: State.UNCONFIRMED,
-            required: true,
-            enum: [State.ACTIVE, State.DELETING, State.UNCONFIRMED]
+            required: true
         },
         confirmationToken: {
             type: TokenSchema,
             required: false
         },
         role: {
-            type: Number,
-            default: Role.USER,
-            required: true,
-            enum: [
-                Role.ADMIN,
-                Role.SECONDARY_ADMIN,
-                Role.UNIDENTIFIED,
-                Role.USER
-            ]
+            type: UserRole,
+            default: UserRole.USER,
+            required: true
         },
         resetToken: {
             type: TokenSchema,
@@ -88,9 +98,8 @@ export const UserSchema = new Schema<IUserSchema>(
         },
         oauth: {
             provider: {
-                type: String,
-                required: false,
-                enum: [OAuthProvider.GOOGLE]
+                type: OAuthProvider,
+                required: false
             },
             refreshToken: {
                 type: String,
@@ -114,7 +123,7 @@ export const UserSchema = new Schema<IUserSchema>(
             },
             backupCodes: {
                 type: [{
-                    _id: {
+                    id: {
                         type: String,
                         required: true
                     },
@@ -128,7 +137,7 @@ export const UserSchema = new Schema<IUserSchema>(
             }
         }
     },
-    { timestamps: true, writeConcern: { w: 'majority', wtimeout: 1000 } }
+    { timestamps: true, writeConcern: { w: 'majority', wtimeout: 1000 }, id: false }
 )
 
 UserSchema.pre('save', function (next) {
@@ -151,11 +160,11 @@ UserSchema.methods.isOAuthUser = function () {
 }
 
 /**
- * Returns public data that can be viewed by the frontend.
+ * Returns public user data that can be viewed by the frontend.
  */
-UserSchema.methods.getPublicUserInfo = function () {
+UserSchema.methods.getPublicInfo = function () {
     return {
-        _id: this._id,
+        id: this.id,
         username: this.username,
         email: this.email,
         isOAuthUser: this.isOAuthUser(),
@@ -182,10 +191,15 @@ UserSchema.methods.hasConfirmed = function (): boolean {
 }
 
 /**
- * Checks if the confirmation token has expired
+ * Checks if one of the user's tokens has expired
  */
-UserSchema.methods.isConfirmationTokenExpired = function (): boolean {
-    return getUnixTime() > this.confirmationToken.exp
+UserSchema.methods.isTokenExpired = function (type: 'confirmation' | 'reset') {
+    if (type === 'confirmation') {
+        if (!this.confirmationToken) return false
+        return getUnixTime() > this.confirmationToken.exp
+    }
+    if (!this.resetToken) return false
+    return getUnixTime() > this.resetToken.exp
 }
 
 /**
