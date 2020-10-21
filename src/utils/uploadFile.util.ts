@@ -14,8 +14,8 @@ const { Storage } = require('@google-cloud/storage')
  */
 const uploadFile = async (
     file: UploadedFile,
-    userID: IUserSchema['_id'],
-    noteID: INoteSchema['_id']
+    userID: IUserSchema['id'],
+    noteID: INoteSchema['id']
 ): Promise<INoteSchema['attachments'][0]['url']> => {
     if (constants.nodeEnv === 'production') {
         const storage = new Storage()

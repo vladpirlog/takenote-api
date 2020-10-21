@@ -38,7 +38,7 @@ const generateBackupCodes = (): IUserSchema['twoFactorAuth']['backupCodes'] => {
     const arr: IUserSchema['twoFactorAuth']['backupCodes'] = []
     for (let _ = 0; _ < constants.authentication.numberOfBackupCodes; ++_) {
         arr.push({
-            active: true, _id: nanoid(constants.authentication.backupCodeLength)
+            active: true, id: nanoid(constants.authentication.backupCodeLength)
         })
     }
     return arr

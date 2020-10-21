@@ -6,7 +6,7 @@ const moesif = require('moesif-nodejs')
 const moesifLoggingMiddleware = moesif({
     applicationId: constants.moesif.apiKey,
     logBody: false,
-    identifyUser: (req: Request, res: Response) => getAuthUser(res)?._id,
+    identifyUser: (req: Request, res: Response) => getAuthUser(res).id || 'guest',
     skip: (req: Request) => req.path === '/'
 })
 
