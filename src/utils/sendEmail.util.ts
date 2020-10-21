@@ -14,16 +14,12 @@ const sendToken = async (
     type: 'reset' | 'confirmation'
 ) => {
     const data = {
-        reset: { token: user?.resetToken?.id, path: '/new_password' },
+        reset: { token: user.resetToken?.id, path: '/new_password' },
         confirmation: { token: user?.confirmationToken?.id, path: '/confirm' }
     }
 
-    const completeURL = makeCompleteURL(data[type])
-    const tokenMailContent = makeTokenMailContent(
-        user,
-        completeURL,
-        type === 'confirmation'
-    )
+    const completeURL = makeCompleteURL({ path: data[type].path, token: data[type].token || '' })
+    const tokenMailContent = makeTokenMailContent(user, completeURL, type)
     const mailOptions = makeMailOptions(user, tokenMailContent)
     const mailTransport = makeMailTransport()
 
@@ -101,9 +97,9 @@ const makeMailOptions = (user: IUserSchema, mailContent: {
 const makeTokenMailContent = (
     user: IUserSchema,
     url: string,
-    forConfirmation: boolean
+    tokenType: 'reset' | 'confirmation'
 ) => {
-    if (forConfirmation) {
+    if (tokenType === 'confirmation') {
         return {
             subject: `TakeNote Account Confirmation - ${user.username}`,
             text: `Go to this URL to confirm your account: ${url}`,

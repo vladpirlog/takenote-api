@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import { IUserSchema } from '../models/User'
-import { State } from '../interfaces/state.enum'
+import { IUserSchema, State } from '../models/User'
 import getAuthUser from '../utils/getAuthUser.util'
 
 const mustConfirmEmail = (userState: State, states: IUserSchema['state'][]) => {
@@ -17,10 +16,10 @@ const isInAcceptedState = (userState: State, states: IUserSchema['state'][]) => 
  * Function that verifies if the user is in one of the accepted states.
  * @param states an array of states that the user must be in
  */
-const checkUserState = (states: IUserSchema['state'][]) => {
+const checkUserState = (states: State[]) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userState = getAuthUser(res)?.state
+            const userState = getAuthUser(res).state
             if (!userState) return createResponse(res, 403)
 
             if (mustConfirmEmail(userState, states)) {

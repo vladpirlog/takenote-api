@@ -8,13 +8,13 @@ import authConfirmationController from '../controllers/auth.confirmation.control
 import validateToken from '../middlewares/validateToken.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
 import rateLimiting from '../middlewares/rateLimiting.middleware'
-import { State } from '../interfaces/state.enum'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import auth2faController from '../controllers/auth.2fa.controller'
 import extractUser from '../middlewares/extractUser.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import authOauthController from '../controllers/auth.oauth.controller'
 import recaptcha from '../middlewares/recaptcha.middleware'
+import { State } from '../models/User'
 
 const router = Router()
 
@@ -81,6 +81,7 @@ router.post(
     authPasswordController.requestResetTokenWithEmail
 )
 
+// New password submition handler
 router.post(
     '/new_password',
     requestFieldsDefined('query', ['token']),
@@ -94,7 +95,7 @@ router.post(
 router.get(
     '/check_token',
     requestFieldsDefined('query', ['token']),
-    validateToken('any', true)
+    validateToken
 )
 
 // Check user existence handler

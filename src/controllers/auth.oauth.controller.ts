@@ -31,13 +31,13 @@ const google = async (req: Request, res: Response, next: NextFunction) => {
 
             cookie.setAuthCookie(res, newUser)
             return createResponse(res, 201, 'User created successfully.', {
-                user: newUser.getPublicUserInfo()
+                user: newUser.getPublicInfo()
             })
         }
 
         cookie.setAuthCookie(res, user)
         return createResponse(res, 200, 'Authentication successful.', {
-            user: user.getPublicUserInfo()
+            user: user.getPublicInfo()
         })
     } catch (err) { return next(err) }
 }

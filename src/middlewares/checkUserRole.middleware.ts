@@ -10,7 +10,7 @@ import getAuthUser from '../utils/getAuthUser.util'
 const checkUserRole = (roles: IUserSchema['role'][]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         try {
-            const userRole = getAuthUser(res)?.role
+            const userRole = getAuthUser(res).role
 
             return userRole && roles.includes(userRole)
                 ? next() : createResponse(res, 401)

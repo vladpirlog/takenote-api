@@ -7,94 +7,69 @@ import noteShareController from '../controllers/note.share.controller'
 import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
-import { State } from '../interfaces/state.enum'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
-import { Role } from '../interfaces/role.enum'
 import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFile from '../middlewares/deleteFile.middleware'
+import { State, UserRole } from '../models/User'
 
 const router = Router()
 
-/**
- * Check authentication status, the role and the state of the user making the request.
- */
+// Check authentication status, the role and the state of the user making the request.
 router.all(
     '*',
     checkAuthStatus([AuthStatus.LOGGED_IN]),
-    checkUserRole([Role.USER]),
+    checkUserRole([UserRole.USER]),
     checkUserState([State.ACTIVE])
 )
 
-/**
- * GET all notes
- */
+// GET all notes
 router.get('/', noteCrudController.getAllNotes)
 
-/**
- * GET notes by tag or tag RegExp
- */
+// GET notes by tag or tag RegExp
 router.get('/tags', requestFieldsDefined('query', ['tag']), noteTagsController.getByTag)
 
-/**
- * GET a note
- */
+// GET a note
 router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.getOneNote)
 
-/**
- * ADD a note
- */
+// ADD a note
 router.post('/', regexTest.note, checkLimits.forNote, noteCrudController.addNote)
 
-/**
- * UPDATE a note
- */
+// UPDATE a note
 router.put('/:id', requestFieldsDefined('params', ['id']), regexTest.note, noteCrudController.editNote)
 
-/**
- * DELETE a note
- */
+// DELETE a note
 router.delete('/:id', requestFieldsDefined('params', ['id']), noteCrudController.deleteNote)
 
-/**
- * DUPLICATE a note
- */
+// DUPLICATE a note
 router.post('/:id/duplicate', requestFieldsDefined('params', ['id']), noteCrudController.duplicateNote)
 
-/**
- * GET sharing URL and set that URL's state; optionally, request a new URL for a note
- */
+// UPDATE sharing url and its state
 router.post(
     '/:id/share',
     requestFieldsDefined('params', ['id']),
     noteShareController.getShareLink
 )
 
-/**
- * ADD a collaborator to a note, in the form of username/email/id and type (r, rw)
- */
+// ADD a collaborator to a note, in the form of username/email/id and type (r, rw)
 router.post(
     '/:id/share/collaborators',
     requestFieldsDefined('params', ['id']),
     requestFieldsDefined('body', ['user', 'type']),
-    checkLimits.forPermission,
+    checkLimits.forCollaborator,
     noteShareController.addCollaborator
 )
 
-/**
- * DELETE a collaborator from a note
- */
+// DELETE a collaborator from a note
 router.delete(
-    '/:id/share/collaborators/:permissionID',
-    requestFieldsDefined('params', ['id', 'permissionID']),
+    '/:id/share/collaborators/:collaboratorID',
+    requestFieldsDefined('params', ['id', 'collaboratorID']),
     noteShareController.deleteCollaborator
 )
 
-/**
- * ADD tags to a note
- */
+// ADD tags to a note
 router.post(
     '/:id/tags',
     requestFieldsDefined('params', ['id']),
@@ -103,9 +78,7 @@ router.post(
     noteTagsController.addTags
 )
 
-/**
- * DELETE tags from a note
- */
+// DELETE tags from a note
 router.delete(
     '/:id/tags',
     requestFieldsDefined('params', ['id']),
@@ -113,9 +86,7 @@ router.delete(
     noteTagsController.deleteTags
 )
 
-/**
- * ADD a photo attachment to a note
- */
+// ADD a photo attachment to a note
 router.post(
     '/:id/attachments',
     fileUpload({
@@ -130,9 +101,7 @@ router.post(
     noteAttachmentsController.addAttachment
 )
 
-/**
- * UPDATE a photo attachment of a note
- */
+// UPDATE a photo attachment of a note
 router.put(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
@@ -140,9 +109,7 @@ router.put(
     noteAttachmentsController.editAttachment
 )
 
-/**
- * DELETE a photo attachment from a note
- */
+// DELETE a photo attachment from a note
 router.delete(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
