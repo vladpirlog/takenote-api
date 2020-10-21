@@ -3,18 +3,17 @@ import createResponse from '../utils/createResponse.util'
 import authJWT from '../utils/authJWT.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import createNewToken from '../utils/createNewToken.util'
-import { State } from '../interfaces/state.enum'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 import cookie from '../utils/cookie.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import constants from '../config/constants.config'
+import { State } from '../models/User'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userQuery.getById(getAuthUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res).id)
         return user ? createResponse(res, 200, 'User found.', {
-            user: user.getPublicUserInfo()
+            user: user.getPublicInfo()
         }) : createResponse(res, 404, 'User not found.')
     } catch (err) { return next(err) }
 }
@@ -24,7 +23,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         const { email, password } = req.body
 
         const user = await userQuery.getByUsernameOrEmail(email)
-        if (!user || user.isOAuthUser() || !user.validPassword(password)) {
+        if (!user || user.isOAuthUser() || !await user.validPassword(password)) {
             return createResponse(res, 401)
         }
 
@@ -35,7 +34,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
         cookie.setAuthCookie(res, user)
         return createResponse(res, 200, 'Authentication successful.', {
-            user: user.getPublicUserInfo()
+            user: user.getPublicInfo()
         })
     } catch (err) { return next(err) }
 }
@@ -52,19 +51,17 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { username, email, password } = req.body
-        const confirmationToken = createNewToken('confirmation')
         const user = await userQuery.createNewUser({
             username,
             email,
-            password,
-            confirmationToken
+            password
         })
         if (!user) {
             return createResponse(res, 400, 'Couldn\'t create user.')
         }
         await sendEmailUtil.sendToken(user, 'confirmation')
         return createResponse(res, 201, 'User created successfully.', {
-            user: user.getPublicUserInfo()
+            user: user.getPublicInfo()
         })
     } catch (err) { return next(err) }
 }
@@ -73,9 +70,9 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { old_password: oldPassword } = req.body
-        const user = await userQuery.getById(getAuthUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res).id)
         if (!user) return createResponse(res, 400)
-        if (user.validPassword(oldPassword)) {
+        if (await user.validPassword(oldPassword)) {
             return await handleDeleteOrRecover(res, req.cookies[constants.authentication.authCookieName], 'delete')
         }
         return createResponse(res, 401)
@@ -94,7 +91,7 @@ const handleDeleteOrRecover = async (res: Response, authCookie: string, type: 'd
         : { state: State.ACTIVE, message: 'Account is now active.' }
 
     const newUser = await userQuery.setUserState(
-        getAuthUser(res)?._id,
+        getAuthUser(res).id,
         dynamicData.state
     )
     if (!newUser) return createResponse(res, 400)

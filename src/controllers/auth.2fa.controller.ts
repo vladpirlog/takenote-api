@@ -12,11 +12,11 @@ import { IUserSchema } from '../models/User'
  */
 const generate2faSecret = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userQuery.getById(getAuthUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res).id)
         if (!user || user.twoFactorAuth.active) return createResponse(res, 400)
 
         const { secret, image } = await twoFactorAuth.generateSecretAndImage(user.email)
-        await userQuery.set2faData(getAuthUser(res)?._id, { secret })
+        await userQuery.set2faData(getAuthUser(res).id, { secret })
 
         return createResponse(res, 200, 'Image data fetched.', { image })
     } catch (err) { return next(err) }
@@ -28,8 +28,7 @@ const generate2faSecret = async (req: Request, res: Response, next: NextFunction
 const verify2faCode = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { code, remember } = req.query
-
-        const user = await userQuery.getById(getAuthUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res).id)
         if (!user || !user.twoFactorAuth.secret || block2faVerfication(res.locals.isFullAuth, user)) {
             return createResponse(res, 401)
         }
@@ -37,9 +36,8 @@ const verify2faCode = async (req: Request, res: Response, next: NextFunction) =>
         if (!isValidOTPOrBackupCode(code as string, user)) return createResponse(res, 403)
 
         const newNextCheckTime = twoFactorAuth.getNextCheckTime(remember as string | undefined)
-
         if (user.is2faRequired()) {
-            const backupCodeUsed = user.twoFactorAuth.backupCodes?.find(b => b.active && b._id === code)
+            const backupCodeUsed = user.twoFactorAuth.backupCodes?.find(b => b.active && b.id === code)
             const updateData: {
                 nextCheck?: IUserSchema['twoFactorAuth']['nextCheck'],
                 backupCodes?: IUserSchema['twoFactorAuth']['backupCodes']
@@ -66,7 +64,7 @@ const isValidOTPOrBackupCode = (
 ) => {
     const isValidOTP = twoFactorAuth.verifyCode(code as string, user.twoFactorAuth.secret as string)
     const isValidBackupCode = user.twoFactorAuth.backupCodes &&
-        user.twoFactorAuth.backupCodes.find(b => b.active && b._id === code) !== undefined
+        user.twoFactorAuth.backupCodes.find(b => b.active && b.id === code) !== undefined
     return isValidOTP || isValidBackupCode
 }
 
@@ -78,7 +76,7 @@ const handle2faOnLogin = async (
     await cookie.clearTfaTempCookie(req, res)
     cookie.setAuthCookie(res, user)
     return createResponse(res, 200, 'Authentication successful.', {
-        user: user.getPublicUserInfo()
+        user: user.getPublicInfo()
     })
 }
 
@@ -87,7 +85,7 @@ const handleInitial2faSetup = async (
     newNextCheckTime: IUserSchema['twoFactorAuth']['nextCheck']
 ) => {
     const backupCodes = twoFactorAuth.generateBackupCodes()
-    await userQuery.set2faData(getAuthUser(res)?._id, {
+    await userQuery.set2faData(getAuthUser(res).id, {
         active: true, nextCheck: newNextCheckTime, backupCodes
     })
     return createResponse(res, 201, 'Two-factor authentication enabled.', { backupCodes })
@@ -111,7 +109,7 @@ const disable2fa = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { code } = req.query
 
-        const user = await userQuery.getById(getAuthUser(res)?._id)
+        const user = await userQuery.getById(getAuthUser(res).id)
         if (!user || !user.twoFactorAuth.secret || !user.twoFactorAuth.active) {
             return createResponse(res, 401)
         }
@@ -120,7 +118,7 @@ const disable2fa = async (req: Request, res: Response, next: NextFunction) => {
 
         if (!ok) return createResponse(res, 403)
 
-        await userQuery.remove2faData(getAuthUser(res)?._id)
+        await userQuery.remove2faData(getAuthUser(res).id)
         return createResponse(res, 200)
     } catch (err) { return next(err) }
 }

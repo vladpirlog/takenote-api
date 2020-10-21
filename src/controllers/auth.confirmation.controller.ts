@@ -2,23 +2,23 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import { IUserSchema } from '../models/User'
-import { State } from '../interfaces/state.enum'
+import { IUserSchema, State } from '../models/User'
 import cookie from '../utils/cookie.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import authJWT from '../utils/authJWT.util'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 import constants from '../config/constants.config'
+import { ITokenSchema } from '../models/Token'
 
 const confirm = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { token } = req.query
         const user = await userQuery.getByToken(
-            token as IUserSchema['confirmationToken']['_id'],
+            token as ITokenSchema['id'],
             'confirmation'
         )
         if (!user) return createResponse(res, 400)
-        if (user.isConfirmationTokenExpired()) {
+        if (user.isTokenExpired('confirmation')) {
             return await handleSendNewToken(res, user.id)
         }
         return await handleConfirmation(
@@ -32,7 +32,7 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
 const requestConfirmationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const newUser = await userQuery.setNewToken(
-            getAuthUser(res)?._id,
+            getAuthUser(res).id,
             'confirmation'
         )
         if (!newUser) return createResponse(res, 400)
@@ -47,10 +47,10 @@ const requestConfirmationToken = async (req: Request, res: Response, next: NextF
     } catch (err) { return next(err) }
 }
 
-const handleConfirmation = async (res: Response, userID: IUserSchema['_id'], authCookie: string) => {
+const handleConfirmation = async (res: Response, userID: IUserSchema['id'], authCookie: string) => {
     const newUser = await userQuery.setUserState(userID, State.ACTIVE)
     if (!newUser) return createResponse(res, 400)
-    if (getAuthUser(res)) {
+    if (getAuthUser(res).id) {
         // only refresh the cookie if the user is authenticated while confirming the email address
         const { id, exp } = authJWT.getIDAndExp(authCookie)
         await jwtBlacklist.add(id, exp)
@@ -60,7 +60,7 @@ const handleConfirmation = async (res: Response, userID: IUserSchema['_id'], aut
     return createResponse(res, 200, 'Email address confirmed.')
 }
 
-const handleSendNewToken = async (res: Response, userID: IUserSchema['_id']) => {
+const handleSendNewToken = async (res: Response, userID: IUserSchema['id']) => {
     const newUser = await userQuery.setNewToken(userID, 'confirmation')
     if (!newUser) return createResponse(res, 400)
 
