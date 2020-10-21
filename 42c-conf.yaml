@@ -573,10 +573,7 @@ paths:
           description: If true, 2fa will not be required on login for 30 days, else will be required on every login
           required: true
           schema:
-            type: string
-            enum:
-              - "true"
-              - "false"
+            type: boolean
       responses:
         default:
           description: Error
@@ -613,10 +610,10 @@ paths:
                       additionalProperties: false
                       type: object
                       required:
-                        - _id
+                        - id
                         - active
                       properties:
-                        _id:
+                        id:
                           type: string
                           pattern: /^[a-zA-Z0-9_-]{10}$/
                           maxLength: 10
@@ -659,7 +656,7 @@ paths:
           schema:
             type: boolean
             description: Specifies whether the notes where the user is collaborating should be included
-            default: false
+            default: true
         - name: skip
           in: query
           required: false
@@ -667,6 +664,7 @@ paths:
             type: integer
             format: int32
             description: The number of notes to skip from the result
+            default: 0
         - name: limit
           in: query
           required: false
@@ -674,6 +672,7 @@ paths:
             type: integer
             format: int32
             description: The maximum number of notes to return
+            default: 1000
         - name: archived
           in: query
           required: false
@@ -1079,11 +1078,36 @@ paths:
                     type: string
                     pattern: /^[a-zA-Z0-9_\-.,]*$/
                     maxLength: 1000
-                  permission:
-                    $ref: "#/components/schemas/Permission"
+                  collaborator:
+                    type: object
+                    properties:
+                      role:
+                        type: string
+                        enum:
+                          - viewer
+                          - editor
+                      subject:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            pattern: /^u[a-zA-Z0-9_-]{24}$/
+                            maxLength: 25
+                            minLength: 25
+                          username:
+                            type: string
+                            pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                            maxLength: 16
+                            minLength: 4
+                          email:
+                            type: string
+                            pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                            maxLength: 254
+                            minLength: 3
       requestBody:
         $ref: "#/components/requestBodies/AddCollaborator"
-  "/notes/{noteID}/share/collaborators/{permissionID}":
+  "/notes/{noteID}/share/collaborators/{collaboratorID}":
     delete:
       tags:
         - notes
@@ -1102,13 +1126,13 @@ paths:
             pattern: /^n[a-zA-Z0-9_-]{24}$/
             maxLength: 25
             minLength: 25
-        - name: permissionID
+        - name: collaboratorID
           in: path
-          description: ID of the permission to delete
+          description: ID of the collaborator to delete
           required: true
           schema:
             type: string
-            pattern: /^p[a-zA-Z0-9_-]{24}$/
+            pattern: /^u[a-zA-Z0-9_-]{24}$/
             maxLength: 25
             minLength: 25
       responses:
@@ -1387,49 +1411,11 @@ externalDocs:
   url: "http://swagger.io"
 components:
   schemas:
-    Permission:
-      additionalProperties: false
-      type: object
-      properties:
-        _id:
-          type: string
-          pattern: /^p[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
-        subject:
-          additionalProperties: false
-          type: object
-          required:
-            - _id
-            - username
-            - email
-          properties:
-            _id:
-              type: string
-              pattern: /^u[a-zA-Z0-9_-]{24}$/
-              maxLength: 25
-              minLength: 25
-            username:
-              type: string
-              pattern: /^[a-zA-Z0-9_-]{4,16}$/
-              maxLength: 16
-              minLength: 4
-            email:
-              type: string
-              pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
-              maxLength: 254
-              minLength: 3
-        level:
-          type: integer
-          format: int32
-          enum:
-            - 0
-            - 1
     Attachment:
       additionalProperties: false
       type: object
       properties:
-        _id:
+        id:
           type: string
           pattern: /^a[a-zA-Z0-9_-]{24}$/
           maxLength: 25
@@ -1459,15 +1445,21 @@ components:
       additionalProperties: false
       type: object
       required:
-        - _id
+        - id
+        - title
+        - content
+        - collaborators
         - owner
         - archived
+        - fixed
+        - attachments
         - share
         - color
+        - tags
         - createdAt
         - updatedAt
       properties:
-        _id:
+        id:
           type: string
           pattern: /^n[a-zA-Z0-9_-]{24}$/
           maxLength: 25
@@ -1483,15 +1475,58 @@ components:
           maxLength: 10000
           minLength: 0
         owner:
-          type: string
-          pattern: /^u[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
-        permissions:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              pattern: /^u[a-zA-Z0-9_-]{24}$/
+              maxLength: 25
+              minLength: 25
+            username:
+              type: string
+              pattern: /^[a-zA-Z0-9_-]{4,16}$/
+              maxLength: 16
+              minLength: 4
+            email:
+              type: string
+              pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+              maxLength: 254
+              minLength: 3
+        collaborators:
           type: array
-          maxItems: 10
+          maxLength: 10
           items:
-            $ref: "#/components/schemas/Permission"
+            type: object
+            additionalProperties: false
+            required:
+                - role
+                - subject
+            properties:
+              role:
+                type: string
+                enum:
+                  - viewer
+                  - editor
+              subject:
+                type: object
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    pattern: /^u[a-zA-Z0-9_-]{24}$/
+                    maxLength: 25
+                    minLength: 25
+                  username:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_-]{4,16}$/
+                    maxLength: 16
+                    minLength: 4
+                  email:
+                    type: string
+                    pattern: /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+                    maxLength: 254
+                    minLength: 3
         attachments:
           type: array
           maxItems: 10
@@ -1516,6 +1551,8 @@ components:
               maxLength: 25
               minLength: 25
         archived:
+          type: boolean
+        fixed:
           type: boolean
         color:
           type: string
@@ -1551,13 +1588,13 @@ components:
       additionalProperties: false
       type: object
       required:
-        - _id
+        - id
         - username
         - email
         - isOAuthUser
         - twoFactorAuth
       properties:
-        _id:
+        id:
           type: string
           pattern: /^u[a-zA-Z0-9_-]{24}$/
           maxLength: 25
@@ -1912,13 +1949,20 @@ components:
                 maxLength: 10000
                 minLength: 0
               archived:
-                type: string
-                enum:
-                  - "true"
-                  - "false"
+                type: boolean
+              fixed:
+                type: boolean
               color:
                 type: string
                 pattern: /^#[0-9abcdef]{6}$/
+                enum:
+                  - "#ced4da"
+                  - "#edafb8"
+                  - "#d6efff"
+                  - "#fbf7ae"
+                  - "#cce7cf"
+                  - "#e9dff7"
+                  - "#fdeac4"
                 maxLength: 7
                 minLength: 7
         application/json:
@@ -1937,13 +1981,20 @@ components:
                 maxLength: 10000
                 minLength: 0
               archived:
-                type: string
-                enum:
-                  - "true"
-                  - "false"
+                type: boolean
+              fixed:
+                type: boolean
               color:
                 type: string
                 pattern: /^#[0-9abcdef]{6}$/
+                enum:
+                  - "#ced4da"
+                  - "#edafb8"
+                  - "#d6efff"
+                  - "#fbf7ae"
+                  - "#cce7cf"
+                  - "#e9dff7"
+                  - "#fdeac4"
                 maxLength: 7
                 minLength: 7
     AddCollaborator:
