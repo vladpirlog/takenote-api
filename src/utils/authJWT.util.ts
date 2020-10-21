@@ -20,7 +20,7 @@ const generateAuthJWT = (payload: IAuthenticatedUserInfo) => {
             issuer: constants.domain.apiDomain,
             audience: [constants.domain.baseDomain, constants.domain.apiDomain],
             jwtid: createID('jwt'),
-            subject: payload._id,
+            subject: payload.id,
             notBefore: 0
         }
     )
@@ -40,7 +40,7 @@ const verify = async (token: string): Promise<IAuthenticatedUserInfo> => {
     const valid = await jwtBlacklistUtil.check(decoded.jti)
     if (!valid) throw new Error('Blacklisted JWT.')
     return {
-        _id: decoded.sub,
+        id: decoded.sub,
         role: decoded._info,
         state: decoded._state
     }

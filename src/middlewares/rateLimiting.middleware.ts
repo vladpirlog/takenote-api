@@ -4,7 +4,7 @@ import constants from '../config/constants.config'
 import redisConfig from '../config/redis.config'
 import { IUserSchema } from '../models/User'
 
-const getKey = (req: Request, type: 'request' | 'email', userID?: IUserSchema['_id']) => {
+const getKey = (req: Request, type: 'request' | 'email', userID?: IUserSchema['id']) => {
     return `${userID || 'guest'}--${req.ip}--${type}`
 }
 
@@ -49,7 +49,7 @@ const incrementExistingEntry = async (res: Response, key: string) => {
 const rateLimiting = (type: 'request' | 'email') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const key = getKey(req, type, res.locals?.user?._id)
+            const key = getKey(req, type, res.locals?.user?.id)
             const value = await getValueFromKey(key)
             const newValue = value
                 ? await incrementExistingEntry(res, key)
