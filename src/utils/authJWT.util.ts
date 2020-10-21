@@ -15,7 +15,7 @@ const generateAuthJWT = (payload: IAuthenticatedUserInfo) => {
         constants.authentication.authJWTSecret,
         {
             expiresIn: `${
-                constants.authentication.authCookieExpires / (60 * 60 * 1000)
+                constants.authentication.authCookieAge / (60 * 60 * 1000)
             }h`,
             issuer: constants.domain.apiDomain,
             audience: [constants.domain.baseDomain, constants.domain.apiDomain],
