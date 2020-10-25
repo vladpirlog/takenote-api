@@ -32,7 +32,7 @@ const getAll = (
  * @param noteID id of the note
  * @param userID id of the note's owner or collaborator
  */
-const getOneByID = async (noteID: INoteSchema['id'], userID: IUserSchema['id']) => {
+const getOneByID = (noteID: INoteSchema['id'], userID: IUserSchema['id']) => {
     return Note.findOne({ id: noteID, 'users.subject.id': userID }).exec()
 }
 

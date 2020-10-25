@@ -4,7 +4,7 @@ import fs from 'fs'
 /**
  * Middleware for deleting the photo(s) uploaded on the server after processing.
  */
-const deleteFile = (req: Request, res: Response, next: NextFunction) => {
+const deleteFileOnFinish = (req: Request, res: Response, next: NextFunction) => {
     res.on('finish', () => {
         try {
             const file = req.files?.photo
@@ -18,4 +18,4 @@ const deleteFile = (req: Request, res: Response, next: NextFunction) => {
     return next()
 }
 
-export default deleteFile
+export default deleteFileOnFinish

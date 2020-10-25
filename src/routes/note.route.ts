@@ -13,7 +13,7 @@ import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import checkLimits from '../middlewares/checkLimits.middleware'
-import deleteFileOnFinish from '../middlewares/deleteFile.middleware'
+import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
 import { State, UserRole } from '../models/User'
 import { NoteRole } from '../models/Note'
 

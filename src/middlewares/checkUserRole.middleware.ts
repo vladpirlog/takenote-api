@@ -5,7 +5,7 @@ import getAuthUser from '../utils/getAuthUser.util'
 
 /**
  * Higher-order function that verifies if the user has one of the required roles.
- * @param roles an array of roles that the user must be in
+ * @param roles an array of UserRole elements; the user has to have one of these roles
  */
 const checkUserRole = (roles: IUserSchema['role'][]) => {
     return (req: Request, res: Response, next: NextFunction) => {
@@ -13,7 +13,8 @@ const checkUserRole = (roles: IUserSchema['role'][]) => {
             const userRole = getAuthUser(res).role
 
             return userRole && roles.includes(userRole)
-                ? next() : createResponse(res, 401)
+                ? next()
+                : createResponse(res, 401)
         } catch (err) { return next(err) }
     }
 }
