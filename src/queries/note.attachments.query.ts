@@ -1,17 +1,14 @@
 import Note, { INoteSchema } from '../models/Note'
-import { IUserSchema } from '../models/User'
 import Attachment, { IAttachmentSchema } from '../models/Attachment'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 
 /**
  * Adds an attachment (title, description, url) to a note.
  * @param noteID id of the note
- * @param userID id of the note's owner or editor
  * @param data object of mandatory url field and optional title and description fields
  */
-const addAttachment = async (
+const addAttachment = (
     noteID: INoteSchema['id'],
-    userID: IUserSchema['id'],
     data: Pick<IAttachmentSchema, 'url'> & Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
     return Note.findOneAndUpdate(
@@ -24,13 +21,11 @@ const addAttachment = async (
 /**
  * Updates a note's attachment.
  * @param noteID id of the note
- * @param userID id of the note's owner or editor
  * @param attachmentID id of the attachment to be updated
  * @param data object with optional properties of title and description
  */
-const editAttachment = async (
+const editAttachment = (
     noteID: INoteSchema['id'],
-    userID: IUserSchema['id'],
     attachmentID: IAttachmentSchema['id'],
     data: Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
@@ -49,12 +44,10 @@ const editAttachment = async (
 /**
  * Removes an attachment from a note.
  * @param noteID id of the note
- * @param userID id of the note's owner or editor
  * @param attachmentID the id of the attachment to be removed
  */
-const deleteAttachment = async (
+const deleteAttachment = (
     noteID: INoteSchema['id'],
-    userID: IUserSchema['id'],
     attachmentID: INoteSchema['attachments'][0]['id']
 ) => {
     return Note.findOneAndUpdate(

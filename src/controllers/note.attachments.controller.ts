@@ -4,6 +4,7 @@ import uploadFile from '../utils/uploadFile.util'
 import { UploadedFile } from 'express-fileupload'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
 import getAuthUser from '../utils/getAuthUser.util'
+import constants from '../config/constants.config'
 
 const addAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -14,14 +15,9 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
         if (!file) {
             return createResponse(res, 400, 'File not found.')
         }
+        const url = await uploadFile(file as UploadedFile, getAuthUser(res).id, id, constants.nodeEnv)
 
-        const url = await uploadFile(
-            file as UploadedFile, getAuthUser(res).id, id
-        )
-
-        const newNote = await noteAttachmentsQuery.addAttachment(
-            id, getAuthUser(res).id, { url, title, description }
-        )
+        const newNote = await noteAttachmentsQuery.addAttachment(id, { url, title, description })
         if (!newNote) return createResponse(res, 400, 'Couldn\'t add attachment.')
 
         const insertedAttachment = newNote.attachments[newNote.attachments.length - 1]
@@ -42,10 +38,7 @@ const editAttachment = async (req: Request, res: Response, next: NextFunction) =
         const { id, attachmentID } = req.params
 
         const newNote = await noteAttachmentsQuery.editAttachment(
-            id,
-            getAuthUser(res).id,
-            attachmentID,
-            { title, description }
+            id, attachmentID, { title, description }
         )
 
         const updatedAttachment = newNote?.attachments.find(a => a.id === attachmentID)
@@ -66,9 +59,7 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     try {
         const { id, attachmentID } = req.params
 
-        const newNote = await noteAttachmentsQuery.deleteAttachment(
-            id, getAuthUser(res).id, attachmentID
-        )
+        const newNote = await noteAttachmentsQuery.deleteAttachment(id, attachmentID)
         return newNote
             ? createResponse(res, 200, 'Attachment deleted.')
             : createResponse(res, 400, 'Couldn\'t delete attachment.')
