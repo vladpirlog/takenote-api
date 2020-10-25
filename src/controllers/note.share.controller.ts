@@ -6,6 +6,7 @@ import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import { INoteSchema, NoteRole } from '../models/Note'
+import userQuery from '../queries/user.query'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -40,11 +41,9 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
         const newShareCode = getNew !== 'true' && note.share.code
             ? note.share.code : createID('share')
 
-        const newNote = await noteShareQuery.updateSharing(
-            note.id, getAuthUser(res).id, {
-                active: newActiveState,
-                code: newShareCode
-            })
+        const newNote = await noteShareQuery.updateSharing(note.id, {
+            active: newActiveState, code: newShareCode
+        })
         return newNote ? createResponse(res, 200, 'Link fetched.', {
             share: newNote.share
         }) : createResponse(res, 400)
@@ -60,14 +59,15 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
             return createResponse(res, 400, 'Invalid type. Should be \'r\' or \'rw\'.')
         }
 
+        const collaborator = await userQuery.getByUsernameOrEmail(user)
+        if (!collaborator || collaborator.id === getAuthUser(res).id) return null
+
         const newNote = await noteShareQuery.addCollaborator(
             id,
-            getAuthUser(res).id,
-            user,
+            { id: collaborator.id, username: collaborator.username, email: collaborator.email },
             type === 'rw' ? NoteRole.EDITOR : NoteRole.VIEWER
         )
-        const newCollaborator = newNote?.users
-            .find(u => u.subject.email === user || u.subject.username === user)
+        const newCollaborator = newNote?.users.find(u => u.subject.id === collaborator.id)
         if (!newNote || !newCollaborator) return createResponse(res, 400)
 
         return createResponse(res, 200, 'Collaborator added.', {
@@ -80,11 +80,7 @@ const deleteCollaborator = async (req: Request, res: Response, next: NextFunctio
     try {
         const { id, collaboratorID } = req.params
 
-        const newNote = await noteShareQuery.deleteCollaborator(
-            id,
-            getAuthUser(res).id,
-            collaboratorID
-        )
+        const newNote = await noteShareQuery.deleteCollaborator(id, collaboratorID)
         return newNote
             ? createResponse(res, 200, 'Collaborator deleted.')
             : createResponse(res, 400, 'Couldn\'t delete collaborator.')

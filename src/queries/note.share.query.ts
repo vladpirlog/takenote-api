@@ -5,13 +5,11 @@ import { IUserSchema } from '../models/User'
 /**
  * Adds a collaborator to a note.
  * @param noteID id of the note
- * @param userID id of the note's owner
- * @param collaboratorIdentifier username or email of the collaborator user
+ * @param collaborator id, username and email of the collaborator
  * @param role the role to be assigned to that user (EDITOR or VIEWER)
  */
 const addCollaborator = async (
     noteID: INoteSchema['id'],
-    userID: IUserSchema['id'],
     collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
     role: NoteRole.EDITOR | NoteRole.VIEWER
 ) => {
@@ -52,12 +50,10 @@ const addCollaborator = async (
 /**
  * Remove a collaborator from a note.
  * @param noteID id of the note
- * @param userID id of the note's owner
- * @param collabUserID id of the collaborator to be removed
+ * @param collaboratorID id of the collaborator to be removed
  */
-const deleteCollaborator = async (
+const deleteCollaborator = (
     noteID: INoteSchema['id'],
-    userID: IUserSchema['id'],
     collaboratorID: IUserSchema['id']
 ) => {
     return Note.findOneAndUpdate(
@@ -77,12 +73,10 @@ const deleteCollaborator = async (
 /**
  * Updates the sharing code and its state.
  * @param noteID id of the note
- * @param userID id of the note's owner
  * @param newShare the new share object to be set (has active and code properties)
  */
-const updateSharing = async (
+const updateSharing = (
     noteID: INoteSchema['id'],
-    userID: IUserSchema['id'],
     newShare: INoteSchema['share']
 ) => {
     return Note.findOneAndUpdate(
