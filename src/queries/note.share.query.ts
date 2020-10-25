@@ -13,17 +13,15 @@ const addCollaborator = async (
     collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
     role: NoteRole.EDITOR | NoteRole.VIEWER
 ) => {
-    await Note.findOneAndUpdate(
-        { id: noteID },
-        {
-            $pull: {
-                users: {
-                    // @ts-ignore
-                    'subject.id': collaborator.id
-                }
-            }
-        }
-    )
+    const note = await Note.findOne({ id: noteID, 'users.subject.id': collaborator.id }).exec()
+
+    if (note) {
+        return Note.findOneAndUpdate(
+            { id: noteID, 'users.subject.id': collaborator.id },
+            { $set: { 'users.$.role': role } },
+            { new: true }
+        ).exec()
+    }
 
     return Note.findOneAndUpdate(
         { id: noteID },
