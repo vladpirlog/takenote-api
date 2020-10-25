@@ -24,7 +24,7 @@ const setHeaders = (res: Response, counter: number) => {
     res.setHeader('X-RateLimit-Limit-Minute', constants.limits.perUser.request)
 }
 
-const createNewEntry = async (res: Response, key: string) => {
+const createNewEntry = async (key: string) => {
     const redisClient = await redisConfig.getClient()
     await new Promise((resolve, reject) => {
         redisClient.setex(key, 60, '1', (err, res) => {
@@ -35,7 +35,7 @@ const createNewEntry = async (res: Response, key: string) => {
     return 1
 }
 
-const incrementExistingEntry = async (res: Response, key: string) => {
+const incrementExistingEntry = async (key: string) => {
     const redisClient = await redisConfig.getClient()
     const newValue: number = await new Promise((resolve, reject) => {
         redisClient.incr(key, (err, res) => {
@@ -52,8 +52,8 @@ const rateLimiting = (type: 'request' | 'email') => {
             const key = getKey(req, type, res.locals?.user?.id)
             const value = await getValueFromKey(key)
             const newValue = value
-                ? await incrementExistingEntry(res, key)
-                : await createNewEntry(res, key)
+                ? await incrementExistingEntry(key)
+                : await createNewEntry(key)
 
             if (type === 'request') setHeaders(res, newValue)
             return newValue > constants.limits.perUser.request
