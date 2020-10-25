@@ -1,8 +1,6 @@
 import { Color } from '../interfaces/color.enum'
 import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
-import getNoteRole from './getNoteRole.query'
-import userQuery from './user.query'
 
 /**
  * Adds a collaborator to a note.
@@ -14,14 +12,9 @@ import userQuery from './user.query'
 const addCollaborator = async (
     noteID: INoteSchema['id'],
     userID: IUserSchema['id'],
-    collaboratorIdentifier: IUserSchema['username'] | IUserSchema['email'],
+    collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
     role: NoteRole.EDITOR | NoteRole.VIEWER
 ) => {
-    if (await getNoteRole(noteID, userID) !== NoteRole.OWNER) return null
-
-    const collaborator = await userQuery.getByUsernameOrEmail(collaboratorIdentifier)
-    if (!collaborator || collaborator.id === userID) return null
-
     await Note.findOneAndUpdate(
         { id: noteID },
         {
@@ -67,8 +60,6 @@ const deleteCollaborator = async (
     userID: IUserSchema['id'],
     collaboratorID: IUserSchema['id']
 ) => {
-    if (await getNoteRole(noteID, userID) !== NoteRole.OWNER) return null
-
     return Note.findOneAndUpdate(
         { id: noteID },
         {
@@ -94,8 +85,6 @@ const updateSharing = async (
     userID: IUserSchema['id'],
     newShare: INoteSchema['share']
 ) => {
-    if (await getNoteRole(noteID, userID) !== NoteRole.OWNER) return null
-
     return Note.findOneAndUpdate(
         { id: noteID },
         { share: newShare },

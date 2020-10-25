@@ -1,8 +1,7 @@
-import Note, { INoteSchema, NoteRole } from '../models/Note'
+import Note, { INoteSchema } from '../models/Note'
 import { IUserSchema } from '../models/User'
 import Attachment, { IAttachmentSchema } from '../models/Attachment'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
-import getNoteRole from './getNoteRole.query'
 
 /**
  * Adds an attachment (title, description, url) to a note.
@@ -15,9 +14,6 @@ const addAttachment = async (
     userID: IUserSchema['id'],
     data: Pick<IAttachmentSchema, 'url'> & Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
-    const role = await getNoteRole(noteID, userID)
-    if (role !== NoteRole.OWNER && role !== NoteRole.EDITOR) return null
-
     return Note.findOneAndUpdate(
         { id: noteID },
         { $push: { attachments: new Attachment(removeUndefinedProps(data)) } },
@@ -38,9 +34,6 @@ const editAttachment = async (
     attachmentID: IAttachmentSchema['id'],
     data: Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
-    const role = await getNoteRole(noteID, userID)
-    if (role !== NoteRole.OWNER && role !== NoteRole.EDITOR) return null
-
     return Note.findOneAndUpdate(
         { id: noteID, 'attachments.id': attachmentID },
         {
@@ -64,9 +57,6 @@ const deleteAttachment = async (
     userID: IUserSchema['id'],
     attachmentID: INoteSchema['attachments'][0]['id']
 ) => {
-    const role = await getNoteRole(noteID, userID)
-    if (role !== NoteRole.OWNER && role !== NoteRole.EDITOR) return null
-
     return Note.findOneAndUpdate(
         { id: noteID },
         { $pull: { attachments: { id: attachmentID } } },
