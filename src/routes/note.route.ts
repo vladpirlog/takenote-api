@@ -8,12 +8,14 @@ import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
+import checkNoteRole from '../middlewares/checkNoteRole.middleware'
 import regexTest from '../middlewares/regexTest.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import checkLimits from '../middlewares/checkLimits.middleware'
-import deleteFile from '../middlewares/deleteFile.middleware'
+import deleteFileOnFinish from '../middlewares/deleteFile.middleware'
 import { State, UserRole } from '../models/User'
+import { NoteRole } from '../models/Note'
 
 const router = Router()
 
@@ -50,6 +52,7 @@ router.post('/:id/duplicate', requestFieldsDefined('params', ['id']), noteCrudCo
 router.post(
     '/:id/share',
     requestFieldsDefined('params', ['id']),
+    checkNoteRole([NoteRole.OWNER]),
     noteShareController.getShareLink
 )
 
@@ -58,6 +61,7 @@ router.post(
     '/:id/share/collaborators',
     requestFieldsDefined('params', ['id']),
     requestFieldsDefined('body', ['user', 'type']),
+    checkNoteRole([NoteRole.OWNER]),
     checkLimits.forCollaborator,
     noteShareController.addCollaborator
 )
@@ -66,6 +70,7 @@ router.post(
 router.delete(
     '/:id/share/collaborators/:collaboratorID',
     requestFieldsDefined('params', ['id', 'collaboratorID']),
+    checkNoteRole([NoteRole.OWNER]),
     noteShareController.deleteCollaborator
 )
 
@@ -93,8 +98,9 @@ router.post(
         tempFileDir: './temp/',
         useTempFiles: true
     }),
-    deleteFile,
+    deleteFileOnFinish,
     requestFieldsDefined('params', ['id']),
+    checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
     regexTest.attachment,
     attachmentMetadata,
     checkLimits.forAttachment,
@@ -105,6 +111,7 @@ router.post(
 router.put(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
+    checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
     regexTest.attachment,
     noteAttachmentsController.editAttachment
 )
@@ -113,6 +120,7 @@ router.put(
 router.delete(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
+    checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
     noteAttachmentsController.deleteAttachment
 )
 

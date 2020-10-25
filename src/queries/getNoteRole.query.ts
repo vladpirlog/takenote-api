@@ -1,4 +1,4 @@
-import Note, { INoteSchema } from '../models/Note'
+import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
 
 /**
@@ -7,7 +7,10 @@ import { IUserSchema } from '../models/User'
  * @param noteID id of the note
  * @param userID id of the user
  */
-const getNoteRole = async (noteID: INoteSchema['id'], userID: IUserSchema['id']) => {
+const getNoteRole = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id']
+): Promise<NoteRole | null> => {
     const note = await Note.findOne({ id: noteID }).exec()
     return note?.users.find(u => u.subject.id === userID)?.role || null
 }
