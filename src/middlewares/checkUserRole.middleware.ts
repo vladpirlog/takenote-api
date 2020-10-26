@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 import createResponse from '../utils/createResponse.util'
 import getAuthUser from '../utils/getAuthUser.util'
 

@@ -1,4 +1,4 @@
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 import nodemailer from 'nodemailer'
 import constants from '../config/constants.config'
 import url from 'url'

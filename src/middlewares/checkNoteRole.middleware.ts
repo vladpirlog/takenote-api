@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import { NoteRole } from '../models/Note'
+import NoteRole from '../enums/NoteRole.enum'
 import getNoteRole from '../queries/getNoteRole.query'
 import createResponse from '../utils/createResponse.util'
 import getAuthUser from '../utils/getAuthUser.util'

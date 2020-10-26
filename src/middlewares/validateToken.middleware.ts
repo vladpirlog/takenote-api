@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import userQuery from '../queries/user.query'
 import getUnixTime from '../utils/getUnixTime.util'
-import { ITokenSchema } from '../models/Token'
+import { ITokenSchema } from '../types/Token'
 
 /**
  * Middleware used for checking the expiration time of a given token.

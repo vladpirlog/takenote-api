@@ -1,10 +1,9 @@
 import { Request, Response } from 'express'
-import { IUserSchema } from '../models/User'
+import { IUserSchema, AuthenticatedUserInfo } from '../types/User'
 import constants from '../config/constants.config'
 import authJWT from './authJWT.util'
 import createID from './createID.util'
 import redisConfig from '../config/redis.config'
-import IAuthenticatedUserInfo from '../types/AuthenticatedUserInfo'
 
 const setCookie = (res: Response, key: string, value: string, age: number) => {
     res.cookie(key, value, {
@@ -48,7 +47,7 @@ const clearAuthCookie = (res: Response): Response => {
  */
 const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Response> => {
     const tfaCookieID = createID('tfa')
-    const userData: IAuthenticatedUserInfo = {
+    const userData: AuthenticatedUserInfo = {
         id: user.id, state: user.state, role: user.role
     }
     const redisClient = await redisConfig.getClient()

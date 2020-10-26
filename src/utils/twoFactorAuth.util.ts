@@ -1,6 +1,6 @@
 import speakeasy from 'speakeasy'
 import qrcode from 'qrcode'
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 import getUnixTime from './getUnixTime.util'
 import constants from '../config/constants.config'
 import { nanoid } from 'nanoid'

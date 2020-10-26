@@ -2,13 +2,14 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import { IUserSchema, State } from '../models/User'
+import { IUserSchema } from '../types/User'
 import cookie from '../utils/cookie.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import authJWT from '../utils/authJWT.util'
 import jwtBlacklist from '../utils/jwtBlacklist.util'
 import constants from '../config/constants.config'
-import { ITokenSchema } from '../models/Token'
+import { ITokenSchema } from '../types/Token'
+import State from '../enums/State.enum'
 
 const confirm = async (req: Request, res: Response, next: NextFunction) => {
     try {

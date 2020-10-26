@@ -1,61 +1,12 @@
-import mongoose, { Schema, Document } from 'mongoose'
-import { TokenSchema, ITokenSchema } from './Token'
+import mongoose, { Schema } from 'mongoose'
+import { TokenSchema } from './Token'
 import bcrypt from 'bcrypt'
 import createID from '../utils/createID.util'
 import getUnixTime from '../utils/getUnixTime.util'
-import { OAuthProvider } from '../types/OAuth'
-
-export interface IUserSchema extends Document {
-    id: string
-    username: string
-    email: string
-    password: string
-    state: State
-    confirmationToken?: ITokenSchema
-    role: UserRole
-    resetToken?: ITokenSchema
-    oauth?: {
-        provider: OAuthProvider
-        refreshToken: string
-    }
-    twoFactorAuth: {
-        secret?: string,
-        active: boolean,
-        nextCheck: number,
-        backupCodes: {
-            id: string,
-            active: boolean
-        }[]
-    }
-    createdAt: Date
-    updatedAt: Date
-    isOAuthUser(): boolean
-    getPublicInfo(): PublicUserInfo
-    hasConfirmed(): boolean
-    validPassword(hash: string): Promise<boolean>
-    isTokenExpired(type: 'confirmation' | 'reset'): boolean
-    is2faInitialSetup(): boolean
-    is2faRequired(): boolean
-}
-
-export type PublicUserInfo = Pick<IUserSchema, 'id' | 'username' | 'email'>
-    & {
-        twoFactorAuth: Pick<IUserSchema['twoFactorAuth'], 'active' | 'nextCheck'>,
-        isOAuthUser: boolean
-    }
-
-export enum UserRole {
-    ADMIN = 0,
-    SECONDARY_ADMIN = 1,
-    USER = 2,
-    UNIDENTIFIED = -1,
-}
-
-export enum State {
-    UNCONFIRMED = 'unconfirmed',
-    ACTIVE = 'active',
-    DELETING = 'deleting',
-}
+import { IUserSchema } from '../types/User'
+import OAuthProvider from '../enums/OAuthProvider.enum'
+import State from '../enums/State.enum'
+import UserRole from '../enums/UserRole.enum'
 
 export const UserSchema = new Schema<IUserSchema>(
     {
@@ -149,9 +100,6 @@ UserSchema.pre('save', function (next) {
     } else { return next() }
 })
 
-/**
- * Returns true if user was created using the OAuth 2.0 flow.
- */
 UserSchema.methods.isOAuthUser = function () {
     if (this.oauth && this.oauth.provider) {
         return true
@@ -159,9 +107,6 @@ UserSchema.methods.isOAuthUser = function () {
     return false
 }
 
-/**
- * Returns public user data that can be viewed by the frontend.
- */
 UserSchema.methods.getPublicInfo = function () {
     return {
         id: this.id,
@@ -175,24 +120,14 @@ UserSchema.methods.getPublicInfo = function () {
     }
 }
 
-/**
- * Checks if the given argument(an unhashed string) matches the user's actual password; returns a boolean
- * @param password an unhashed string
- */
 UserSchema.methods.validPassword = function (password: string): Promise<boolean> {
     return bcrypt.compare(password, this.password)
 }
 
-/**
- * Checks if the user has confirmed their email address
- */
 UserSchema.methods.hasConfirmed = function (): boolean {
     return this.state !== 'unconfirmed'
 }
 
-/**
- * Checks if one of the user's tokens has expired
- */
 UserSchema.methods.isTokenExpired = function (type: 'confirmation' | 'reset') {
     if (type === 'confirmation') {
         if (!this.confirmationToken) return false
@@ -202,9 +137,6 @@ UserSchema.methods.isTokenExpired = function (type: 'confirmation' | 'reset') {
     return getUnixTime() > this.resetToken.exp
 }
 
-/**
- * Checks if 2fa setup needs initial code validation
- */
 UserSchema.methods.is2faInitialSetup = function (): boolean {
     if (!this.twoFactorAuth.active && this.twoFactorAuth.secret) {
         return true
@@ -212,10 +144,7 @@ UserSchema.methods.is2faInitialSetup = function (): boolean {
     return false
 }
 
-/**
- * Checks if 2fa verification is required for the login
- */
-UserSchema.methods.is2faRequired = function (): boolean {
+UserSchema.methods.is2faRequiredOnLogin = function (): boolean {
     return this.twoFactorAuth.active && getUnixTime() > this.twoFactorAuth.nextCheck
 }
 

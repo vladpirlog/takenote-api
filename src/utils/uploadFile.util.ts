@@ -1,7 +1,7 @@
 import { UploadedFile } from 'express-fileupload'
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 import constants from '../config/constants.config'
-import { INoteSchema } from '../models/Note'
+import { INoteSchema } from '../types/Note'
 const cloudinary = require('cloudinary').v2
 const { Storage } = require('@google-cloud/storage')
 

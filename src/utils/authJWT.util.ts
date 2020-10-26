@@ -1,15 +1,14 @@
 import jwt from 'jsonwebtoken'
 import constants from '../config/constants.config'
 import jwtBlacklistUtil from './jwtBlacklist.util'
-import { IDecodedJWT } from '../types/DecodedJWT'
 import createID from './createID.util'
-import IAuthenticatedUserInfo from '../types/AuthenticatedUserInfo'
+import { AuthenticatedUserInfo, DecodedJWT } from '../types/User'
 
 /**
  * Generates a JWT using the info in the payload. Returns a string token.
  * @param payload object containing id, role and state of the user
  */
-const generateAuthJWT = (payload: IAuthenticatedUserInfo) => {
+const generateAuthJWT = (payload: AuthenticatedUserInfo) => {
     const token = jwt.sign(
         { _info: payload.role, _state: payload.state },
         constants.authentication.authJWTSecret,
@@ -32,11 +31,11 @@ const generateAuthJWT = (payload: IAuthenticatedUserInfo) => {
  * Async returns the user info stored in the JWT payload.
  * @param token JWT to check and decode
  */
-const verify = async (token: string): Promise<IAuthenticatedUserInfo> => {
-    const decoded: IDecodedJWT = jwt.verify(
+const verify = async (token: string): Promise<AuthenticatedUserInfo> => {
+    const decoded = jwt.verify(
         token,
         constants.authentication.authJWTSecret
-    ) as IDecodedJWT
+    ) as DecodedJWT
     const valid = await jwtBlacklistUtil.check(decoded.jti)
     if (!valid) throw new Error('Blacklisted JWT.')
     return {
@@ -51,10 +50,10 @@ const verify = async (token: string): Promise<IAuthenticatedUserInfo> => {
  * @param token JWT to extract data from
  */
 const getIDAndExp = (token: string): { id: string; exp: number } => {
-    const decoded: IDecodedJWT = jwt.verify(
+    const decoded: DecodedJWT = jwt.verify(
         token,
         constants.authentication.authJWTSecret
-    ) as IDecodedJWT
+    ) as DecodedJWT
     return { id: decoded.jti, exp: decoded.exp }
 }
 

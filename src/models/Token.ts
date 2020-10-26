@@ -1,12 +1,5 @@
-import mongoose, { Schema, Document } from 'mongoose'
-
-/**
- * Schema describing a token (can be of type reset or confirmation).
- */
-export interface ITokenSchema extends Document {
-    id: string
-    exp: number
-}
+import mongoose, { Schema } from 'mongoose'
+import { ITokenSchema } from '../types/Token'
 
 export const TokenSchema = new Schema<ITokenSchema>({
     id: {

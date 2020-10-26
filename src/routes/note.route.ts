@@ -15,11 +15,12 @@ import {
     validateNoteBody
 } from '../middlewares/bodyValidation.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
-import { AuthStatus } from '../types/AuthStatus'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
-import { State, UserRole } from '../models/User'
-import { NoteRole } from '../models/Note'
+import UserRole from '../enums/UserRole.enum'
+import AuthStatus from '../enums/AuthStatus.enum'
+import State from '../enums/State.enum'
+import NoteRole from '../enums/NoteRole.enum'
 
 const router = Router()
 

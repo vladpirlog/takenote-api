@@ -1,6 +1,8 @@
-import Note, { INoteSchema } from '../models/Note'
-import Attachment, { IAttachmentSchema } from '../models/Attachment'
+import Note from '../models/Note'
+import Attachment from '../models/Attachment'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
+import { IAttachmentSchema } from '../types/Attachment'
+import { INoteSchema } from '../types/Note'
 
 /**
  * Adds an attachment (title, description, url) to a note.

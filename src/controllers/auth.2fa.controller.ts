@@ -4,7 +4,7 @@ import userQuery from '../queries/user.query'
 import getAuthUser from '../utils/getAuthUser.util'
 import twoFactorAuth from '../utils/twoFactorAuth.util'
 import cookie from '../utils/cookie.util'
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 
 /**
  * Controller for generating a qrcode image with the totp secret.
@@ -36,7 +36,7 @@ const verify2faCode = async (req: Request, res: Response, next: NextFunction) =>
         if (!isValidOTPOrBackupCode(code as string, user)) return createResponse(res, 403)
 
         const newNextCheckTime = twoFactorAuth.getNextCheckTime(remember as string | undefined)
-        if (user.is2faRequired()) {
+        if (user.is2faRequiredOnLogin()) {
             const backupCodeUsed = user.twoFactorAuth.backupCodes?.find(b => b.active && b.id === code)
             const updateData: {
                 nextCheck?: IUserSchema['twoFactorAuth']['nextCheck'],
@@ -99,7 +99,7 @@ const handleInitial2faSetup = async (
  */
 const block2faVerfication = (isFullAuth: boolean, user: IUserSchema) => {
     if (isFullAuth) return !user.is2faInitialSetup()
-    return !user.is2faRequired()
+    return !user.is2faRequiredOnLogin()
 }
 
 /**

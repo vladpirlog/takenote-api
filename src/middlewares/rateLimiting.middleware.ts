@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import constants from '../config/constants.config'
 import redisConfig from '../config/redis.config'
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 
 const getKey = (req: Request, type: 'request' | 'email', userID?: IUserSchema['id']) => {
     return `${userID || 'guest'}--${req.ip}--${type}`

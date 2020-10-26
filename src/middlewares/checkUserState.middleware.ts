@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import { IUserSchema, State } from '../models/User'
+import { IUserSchema } from '../types/User'
 import getAuthUser from '../utils/getAuthUser.util'
+import State from '../enums/State.enum'
 
 const mustConfirmEmail = (userState: State, states: IUserSchema['state'][]) => {
     return userState === State.UNCONFIRMED &&
