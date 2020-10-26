@@ -1,5 +1,5 @@
 import constants from '../config/constants.config'
-import { IOAuthEndpointData, IOAuthTokenData, IOAuthUserData } from '../interfaces/oauth.interface'
+import { IOAuthEndpointData, IOAuthTokenData, IOAuthUserData } from '../types/OAuth'
 import querystring from 'querystring'
 import axios from 'axios'
 

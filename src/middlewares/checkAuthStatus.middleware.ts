@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import { AuthStatus } from '../interfaces/authStatus.enum'
+import { AuthStatus } from '../types/AuthStatus'
 
 /**
  * Higher-order function that checks the authentication state of the user.

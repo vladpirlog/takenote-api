@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import constants from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
-import { Color } from '../interfaces/color.enum'
+import { Color } from '../types/Color'
 import Joi from 'joi'
 import { NoteRole } from '../models/Note'
 import {

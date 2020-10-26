@@ -4,7 +4,7 @@ import constants from '../config/constants.config'
 import authJWT from './authJWT.util'
 import createID from './createID.util'
 import redisConfig from '../config/redis.config'
-import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interface'
+import IAuthenticatedUserInfo from '../types/AuthenticatedUserInfo'
 
 const setCookie = (res: Response, key: string, value: string, age: number) => {
     res.cookie(key, value, {

@@ -3,7 +3,7 @@ import { TokenSchema, ITokenSchema } from './Token'
 import bcrypt from 'bcrypt'
 import createID from '../utils/createID.util'
 import getUnixTime from '../utils/getUnixTime.util'
-import { OAuthProvider } from '../interfaces/oauth.interface'
+import { OAuthProvider } from '../types/OAuth'
 
 export interface IUserSchema extends Document {
     id: string

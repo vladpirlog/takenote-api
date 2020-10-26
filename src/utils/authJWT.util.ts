@@ -1,9 +1,9 @@
 import jwt from 'jsonwebtoken'
 import constants from '../config/constants.config'
 import jwtBlacklistUtil from './jwtBlacklist.util'
-import { IDecodedJWT } from '../interfaces/decodedJWT.interface'
+import { IDecodedJWT } from '../types/DecodedJWT'
 import createID from './createID.util'
-import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interface'
+import IAuthenticatedUserInfo from '../types/AuthenticatedUserInfo'
 
 /**
  * Generates a JWT using the info in the payload. Returns a string token.

@@ -1,4 +1,4 @@
-import { Color } from '../interfaces/color.enum'
+import { Color } from '../types/Color'
 import Note, { INoteSchema, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
 

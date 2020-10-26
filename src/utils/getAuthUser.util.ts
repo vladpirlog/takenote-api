@@ -1,5 +1,5 @@
 import { Response } from 'express'
-import IAuthenticatedUserInfo from '../interfaces/authenticatedUserInfo.interface'
+import IAuthenticatedUserInfo from '../types/AuthenticatedUserInfo'
 
 /**
  * Returns null or an object containing essential info about the user that made the request.

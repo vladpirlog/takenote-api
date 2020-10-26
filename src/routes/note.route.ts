@@ -15,7 +15,7 @@ import {
     validateNoteBody
 } from '../middlewares/bodyValidation.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
-import { AuthStatus } from '../interfaces/authStatus.enum'
+import { AuthStatus } from '../types/AuthStatus'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
 import { State, UserRole } from '../models/User'
