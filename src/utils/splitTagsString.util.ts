@@ -1,8 +1,7 @@
 import constants from '../config/constants.config'
-import checkRegex from './checkRegex.util'
 
 /**
- * Splits and tests a tags string. Returns an array of tags.
+ * Splits and tests a tags string. Returns null or an array of tags.
  * @param str string to parse
  */
 const splitTagsString = (str: string): string[] | null => {
@@ -11,7 +10,7 @@ const splitTagsString = (str: string): string[] | null => {
         tagsArray.includes('') ||
         tagsArray.length === 0 ||
         !Array.isArray(tagsArray) ||
-        !checkRegex(constants.regex.tag, tagsArray)
+        tagsArray.map(elem => constants.regex.tag.test(elem)).includes(false)
     ) {
         return null
     }
