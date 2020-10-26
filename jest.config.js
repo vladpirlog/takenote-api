@@ -23,7 +23,7 @@ module.exports = {
         '!**/node_modules/**',
         '!**/dist/**',
         '!**/temp/**',
-        '!./src/interfaces/**',
+        '!./src/types/**',
         '!./src/config/constants.ts'
     ],
 

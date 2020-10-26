@@ -18,10 +18,10 @@ import rateLimiting from '../middlewares/rateLimiting.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import auth2faController from '../controllers/auth.2fa.controller'
 import extractUser from '../middlewares/extractUser.middleware'
-import { AuthStatus } from '../types/AuthStatus'
 import authOauthController from '../controllers/auth.oauth.controller'
 import recaptcha from '../middlewares/recaptcha.middleware'
-import { State } from '../models/User'
+import State from '../enums/State.enum'
+import AuthStatus from '../enums/AuthStatus.enum'
 
 const router = Router()
 

@@ -1,4 +1,4 @@
-import { IUserSchema } from '../models/User'
+import { IUserSchema } from '../types/User'
 
 /**
  * Creates a valid username. Takes the first 12 characters from the part before the '@' symbol of the email

@@ -1,4 +1,4 @@
-export enum Color {
+enum Color {
     DEFAULT = '#ced4da',
     RED = '#edafb8',
     BLUE = '#d6efff',
@@ -7,3 +7,5 @@ export enum Color {
     PURPLE = '#e9dff7',
     ORANGE = '#fdeac4'
 }
+
+export default Color

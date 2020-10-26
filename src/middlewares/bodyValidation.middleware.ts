@@ -1,9 +1,7 @@
 import { Request, Response, NextFunction } from 'express'
 import constants from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
-import { Color } from '../types/Color'
 import Joi from 'joi'
-import { NoteRole } from '../models/Note'
 import {
     AddAttachmentBody,
     CheckCredentialsBody,
@@ -16,6 +14,8 @@ import {
     OldPasswordBody,
     RegisterBody
 } from '../types/RequestBodies'
+import Color from '../enums/Color.enum'
+import NoteRole from '../enums/NoteRole.enum'
 
 export const validateLoginBody = async (req: Request, res: Response, next: NextFunction) => {
     const schema = Joi.object<LoginBody>({

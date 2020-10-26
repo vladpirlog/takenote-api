@@ -1,5 +1,7 @@
-import Note, { INoteSchema, NoteRole } from '../models/Note'
-import { IUserSchema } from '../models/User'
+import NoteRole from '../enums/NoteRole.enum'
+import Note from '../models/Note'
+import { IUserSchema } from '../types/User'
+import { INoteSchema } from '../types/Note'
 
 /**
  * Returns the role (VIEWER, EDITOR or OWNER) that one of the users has for a note.

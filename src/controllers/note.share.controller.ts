@@ -5,7 +5,7 @@ import noteCrudQuery from '../queries/note.crud.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthUser from '../utils/getAuthUser.util'
-import { INoteSchema } from '../models/Note'
+import { INoteSchema } from '../types/Note'
 import userQuery from '../queries/user.query'
 import { CollaboratorBody } from '../types/RequestBodies'
 

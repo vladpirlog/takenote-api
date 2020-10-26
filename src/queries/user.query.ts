@@ -1,9 +1,11 @@
-import User, { IUserSchema, State } from '../models/User'
+import User from '../models/User'
+import { IUserSchema } from '../types/User'
 import createNewToken from '../utils/createNewToken.util'
 import bcrypt from 'bcrypt'
 import { MongooseUpdateQuery } from 'mongoose'
-import { ITokenSchema } from '../models/Token'
+import { ITokenSchema } from '../types/Token'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
+import State from '../enums/State.enum'
 
 /**
  * Searches for and returns a user using its id.

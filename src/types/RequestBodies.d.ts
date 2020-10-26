@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
-import { Color } from '../interfaces/color.enum'
-import { NoteRole } from '../models/Note'
+import { Color, NoteRole } from '../models/Note'
 import { IUserSchema } from '../models/User'
 
 export interface LoginBody {

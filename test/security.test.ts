@@ -4,7 +4,8 @@ import redisConfig from '../src/config/redis.config'
 import supertest from 'supertest'
 import app from '../src/app'
 import constants from '../src/config/constants.config'
-import Note, { INoteSchema } from '../src/models/Note'
+import Note from '../src/models/Note'
+import { INoteSchema } from '../src/types/Note'
 
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)

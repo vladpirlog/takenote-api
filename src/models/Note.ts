@@ -1,44 +1,10 @@
-import mongoose, { Schema, Document } from 'mongoose'
-import { AttachmentSchema, IAttachmentSchema } from './Attachment'
-import { Color } from '../types/Color'
-import { IUserSchema } from './User'
+import mongoose, { Schema } from 'mongoose'
+import { AttachmentSchema } from './Attachment'
+import { IUserSchema } from '../types/User'
 import createID from '../utils/createID.util'
-
-export interface INoteSchema extends Document {
-    id: string
-    title: string
-    content: string
-    attachments: IAttachmentSchema[]
-    share: { code: string, active: boolean }
-    users: {
-        subject: {
-            id: IUserSchema['id']
-            username: IUserSchema['username']
-            email: IUserSchema['email']
-        }
-        tags: string[]
-        archived: boolean
-        color: Color
-        role: NoteRole
-        fixed: boolean
-    }[]
-    createdAt: Date
-    updatedAt: Date
-    getPublicInfo(userID?: IUserSchema['id']): PublicNoteInfo
-}
-
-export type PublicNoteInfo =
-    Pick<INoteSchema, 'id' | 'title' | 'content' | 'attachments' | 'share' | 'createdAt' | 'updatedAt'>
-    & { owner: INoteSchema['users'][0]['subject'] }
-    & Partial<Omit<INoteSchema['users'][0], 'subject'> & {
-        collaborators: Pick<INoteSchema['users'][0], 'subject' | 'role'>[],
-    }>
-
-export enum NoteRole {
-    OWNER = 'owner',
-    EDITOR = 'editor',
-    VIEWER = 'viewer'
-}
+import { INoteSchema } from '../types/Note'
+import Color from '../enums/Color.enum'
+import NoteRole from '../enums/NoteRole.enum'
 
 export const NoteSchema = new Schema<INoteSchema>(
     {
@@ -114,10 +80,6 @@ export const NoteSchema = new Schema<INoteSchema>(
     { timestamps: true, id: false }
 )
 
-/**
- * Returns public note data that can be viewed by the frontend.
- * @param userID id of the user which requests the note
- */
 NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
     const owner = this.users.find(u => u.role === 'owner')
     if (!owner) throw new Error('Note has no owner.')

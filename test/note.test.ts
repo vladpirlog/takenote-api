@@ -3,10 +3,11 @@ import app from '../src/app'
 import mongodbConfig from '../src/config/mongodb.config'
 import redisConfig from '../src/config/redis.config'
 import constants from '../src/config/constants.config'
-import { INoteSchema, NoteRole } from '../src/models/Note'
 import path from 'path'
-import { Color } from '../src/interfaces/color.enum'
-import { IUserSchema } from '../src/models/User'
+import { INoteSchema } from '../src/types/Note'
+import { IUserSchema } from '../src/types/User'
+import Color from '../src/enums/Color.enum'
+import NoteRole from '../src/enums/NoteRole.enum'
 
 describe('test note-related operations', () => {
     const request = supertest.agent(app)

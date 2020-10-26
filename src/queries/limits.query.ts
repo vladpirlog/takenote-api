@@ -1,5 +1,7 @@
-import Note, { INoteSchema, NoteRole } from '../models/Note'
-import { IUserSchema } from '../models/User'
+import NoteRole from '../enums/NoteRole.enum'
+import Note from '../models/Note'
+import { INoteSchema } from '../types/Note'
+import { IUserSchema } from '../types/User'
 
 const note = (userID: IUserSchema['id']) => {
     return Note.find({

@@ -1,6 +1,8 @@
-import { Color } from '../types/Color'
-import Note, { INoteSchema, NoteRole } from '../models/Note'
-import { IUserSchema } from '../models/User'
+import Color from '../enums/Color.enum'
+import NoteRole from '../enums/NoteRole.enum'
+import Note from '../models/Note'
+import { INoteSchema } from '../types/Note'
+import { IUserSchema } from '../types/User'
 
 /**
  * Adds a collaborator to a note.

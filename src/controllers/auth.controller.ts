@@ -7,8 +7,8 @@ import jwtBlacklist from '../utils/jwtBlacklist.util'
 import cookie from '../utils/cookie.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import constants from '../config/constants.config'
-import { State } from '../models/User'
 import { LoginBody, OldPasswordBody, RegisterBody } from '../types/RequestBodies'
+import State from '../enums/State.enum'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -28,7 +28,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
             return createResponse(res, 401)
         }
 
-        if (user.is2faRequired()) {
+        if (user.is2faRequiredOnLogin()) {
             await cookie.set2faTempCookie(res, user)
             return createResponse(res, 202, 'First authentication step successful.')
         }

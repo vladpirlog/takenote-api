@@ -1,5 +1,6 @@
-import Note, { INoteSchema } from '../models/Note'
-import { IUserSchema } from '../models/User'
+import Note from '../models/Note'
+import { INoteSchema } from '../types/Note'
+import { IUserSchema } from '../types/User'
 
 /**
  * Returns an array of notes which contain the given tag.

@@ -1,9 +1,9 @@
 import constants from '../config/constants.config'
-import { IOAuthEndpointData, IOAuthTokenData, IOAuthUserData } from '../types/OAuth'
 import querystring from 'querystring'
 import axios from 'axios'
+import OAuth from '../types/OAuth'
 
-const getEndpoints = async (): Promise<IOAuthEndpointData> => {
+const getEndpoints = async (): Promise<OAuth.EndpointData> => {
     try {
         const res = await axios.get(constants.authentication.oauth.google.discoveryDocument)
         return {
@@ -18,7 +18,7 @@ const getTokensWithAuthorizationCode = async (
     authorizationCode: string,
     tokenURL: string,
     redirectURI: string
-): Promise<IOAuthTokenData> => {
+): Promise<OAuth.TokenData> => {
     try {
         const body = querystring.stringify({
             code: authorizationCode,
@@ -39,7 +39,7 @@ const getTokensWithAuthorizationCode = async (
 const getUserDataWithAccessToken = async (
     accessToken: string,
     userInfoURL: string
-): Promise<IOAuthUserData> => {
+): Promise<OAuth.UserData> => {
     try {
         const res = await axios.post(userInfoURL, null, {
             headers: {

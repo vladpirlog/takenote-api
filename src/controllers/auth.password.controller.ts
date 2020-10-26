@@ -3,7 +3,7 @@ import createResponse from '../utils/createResponse.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
 import getAuthUser from '../utils/getAuthUser.util'
-import { ITokenSchema } from '../models/Token'
+import { ITokenSchema } from '../types/Token'
 import { EmailBody, NewPasswordBody, OldPasswordBody } from '../types/RequestBodies'
 
 const requestResetTokenWithEmail = async (req: Request, res: Response, next: NextFunction) => {
