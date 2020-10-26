@@ -19,7 +19,7 @@ describe('test note-related operations', () => {
     let collaboratorID: IUserSchema['id']
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        await redisConfig.connect()
+        redisConfig.connect()
         await request
             .post('/auth/login')
             .send({

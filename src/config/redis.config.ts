@@ -1,42 +1,50 @@
-import redis, { RedisClient } from 'redis'
+import { RedisClient } from 'redis'
+import { promisify } from 'util'
 
-let redisClient: RedisClient
+class RedisClientWithPromises extends RedisClient {
+    promiseGet (key: string) {
+        return promisify(this.get).bind(this)(key)
+    }
+
+    promiseSetex (key: string, seconds: number, value: string) {
+        return promisify(this.setex).bind(this)(key, seconds, value)
+    }
+
+    promiseDel (key: string | string[]) {
+        // @ts-ignore
+        return promisify(this.del).bind(this)(key)
+    }
+
+    promiseIncr (key: string) {
+        return promisify(this.incr).bind(this)(key)
+    }
+
+    promiseQuit () {
+        return promisify(this.quit).bind(this)()
+    }
+
+    constructor () {
+        super({})
+    }
+}
+
+let redisClient: RedisClientWithPromises
 
 /**
- * Creates a client for a Redis server. Returns a promise.
+ * Creates a client for a Redis server.
  */
-const connect = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        redisClient = redis.createClient()
-        redisClient
-            .on('error', (err) => reject(err))
-            .on('connect', () => resolve())
-    })
+const connect = () => {
+    redisClient = new RedisClientWithPromises()
 }
+
+/**
+ * Returns the current Redis client.
+ */
+const getClient = () => redisClient
 
 /**
  * Quits the currently open Redis client. Returns a promise.
  */
-const close = (): Promise<void> => {
-    return new Promise((resolve, reject) => {
-        redisClient.quit((err, ok) => {
-            if (err) return reject(err)
-            return ok === 'OK'
-                ? resolve()
-                : reject(new Error('Failed to close the redis client.'))
-        })
-    })
-}
-
-/**
- * Returns a promise for the currently open Redis client.
- */
-const getClient = (): Promise<RedisClient> => {
-    return new Promise((resolve, reject) => {
-        return redisClient
-            ? resolve(redisClient)
-            : reject(new Error('Redis client is undefined.'))
-    })
-}
+const close = () => redisClient.promiseQuit()
 
 export default { connect, close, getClient }

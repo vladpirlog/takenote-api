@@ -4,18 +4,19 @@ import constants from '../config/constants.config'
 import redisConfig from '../config/redis.config'
 import { IUserSchema } from '../types/User'
 
-const getKey = (req: Request, type: 'request' | 'email', userID?: IUserSchema['id']) => {
-    return `${userID || 'guest'}--${req.ip}--${type}`
+/**
+ * Creates a redis key using the given arguments.
+ * @param ip ip address of the request
+ * @param type the type of rate limiting to be done
+ * @param userID id of the user making the request; defaults to 'guest'
+ */
+const getKey = (ip: string, type: 'request' | 'email', userID: IUserSchema['id'] = 'guest') => {
+    return `${userID}--${ip}--${type}`
 }
 
-const getValueFromKey = async (key: string) => {
-    const redisClient = await redisConfig.getClient()
-    const value: string | null = await new Promise((resolve, reject) => {
-        redisClient.get(key, (err, reply) => err ? reject(err) : resolve(reply))
-    })
-    return value
-}
-
+/**
+ * For request rate limiting, sets the custom headers.
+ */
 const setHeaders = (res: Response, counter: number) => {
     res.setHeader(
         'X-RateLimit-Remaining-Minute',
@@ -24,41 +25,38 @@ const setHeaders = (res: Response, counter: number) => {
     res.setHeader('X-RateLimit-Limit-Minute', constants.limits.perUser.request)
 }
 
+/**
+ * Creates a new entry with the value 1 in the Redis database .
+ */
 const createNewEntry = async (key: string) => {
-    const redisClient = await redisConfig.getClient()
-    await new Promise((resolve, reject) => {
-        redisClient.setex(key, 60, '1', (err, res) => {
-            if (err) return reject(err)
-            return resolve(res)
-        })
-    })
+    await redisConfig.getClient().promiseSetex(key, 60, '1')
     return 1
 }
 
-const incrementExistingEntry = async (key: string) => {
-    const redisClient = await redisConfig.getClient()
-    const newValue: number = await new Promise((resolve, reject) => {
-        redisClient.incr(key, (err, res) => {
-            if (err) return reject(err)
-            return resolve(res)
-        })
-    })
-    return newValue
-}
+/**
+ * Increments an existing entry in the Redis database.
+ */
+const incrementExistingEntry = (key: string) => redisConfig.getClient().promiseIncr(key)
 
+/**
+ * Limits the number of requests or email that have to be sent to a given ip and user.
+ * @param type the type of rate limiting to be done
+ */
 const rateLimiting = (type: 'request' | 'email') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const key = getKey(req, type, res.locals?.user?.id)
-            const value = await getValueFromKey(key)
-            const newValue = value
+            const key = getKey(req.ip, type, res.locals?.user?.id)
+            const counter = await redisConfig.getClient().promiseGet(key)
+
+            const newCounter = counter
                 ? await incrementExistingEntry(key)
                 : await createNewEntry(key)
+            if (type === 'request') setHeaders(res, newCounter)
 
-            if (type === 'request') setHeaders(res, newValue)
-            return newValue > constants.limits.perUser.request
-                ? createResponse(res, 429)
-                : next()
+            if (newCounter > constants.limits.perUser.request) {
+                return createResponse(res, 429)
+            }
+            return next()
         } catch (err) { return next(err) }
     }
 }

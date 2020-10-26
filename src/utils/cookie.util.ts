@@ -5,6 +5,9 @@ import authJWT from './authJWT.util'
 import createID from './createID.util'
 import redisConfig from '../config/redis.config'
 
+/**
+ * Sets a cookie on the express.Response object.
+ */
 const setCookie = (res: Response, key: string, value: string, age: number) => {
     res.cookie(key, value, {
         expires: new Date(Date.now() + age),
@@ -17,7 +20,7 @@ const setCookie = (res: Response, key: string, value: string, age: number) => {
 }
 
 /**
- * Sets a JWT as an authentication cookie for the given user
+ * Sets a JWT as an authentication cookie for the given user.
  * @param res object of type express.Response
  * @param user the owner of the cookie
  */
@@ -35,13 +38,17 @@ const setAuthCookie = (res: Response, user: IUserSchema): Response => {
     )
 }
 
+/**
+ * Clears the authentication cookie.
+ * @param res object of type express.Response
+ */
 const clearAuthCookie = (res: Response): Response => {
     res.clearCookie(constants.authentication.authCookieName)
     return res
 }
 
 /**
- * Sets a temporary cookie for the given user and stores it in redis
+ * Sets a temporary cookie for the given user and stores it in redis.
  * @param res object of type express.Response
  * @param user the owner of the cookie
  */
@@ -50,18 +57,11 @@ const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Respo
     const userData: AuthenticatedUserInfo = {
         id: user.id, state: user.state, role: user.role
     }
-    const redisClient = await redisConfig.getClient()
-    await new Promise((resolve, reject) => {
-        redisClient.setex(
-            tfaCookieID,
-            Math.floor(constants.authentication.tfaTempCookieAge / 1000),
-            JSON.stringify(userData),
-            (err, res) => {
-                if (err) return reject(err)
-                return resolve(res)
-            }
-        )
-    })
+    await redisConfig.getClient().promiseSetex(
+        tfaCookieID,
+        Math.floor(constants.authentication.tfaTempCookieAge / 1000),
+        JSON.stringify(userData)
+    )
     return setCookie(
         res,
         constants.authentication.tfaTempCookieName,
@@ -70,18 +70,17 @@ const set2faTempCookie = async (res: Response, user: IUserSchema): Promise<Respo
     )
 }
 
+/**
+ * Clears the temporary cookie used for two-factor authentication.
+ * @param req object of type express.Request
+ * @param res object of type express.Response
+ */
 const clearTfaTempCookie = async (req: Request, res: Response): Promise<Response> => {
     const tfaCookieID: string | undefined = req.cookies[constants.authentication.tfaTempCookieName]
     if (!tfaCookieID) return res
 
     res.clearCookie(constants.authentication.tfaTempCookieName)
-    const redisClient = await redisConfig.getClient()
-    await new Promise((resolve, reject) => {
-        redisClient.del(tfaCookieID, (err, res) => {
-            if (err) return reject(err)
-            return resolve(res)
-        })
-    })
+    await redisConfig.getClient().promiseDel(tfaCookieID)
     return res
 }
 

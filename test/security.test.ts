@@ -15,7 +15,7 @@ describe('testing the security features of the api', () => {
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        await redisConfig.connect()
+        redisConfig.connect()
 
         const res = await request
             .post('/auth/login')
