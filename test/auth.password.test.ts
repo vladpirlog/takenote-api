@@ -9,7 +9,7 @@ describe('test pw reset flows', () => {
     const request = supertest.agent(app)
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        await redisConfig.connect()
+        redisConfig.connect()
     })
 
     test('check wrong token for expiration', (done) => {

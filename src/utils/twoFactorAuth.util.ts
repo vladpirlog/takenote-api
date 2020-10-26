@@ -4,18 +4,13 @@ import { IUserSchema } from '../types/User'
 import getUnixTime from './getUnixTime.util'
 import constants from '../config/constants.config'
 import { nanoid } from 'nanoid'
+import { promisify } from 'util'
 
 const generateSecretAndImage = async (email: IUserSchema['email']) => {
     const secret = speakeasy.generateSecret({ name: `TakeNote (${email})` })
     if (!secret.otpauth_url) throw new Error('Couldn\'t create the 2fa secret.')
 
-    const p: Promise<string> = new Promise((resolve, reject) => {
-        qrcode.toDataURL(secret.otpauth_url || '', (err, dataUrl) => {
-            if (err) return reject(err)
-            return resolve(dataUrl)
-        })
-    })
-    const image = await p
+    const image = await promisify(qrcode.toDataURL)(secret.otpauth_url) as string
     return { secret: secret.base32, image }
 }
 

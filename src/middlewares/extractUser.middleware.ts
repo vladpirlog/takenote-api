@@ -33,10 +33,7 @@ const fromTfaTempCookie = async (req: Request, res: Response, next: NextFunction
         const tfaTempCookie: string | undefined = req.cookies[constants.authentication.tfaTempCookieName]
         if (getAuthUser(res).id || !tfaTempCookie) return next()
 
-        const redisClient = await redisConfig.getClient()
-        const value: string | null = await new Promise((resolve, reject) => {
-            redisClient.get(tfaTempCookie, (err, reply) => err ? reject(err) : resolve(reply))
-        })
+        const value = await redisConfig.getClient().promiseGet(tfaTempCookie)
         res.locals.user = value ? JSON.parse(value) : null
         res.locals.isFullAuth = false
         return next()

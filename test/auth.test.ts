@@ -9,7 +9,7 @@ describe('test registration and authentication flows', () => {
     const request = supertest.agent(app)
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        await redisConfig.connect()
+        redisConfig.connect()
     })
 
     test('server status', (done) => {
