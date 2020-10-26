@@ -23,7 +23,7 @@ const getById = (
  * @param email email of a user
  */
 const getByUsernameOrEmail = (
-    username: IUserSchema['username'] | IUserSchema['email'],
+    username?: IUserSchema['username'] | IUserSchema['email'],
     email?: IUserSchema['email']
 ) => {
     return User.findOne({

@@ -195,7 +195,7 @@ describe('test note-related operations', () => {
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
                 user: constants.test.persistentUser2.username,
-                type: 'r'
+                type: 'viewer'
             })
             .then((res) => {
                 collaboratorID = res.body.collaborator.subject.id
@@ -213,7 +213,7 @@ describe('test note-related operations', () => {
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
                 user: constants.test.persistentUser2.email,
-                type: 'rw'
+                type: 'editor'
             })
             .then((res) => {
                 expect(res.status).toBe(200)
