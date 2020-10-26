@@ -5,10 +5,11 @@ import { UploadedFile } from 'express-fileupload'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
 import getAuthUser from '../utils/getAuthUser.util'
 import constants from '../config/constants.config'
+import { AddAttachmentBody, EditAttachmentBody } from '../types/RequestBodies'
 
 const addAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { title, description } = req.body
+        const { title, description } = req.body as AddAttachmentBody
         const { id } = req.params
         const file = req.files?.photo
 
@@ -34,7 +35,7 @@ const addAttachment = async (req: Request, res: Response, next: NextFunction) =>
 
 const editAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { title, description } = req.body
+        const { title, description } = req.body as EditAttachmentBody
         const { id, attachmentID } = req.params
 
         const newNote = await noteAttachmentsQuery.editAttachment(

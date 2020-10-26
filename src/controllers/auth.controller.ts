@@ -8,6 +8,7 @@ import cookie from '../utils/cookie.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import constants from '../config/constants.config'
 import { State } from '../models/User'
+import { LoginBody, OldPasswordBody, RegisterBody } from '../types/RequestBodies'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -20,7 +21,7 @@ const getMe = async (req: Request, res: Response, next: NextFunction) => {
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, password } = req.body
+        const { email, password } = req.body as LoginBody
 
         const user = await userQuery.getByUsernameOrEmail(email)
         if (!user || user.isOAuthUser() || !await user.validPassword(password)) {
@@ -50,7 +51,7 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 
 const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { username, email, password } = req.body
+        const { username, email, password } = req.body as RegisterBody
         const user = await userQuery.createNewUser({
             username,
             email,
@@ -69,7 +70,7 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 // TODO: delete users from db after some time
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { old_password: oldPassword } = req.body
+        const { old_password: oldPassword } = req.body as OldPasswordBody
         const user = await userQuery.getById(getAuthUser(res).id)
         if (!user) return createResponse(res, 400)
         if (await user.validPassword(oldPassword)) {
