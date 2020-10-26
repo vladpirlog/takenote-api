@@ -9,11 +9,7 @@ import noteAttachmentsController from '../controllers/note.attachments.controlle
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import checkNoteRole from '../middlewares/checkNoteRole.middleware'
-import {
-    validateAddAttachmentBody,
-    validateEditAttachmentBody,
-    validateNoteBody
-} from '../middlewares/bodyValidation.middleware'
+import validateBody from '../middlewares/bodyValidation.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
@@ -42,10 +38,10 @@ router.get('/tags', requestFieldsDefined('query', ['tag']), noteTagsController.g
 router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.getOneNote)
 
 // ADD a note
-router.post('/', validateNoteBody, checkLimits.forNote, noteCrudController.addNote)
+router.post('/', validateBody('note', 'Note invalid.'), checkLimits.forNote, noteCrudController.addNote)
 
 // UPDATE a note
-router.put('/:id', requestFieldsDefined('params', ['id']), validateNoteBody, noteCrudController.editNote)
+router.put('/:id', requestFieldsDefined('params', ['id']), validateBody('note', 'Note invalid.'), noteCrudController.editNote)
 
 // DELETE a note
 router.delete('/:id', requestFieldsDefined('params', ['id']), noteCrudController.deleteNote)
@@ -105,7 +101,7 @@ router.post(
     deleteFileOnFinish,
     requestFieldsDefined('params', ['id']),
     checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
-    validateAddAttachmentBody,
+    validateBody('addAttachment', 'Attachment invalid.'),
     attachmentMetadata,
     checkLimits.forAttachment,
     noteAttachmentsController.addAttachment
@@ -116,7 +112,7 @@ router.put(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
     checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
-    validateEditAttachmentBody,
+    validateBody('editAttachment', 'Attachment invalid.'),
     noteAttachmentsController.editAttachment
 )
 
