@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose'
 import { AttachmentSchema, IAttachmentSchema } from './Attachment'
-import { Color } from '../interfaces/color.enum'
+import { Color } from '../types/Color'
 import { IUserSchema } from './User'
 import createID from '../utils/createID.util'
 

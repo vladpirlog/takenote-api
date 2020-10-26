@@ -4,7 +4,7 @@ import constantsConfig from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
 import userQuery from '../queries/user.query'
 import getUsernameFromEmail from '../utils/getUsernameFromEmail.util'
-import { OAuthProvider } from '../interfaces/oauth.interface'
+import { OAuthProvider } from '../types/OAuth'
 import cookie from '../utils/cookie.util'
 
 const google = async (req: Request, res: Response, next: NextFunction) => {
