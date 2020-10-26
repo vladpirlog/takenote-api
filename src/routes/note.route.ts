@@ -9,7 +9,11 @@ import noteAttachmentsController from '../controllers/note.attachments.controlle
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import checkNoteRole from '../middlewares/checkNoteRole.middleware'
-import regexTest from '../middlewares/regexTest.middleware'
+import {
+    validateAddAttachmentBody,
+    validateEditAttachmentBody,
+    validateNoteBody
+} from '../middlewares/bodyValidation.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import { AuthStatus } from '../interfaces/authStatus.enum'
 import checkLimits from '../middlewares/checkLimits.middleware'
@@ -37,10 +41,10 @@ router.get('/tags', requestFieldsDefined('query', ['tag']), noteTagsController.g
 router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.getOneNote)
 
 // ADD a note
-router.post('/', regexTest.note, checkLimits.forNote, noteCrudController.addNote)
+router.post('/', validateNoteBody, checkLimits.forNote, noteCrudController.addNote)
 
 // UPDATE a note
-router.put('/:id', requestFieldsDefined('params', ['id']), regexTest.note, noteCrudController.editNote)
+router.put('/:id', requestFieldsDefined('params', ['id']), validateNoteBody, noteCrudController.editNote)
 
 // DELETE a note
 router.delete('/:id', requestFieldsDefined('params', ['id']), noteCrudController.deleteNote)
@@ -56,11 +60,10 @@ router.post(
     noteShareController.getShareLink
 )
 
-// ADD a collaborator to a note, in the form of username/email/id and type (r, rw)
+// ADD a collaborator to a note, in the form of username/email/id and type (editor or viewer)
 router.post(
     '/:id/share/collaborators',
     requestFieldsDefined('params', ['id']),
-    requestFieldsDefined('body', ['user', 'type']),
     checkNoteRole([NoteRole.OWNER]),
     checkLimits.forCollaborator,
     noteShareController.addCollaborator
@@ -101,7 +104,7 @@ router.post(
     deleteFileOnFinish,
     requestFieldsDefined('params', ['id']),
     checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
-    regexTest.attachment,
+    validateAddAttachmentBody,
     attachmentMetadata,
     checkLimits.forAttachment,
     noteAttachmentsController.addAttachment
@@ -112,7 +115,7 @@ router.put(
     '/:id/attachments/:attachmentID',
     requestFieldsDefined('params', ['id', 'attachmentID']),
     checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
-    regexTest.attachment,
+    validateEditAttachmentBody,
     noteAttachmentsController.editAttachment
 )
 

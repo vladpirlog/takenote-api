@@ -1,6 +1,13 @@
 import { Router } from 'express'
 import authController from '../controllers/auth.controller'
-import regexTest from '../middlewares/regexTest.middleware'
+import {
+    validateCheckCredentialsBody,
+    validateLoginBody,
+    validateOldPasswordBody,
+    validateRegisterBody,
+    validateEmailBody,
+    validateNewPasswordBody
+} from '../middlewares/bodyValidation.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
@@ -25,8 +32,7 @@ router.get('/me', checkAuthStatus([AuthStatus.LOGGED_IN]), authController.getMe)
 router.post(
     '/login',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    requestFieldsDefined('body', ['email', 'password']),
-    regexTest.login,
+    validateLoginBody,
     recaptcha,
     authController.login
 )
@@ -38,8 +44,7 @@ router.post('/logout', checkAuthStatus([AuthStatus.LOGGED_IN]), authController.l
 router.post(
     '/register',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    requestFieldsDefined('body', ['username', 'email', 'password', 'confirm_password']),
-    regexTest.register,
+    validateRegisterBody,
     recaptcha,
     checkUniqueUser(false),
     rateLimiting.forEmail,
@@ -65,8 +70,7 @@ router.post(
 router.post(
     '/reset_password',
     checkAuthStatus([AuthStatus.LOGGED_IN]),
-    requestFieldsDefined('body', ['old_password']),
-    regexTest.oldPassword,
+    validateOldPasswordBody,
     rateLimiting.forEmail,
     authPasswordController.requestResetTokenWithPassword
 )
@@ -75,8 +79,7 @@ router.post(
 router.post(
     '/forgot_password',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    requestFieldsDefined('body', ['email']),
-    regexTest.email,
+    validateEmailBody,
     rateLimiting.forEmail,
     authPasswordController.requestResetTokenWithEmail
 )
@@ -85,8 +88,7 @@ router.post(
 router.post(
     '/new_password',
     requestFieldsDefined('query', ['token']),
-    requestFieldsDefined('body', ['new_password', 'confirm_new_password']),
-    regexTest.newPassword,
+    validateNewPasswordBody,
     recaptcha,
     authPasswordController.submitToken
 )
@@ -102,7 +104,7 @@ router.get(
 router.post(
     '/check_credentials',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    regexTest.checkCredentials,
+    validateCheckCredentialsBody,
     checkUniqueUser(true)
 )
 
@@ -111,8 +113,7 @@ router.post(
     '/delete',
     checkAuthStatus([AuthStatus.LOGGED_IN]),
     checkUserState([State.ACTIVE, State.UNCONFIRMED]),
-    requestFieldsDefined('body', ['old_password']),
-    regexTest.oldPassword,
+    validateOldPasswordBody,
     authController.deleteUser
 )
 
