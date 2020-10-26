@@ -4,10 +4,11 @@ import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
 import getAuthUser from '../utils/getAuthUser.util'
 import { ITokenSchema } from '../models/Token'
+import { EmailBody, NewPasswordBody, OldPasswordBody } from '../types/RequestBodies'
 
 const requestResetTokenWithEmail = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email } = req.body
+        const { email } = req.body as EmailBody
         const user = await userQuery.setNewToken(email, 'reset')
         if (!user) return createResponse(res, 400)
 
@@ -18,7 +19,7 @@ const requestResetTokenWithEmail = async (req: Request, res: Response, next: Nex
 
 const requestResetTokenWithPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { old_password: oldPassword } = req.body
+        const { old_password: oldPassword } = req.body as OldPasswordBody
         const user = await userQuery.getById(getAuthUser(res).id)
         if (!user) return createResponse(res, 400)
 
@@ -35,7 +36,7 @@ const requestResetTokenWithPassword = async (req: Request, res: Response, next: 
 
 const submitToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { new_password: newPassword } = req.body
+        const { new_password: newPassword } = req.body as NewPasswordBody
         const { token } = req.query
 
         const user = await userQuery.getByToken(token as ITokenSchema['id'], 'reset')

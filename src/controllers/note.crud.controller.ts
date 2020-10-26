@@ -6,6 +6,7 @@ import stringToBoolean from '../utils/stringToBoolean.util'
 import isPositiveInteger from '../utils/isPositiveInteger.util'
 import User from '../models/User'
 import userQuery from '../queries/user.query'
+import { NoteBody } from '../types/RequestBodies'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -45,16 +46,16 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
 
 const addNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { title, content, archived, color, fixed } = req.body
+        const { title, content, archived, color, fixed } = req.body as NoteBody
 
         const authUser = await User.findOne({ id: getAuthUser(res).id })
         if (!authUser) return createResponse(res, 400)
         const newNote = await noteQuery.createOne({
             title,
             content,
-            archived: stringToBoolean(archived),
+            archived: typeof archived === 'string' ? stringToBoolean(archived) : archived,
             color,
-            fixed: stringToBoolean(fixed),
+            fixed: typeof fixed === 'string' ? stringToBoolean(fixed) : fixed,
             owner: { id: authUser.id, username: authUser.username, email: authUser.email }
         })
         return newNote
@@ -67,7 +68,7 @@ const addNote = async (req: Request, res: Response, next: NextFunction) => {
 const editNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const { title, content, archived, color, fixed } = req.body
+        const { title, content, archived, color, fixed } = req.body as NoteBody
 
         const updatedNote = await noteQuery.updateOneByID(
             id,
@@ -75,9 +76,9 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
             {
                 title,
                 content,
-                archived: stringToBoolean(archived),
+                archived: typeof archived === 'string' ? stringToBoolean(archived) : archived,
                 color,
-                fixed: stringToBoolean(fixed)
+                fixed: typeof fixed === 'string' ? stringToBoolean(fixed) : fixed
             }
         )
 

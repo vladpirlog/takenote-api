@@ -5,8 +5,9 @@ import noteCrudQuery from '../queries/note.crud.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
 import getAuthUser from '../utils/getAuthUser.util'
-import { INoteSchema, NoteRole } from '../models/Note'
+import { INoteSchema } from '../models/Note'
 import userQuery from '../queries/user.query'
+import { CollaboratorBody } from '../types/RequestBodies'
 
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -53,11 +54,7 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
 const addCollaborator = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const { user, type } = req.body
-
-        if (type !== 'rw' && type !== 'r') {
-            return createResponse(res, 400, 'Invalid type. Should be \'r\' or \'rw\'.')
-        }
+        const { user, type } = req.body as CollaboratorBody
 
         const collaborator = await userQuery.getByUsernameOrEmail(user)
         if (!collaborator || collaborator.id === getAuthUser(res).id) return null
@@ -65,7 +62,7 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const newNote = await noteShareQuery.addCollaborator(
             id,
             { id: collaborator.id, username: collaborator.username, email: collaborator.email },
-            type === 'rw' ? NoteRole.EDITOR : NoteRole.VIEWER
+            type
         )
         const newCollaborator = newNote?.users.find(u => u.subject.id === collaborator.id)
         if (!newNote || !newCollaborator) return createResponse(res, 400)
