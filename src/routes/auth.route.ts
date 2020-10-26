@@ -1,13 +1,6 @@
 import { Router } from 'express'
 import authController from '../controllers/auth.controller'
-import {
-    validateCheckCredentialsBody,
-    validateLoginBody,
-    validateOldPasswordBody,
-    validateRegisterBody,
-    validateEmailBody,
-    validateNewPasswordBody
-} from '../middlewares/bodyValidation.middleware'
+import validateBody from '../middlewares/bodyValidation.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
@@ -32,7 +25,7 @@ router.get('/me', checkAuthStatus([AuthStatus.LOGGED_IN]), authController.getMe)
 router.post(
     '/login',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    validateLoginBody,
+    validateBody('login', 'Credentials invalid.'),
     recaptcha,
     authController.login
 )
@@ -44,7 +37,7 @@ router.post('/logout', checkAuthStatus([AuthStatus.LOGGED_IN]), authController.l
 router.post(
     '/register',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    validateRegisterBody,
+    validateBody('register', 'Credentials invalid.'),
     recaptcha,
     checkUniqueUser(false),
     rateLimiting.forEmail,
@@ -70,7 +63,7 @@ router.post(
 router.post(
     '/reset_password',
     checkAuthStatus([AuthStatus.LOGGED_IN]),
-    validateOldPasswordBody,
+    validateBody('oldPassword', 'Credentials invalid.'),
     rateLimiting.forEmail,
     authPasswordController.requestResetTokenWithPassword
 )
@@ -79,7 +72,7 @@ router.post(
 router.post(
     '/forgot_password',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    validateEmailBody,
+    validateBody('email', 'Credentials invalid.'),
     rateLimiting.forEmail,
     authPasswordController.requestResetTokenWithEmail
 )
@@ -88,7 +81,7 @@ router.post(
 router.post(
     '/new_password',
     requestFieldsDefined('query', ['token']),
-    validateNewPasswordBody,
+    validateBody('newPassword', 'Credentials invalid.'),
     recaptcha,
     authPasswordController.submitToken
 )
@@ -104,7 +97,7 @@ router.get(
 router.post(
     '/check_credentials',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    validateCheckCredentialsBody,
+    validateBody('checkCredentials', 'Credentials invalid.'),
     checkUniqueUser(true)
 )
 
@@ -113,7 +106,7 @@ router.post(
     '/delete',
     checkAuthStatus([AuthStatus.LOGGED_IN]),
     checkUserState([State.ACTIVE, State.UNCONFIRMED]),
-    validateOldPasswordBody,
+    validateBody('oldPassword', 'Credentials invalid.'),
     authController.deleteUser
 )
 

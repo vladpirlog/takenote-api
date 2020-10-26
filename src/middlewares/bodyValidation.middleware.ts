@@ -17,157 +17,86 @@ import {
 import Color from '../enums/Color.enum'
 import NoteRole from '../enums/NoteRole.enum'
 
-export const validateLoginBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<LoginBody>({
+const EMAIL_SCHEMA = Joi.string().required().email()
+const USERNAME_SCHEMA = Joi.string().required().regex(constants.regex.username)
+const PASSWORD_SCHEMA = Joi.string().required().regex(constants.regex.password)
+
+const schemas = {
+    login: Joi.object<LoginBody>({
         email: Joi
             .when(Joi.ref('.'), {
-                is: Joi.string().required().email(),
-                otherwise: Joi.string().required().regex(constants.regex.username)
+                is: EMAIL_SCHEMA,
+                otherwise: USERNAME_SCHEMA
             }),
-        password: Joi.string().required().regex(constants.regex.password)
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Credentials invalid.')
-    }
-}
-
-export const validateRegisterBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<RegisterBody>({
-        username: Joi.string().required().regex(constants.regex.username),
-        email: Joi.string().required().email(),
-        password: Joi.string().required().regex(constants.regex.password),
+        password: PASSWORD_SCHEMA
+    }),
+    register: Joi.object<RegisterBody>({
+        username: USERNAME_SCHEMA,
+        email: EMAIL_SCHEMA,
+        password: PASSWORD_SCHEMA,
         confirm_password: Joi.ref('password')
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Credentials invalid.')
-    }
-}
-
-export const validateNewPasswordBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<NewPasswordBody>({
-        new_password: Joi.string().required().regex(constants.regex.password),
+    }),
+    newPassword: Joi.object<NewPasswordBody>({
+        new_password: PASSWORD_SCHEMA,
         confirm_new_password: Joi.ref('new_password')
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Credentials invalid.')
-    }
-}
-
-export const validateOldPasswordBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<OldPasswordBody>({
-        old_password: Joi.string().required().regex(constants.regex.password)
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Credentials invalid.')
-    }
-}
-
-export const validateEmailBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<EmailBody>({
+    }),
+    oldPassword: Joi.object<OldPasswordBody>({
+        old_password: PASSWORD_SCHEMA
+    }),
+    email: Joi.object<EmailBody>({
         email: Joi
             .when(Joi.ref('.'), {
-                is: Joi.string().required().email(),
-                otherwise: Joi.string().required().regex(constants.regex.username)
+                is: EMAIL_SCHEMA,
+                otherwise: USERNAME_SCHEMA
             })
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Credentials invalid.')
-    }
-}
-
-export const validateNoteBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<NoteBody>({
+    }),
+    note: Joi.object<NoteBody>({
         title: Joi.string().max(100),
         content: Joi.string().max(10000),
         archived: Joi.boolean().default(false),
         fixed: Joi.boolean().default(false),
         color: Joi.valid(...Object.values(Color)).default(Color.DEFAULT)
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Note invalid.')
-    }
-}
-
-export const validateAddAttachmentBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<AddAttachmentBody>({
+    }),
+    addAttachment: Joi.object<AddAttachmentBody>({
         title: Joi.string().max(32).default(''),
         description: Joi.string().max(256).default('')
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Attachment invalid.')
-    }
-}
-
-export const validateEditAttachmentBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<EditAttachmentBody>({
+    }),
+    editAttachment: Joi.object<EditAttachmentBody>({
         title: Joi.string().max(32),
         description: Joi.string().max(256)
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Attachment invalid.')
-    }
-}
-
-export const validateCollaboratorBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<CollaboratorBody>({
+    }).or('title', 'description'),
+    collaborator: Joi.object<CollaboratorBody>({
         user: Joi
             .when(Joi.ref('.'), {
-                is: Joi.string().required().email(),
-                otherwise: Joi.string().required().regex(constants.regex.username)
+                is: EMAIL_SCHEMA,
+                otherwise: USERNAME_SCHEMA
             }),
         type: Joi.string().required().valid(NoteRole.VIEWER, NoteRole.EDITOR)
-    })
-
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Collaborator invalid.')
-    }
-}
-
-export const validateCheckCredentialsBody = async (req: Request, res: Response, next: NextFunction) => {
-    const schema = Joi.object<CheckCredentialsBody>({
+    }),
+    checkCredentials: Joi.object<CheckCredentialsBody>({
         username: Joi.string().regex(constants.regex.username),
         email: Joi.string().email()
-    })
+    }).or('username', 'email')
+}
 
-    try {
-        await schema.validateAsync(req.body)
-        return next()
-    } catch (err) {
-        return createResponse(res, 422, 'Credentials invalid.')
+type ValidateBodyArgument = 'login' | 'register' | 'newPassword' | 'oldPassword' |
+    'email' | 'note' | 'addAttachment' | 'editAttachment' | 'collaborator' | 'checkCredentials'
+
+/**
+ * Higher order function for checking the request body against a Joi schema.
+ * @param type the type of body to be validated
+ * @param rejectMessage the message to be sent in case of failure; defaults to 'Unprocessable Entity'
+ * @returns a middleware function
+ */
+const validateBody = (type: ValidateBodyArgument, rejectMessage?: string) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            await schemas[type].validateAsync(req.body)
+            return next()
+        } catch (err) {
+            return createResponse(res, 422, rejectMessage)
+        }
     }
 }
+
+export default validateBody
