@@ -68,7 +68,7 @@ export interface IUserSchema extends Document {
     is2faRequiredOnLogin(): boolean
 }
 
-export type PublicUserInfo = Pick<IUserSchema, 'id' | 'username' | 'email'>
+export type PublicUserInfo = Pick<IUserSchema, 'id' | 'username' | 'email' | 'state'>
     & {
         twoFactorAuth: Pick<IUserSchema['twoFactorAuth'], 'active' | 'nextCheck'>,
         isOAuthUser: boolean
