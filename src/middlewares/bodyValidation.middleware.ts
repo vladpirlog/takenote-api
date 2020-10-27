@@ -28,17 +28,20 @@ const schemas = {
                 is: EMAIL_SCHEMA,
                 otherwise: USERNAME_SCHEMA
             }),
-        password: PASSWORD_SCHEMA
+        password: PASSWORD_SCHEMA,
+        'g-recaptcha-response': Joi.string()
     }),
     register: Joi.object<RegisterBody>({
         username: USERNAME_SCHEMA,
         email: EMAIL_SCHEMA,
         password: PASSWORD_SCHEMA,
-        confirm_password: Joi.ref('password')
+        confirm_password: Joi.ref('password'),
+        'g-recaptcha-response': Joi.string()
     }),
     newPassword: Joi.object<NewPasswordBody>({
         new_password: PASSWORD_SCHEMA,
-        confirm_new_password: Joi.ref('new_password')
+        confirm_new_password: Joi.ref('new_password'),
+        'g-recaptcha-response': Joi.string()
     }),
     oldPassword: Joi.object<OldPasswordBody>({
         old_password: PASSWORD_SCHEMA
@@ -51,15 +54,15 @@ const schemas = {
             })
     }),
     note: Joi.object<NoteBody>({
-        title: Joi.string().max(100),
-        content: Joi.string().max(10000),
-        archived: Joi.boolean().default(false),
-        fixed: Joi.boolean().default(false),
-        color: Joi.valid(...Object.values(Color)).default(Color.DEFAULT)
+        title: Joi.string().max(100).allow(''),
+        content: Joi.string().max(10000).allow(''),
+        archived: Joi.boolean(),
+        fixed: Joi.boolean(),
+        color: Joi.valid(...Object.values(Color))
     }),
     addAttachment: Joi.object<AddAttachmentBody>({
-        title: Joi.string().max(32).default(''),
-        description: Joi.string().max(256).default('')
+        title: Joi.string().max(32),
+        description: Joi.string().max(256)
     }),
     editAttachment: Joi.object<EditAttachmentBody>({
         title: Joi.string().max(32),
