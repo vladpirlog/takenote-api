@@ -112,6 +112,7 @@ UserSchema.methods.getPublicInfo = function () {
         id: this.id,
         username: this.username,
         email: this.email,
+        state: this.state,
         isOAuthUser: this.isOAuthUser(),
         twoFactorAuth: {
             active: this.twoFactorAuth.active,

@@ -1593,6 +1593,7 @@ components:
         - id
         - username
         - email
+        - state
         - isOAuthUser
         - twoFactorAuth
       properties:
@@ -1611,6 +1612,12 @@ components:
           format: email
           maxLength: 254
           minLength: 3
+        state:
+          type: string
+          enum:
+              - unconfirmed
+              - active
+              - deleting
         isOAuthUser:
           type: boolean
         twoFactorAuth:
