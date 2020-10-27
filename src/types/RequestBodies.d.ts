@@ -5,6 +5,7 @@ import { IUserSchema } from '../models/User'
 export interface LoginBody {
     email: IUserSchema['email'] | IUserSchema['password']
     password: string
+    'g-recaptcha-response'?: string
 }
 
 export interface RegisterBody {
@@ -12,11 +13,13 @@ export interface RegisterBody {
     username: IUserSchema['username']
     password: string,
     confirm_password: string
+    'g-recaptcha-response'?: string
 }
 
 export interface NewPasswordBody {
     new_password: string
     confirm_new_password: string
+    'g-recaptcha-response'?: string
 }
 
 export interface OldPasswordBody {

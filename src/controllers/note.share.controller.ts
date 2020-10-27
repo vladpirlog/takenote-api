@@ -57,7 +57,9 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const { user, type } = req.body as CollaboratorBody
 
         const collaborator = await userQuery.getByUsernameOrEmail(user)
-        if (!collaborator || collaborator.id === getAuthUser(res).id) return null
+        if (!collaborator || collaborator.id === getAuthUser(res).id) {
+            return createResponse(res, 400)
+        }
 
         const newNote = await noteShareQuery.addCollaborator(
             id,
