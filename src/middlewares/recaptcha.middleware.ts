@@ -11,8 +11,8 @@ const recaptcha = async (req: Request, res: Response, next: NextFunction) => {
         if (!recaptchaCode) return createResponse(res, 422, 'ReCAPTCHA code missing from body.')
 
         const ok = await recaptchaUtil.verify(recaptchaCode, req.ip)
-        if (!ok) return createResponse(res, 401)
-        return next()
+
+        return ok ? next() : createResponse(res, 401)
     } catch (err) { return next(err) }
 }
 

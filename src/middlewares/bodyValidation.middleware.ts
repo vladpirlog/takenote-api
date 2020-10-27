@@ -20,6 +20,8 @@ import NoteRole from '../enums/NoteRole.enum'
 const EMAIL_SCHEMA = Joi.string().required().email()
 const USERNAME_SCHEMA = Joi.string().required().regex(constants.regex.username)
 const PASSWORD_SCHEMA = Joi.string().required().regex(constants.regex.password)
+const ATTACHMENT_TITLE_SCHEMA = Joi.string().max(32)
+const ATTACHMENT_DESCRIPTION_SCHEMA = Joi.string().max(256)
 
 const schemas = {
     login: Joi.object<LoginBody>({
@@ -61,12 +63,12 @@ const schemas = {
         color: Joi.valid(...Object.values(Color))
     }),
     addAttachment: Joi.object<AddAttachmentBody>({
-        title: Joi.string().max(32),
-        description: Joi.string().max(256)
+        title: ATTACHMENT_TITLE_SCHEMA,
+        description: ATTACHMENT_DESCRIPTION_SCHEMA
     }),
     editAttachment: Joi.object<EditAttachmentBody>({
-        title: Joi.string().max(32),
-        description: Joi.string().max(256)
+        title: ATTACHMENT_TITLE_SCHEMA,
+        description: ATTACHMENT_DESCRIPTION_SCHEMA
     }).or('title', 'description'),
     collaborator: Joi.object<CollaboratorBody>({
         user: Joi

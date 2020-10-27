@@ -7,10 +7,12 @@ import { UploadedFile } from 'express-fileupload'
  */
 const attachmentMetadata = (req: Request, res: Response, next: NextFunction) => {
     try {
-        if (!req.files || !req.files.photo) { return createResponse(res, 404, 'File not found.') }
+        if (!req.files || !req.files.photo) {
+            return createResponse(res, 422, 'Invalid file.')
+        }
         const file: UploadedFile | UploadedFile[] = req.files.photo
         if (Array.isArray(file)) {
-            return createResponse(res, 400, 'Multiple files uploaded.')
+            return createResponse(res, 422, 'Multiple files uploaded.')
         }
         if (!['image/jpeg', 'image/png'].includes(file.mimetype)) {
             return createResponse(res, 415, 'File is not jpeg or png.')
