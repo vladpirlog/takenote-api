@@ -64,13 +64,13 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
         const newNote = await noteShareQuery.addCollaborator(
             id,
             { id: collaborator.id, username: collaborator.username, email: collaborator.email },
-            type
+            [type]
         )
         const newCollaborator = newNote?.users.find(u => u.subject.id === collaborator.id)
         if (!newNote || !newCollaborator) return createResponse(res, 400)
 
         return createResponse(res, 200, 'Collaborator added.', {
-            collaborator: { role: newCollaborator.role, subject: newCollaborator.subject }
+            collaborator: { roles: newCollaborator.roles, subject: newCollaborator.subject }
         })
     } catch (err) { return next(err) }
 }
@@ -86,4 +86,15 @@ const deleteCollaborator = async (req: Request, res: Response, next: NextFunctio
     } catch (err) { return next(err) }
 }
 
-export default { getNote, getShareLink, addCollaborator, deleteCollaborator }
+const deleteSelfCollaborator = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+
+        const newNote = await noteShareQuery.deleteCollaborator(id, getAuthUser(res).id)
+        return newNote
+            ? createResponse(res, 200, 'Collaborator deleted.')
+            : createResponse(res, 400, 'Couldn\'t delete collaborator.')
+    } catch (err) { return next(err) }
+}
+
+export default { getNote, getShareLink, addCollaborator, deleteCollaborator, deleteSelfCollaborator }
