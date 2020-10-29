@@ -12,32 +12,26 @@ describe('test registration and authentication flows', () => {
         redisConfig.connect()
     })
 
-    test('server status', (done) => {
-        request.get('/').then((res) => {
-            expect(res.status).toBe(200)
-            expect(typeof res.body).toBe('object')
-            expect(res.body.status).toBe(200)
-            expect(typeof res.body.message).toBe('string')
-            return done()
-        })
+    test('server status', async () => {
+        const res = await request.get('/')
+        expect(res.status).toBe(200)
+        expect(typeof res.body).toBe('object')
+        expect(res.body.status).toBe(200)
+        expect(typeof res.body.message).toBe('string')
     }, 20000)
 
-    test('get authenticated user when NOT logged in', (done) => {
-        request.get('/auth/me').then((res) => {
-            expect(res.status).toBeGreaterThanOrEqual(400)
-            return done()
-        })
+    test('get authenticated user when NOT logged in', async () => {
+        const res = await request.get('/auth/me')
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('logout when user is NOT authenticated', (done) => {
-        request.post('/auth/logout').then((res) => {
-            expect(res.status).toBeGreaterThanOrEqual(400)
-            return done()
-        })
+    test('logout when user is NOT authenticated', async () => {
+        const res = await request.post('/auth/logout')
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('rejected registration', (done) => {
-        request
+    test('rejected registration', async () => {
+        const res = await request
             .post('/auth/register')
             .send({
                 email: constants.test.wrongCredentials.email,
@@ -45,14 +39,11 @@ describe('test registration and authentication flows', () => {
                 password: constants.test.wrongCredentials.password,
                 confirm_password: constants.test.wrongCredentials.password
             })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('successful registration', (done) => {
-        request
+    test('successful registration', async () => {
+        const res = await request
             .post('/auth/register')
             .send({
                 email: constants.test.acceptedCredentials.email,
@@ -60,138 +51,104 @@ describe('test registration and authentication flows', () => {
                 password: constants.test.acceptedCredentials.password,
                 confirm_password: constants.test.acceptedCredentials.password
             })
-            .then((res) => {
-                expect(res.status).toBe(201)
-                expect(res.body).toHaveProperty('user')
-                expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
-                expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
-                expect(res.body.user).toHaveProperty('id')
-                expect(res.body.user).toHaveProperty('state')
-                expect(res.body.user).toHaveProperty('twoFactorAuth')
-                expect(res.body.user.isOAuthUser).toBeFalsy()
-                return done()
-            })
+        expect(res.status).toBe(201)
+        expect(res.body).toHaveProperty('user')
+        expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
+        expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
+        expect(res.body.user).toHaveProperty('id')
+        expect(res.body.user).toHaveProperty('state')
+        expect(res.body.user).toHaveProperty('twoFactorAuth')
+        expect(res.body.user.isOAuthUser).toBeFalsy()
     }, 20000)
 
-    test('request another confirmation token when not logged in', async (done) => {
-        request
+    test('request another confirmation token when not logged in', async () => {
+        const res = await request
             .post('/auth/request_confirmation')
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('rejected login', (done) => {
-        request
+    test('rejected login', async () => {
+        const res = await request
             .post('/auth/login')
             .send({
                 email: constants.test.wrongCredentials.username,
                 password: constants.test.wrongCredentials.password
             })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('successful username-pw login', (done) => {
-        request
+    test('successful username-pw login', async () => {
+        const res = await request
             .post('/auth/login')
             .send({
                 email: constants.test.acceptedCredentials.username,
                 password: constants.test.acceptedCredentials.password
             })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                expect(res.body).toHaveProperty('user')
-                expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
-                expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
-                expect(res.body.user).toHaveProperty('id')
-                expect(res.body.user).toHaveProperty('state')
-                expect(res.body.user).toHaveProperty('twoFactorAuth')
-                expect(res.body.user.isOAuthUser).toBeFalsy()
-                return done()
-            })
+        expect(res.status).toBe(200)
+        expect(res.body).toHaveProperty('user')
+        expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
+        expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
+        expect(res.body.user).toHaveProperty('id')
+        expect(res.body.user).toHaveProperty('state')
+        expect(res.body.user).toHaveProperty('twoFactorAuth')
+        expect(res.body.user.isOAuthUser).toBeFalsy()
     }, 20000)
 
-    test('request another confirmation token when logged in', async (done) => {
-        request
+    test('request another confirmation token when logged in', async () => {
+        const res = await request
             .post('/auth/request_confirmation')
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('confirm account', async (done) => {
+    test('confirm account', async () => {
         const info = await User.findOne({
             email: constants.test.acceptedCredentials.email
-        })
-            .select('confirmationToken')
-            .exec()
-        request
+        }).select('confirmationToken').exec()
+        const res = await request
             .post('/auth/confirm')
             .query({ token: info.confirmationToken.id })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('get authenticated user when logged in', (done) => {
-        request.get('/auth/me').then((res) => {
-            expect(res.status).toBe(200)
-            expect(res.body).toHaveProperty('user')
-            expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
-            expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
-            expect(res.body.user).toHaveProperty('id')
-            expect(res.body.user).toHaveProperty('state')
-            expect(res.body.user).toHaveProperty('twoFactorAuth')
-            expect(res.body.user.isOAuthUser).toBeFalsy()
-            return done()
-        })
+    test('get authenticated user when logged in', async () => {
+        const res = await request.get('/auth/me')
+        expect(res.status).toBe(200)
+        expect(res.body).toHaveProperty('user')
+        expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
+        expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
+        expect(res.body.user).toHaveProperty('id')
+        expect(res.body.user).toHaveProperty('state')
+        expect(res.body.user).toHaveProperty('twoFactorAuth')
+        expect(res.body.user.isOAuthUser).toBeFalsy()
     }, 20000)
 
-    test('restore account when not deleted', (done) => {
-        request.post('/auth/recover').then((res) => {
-            expect(res.status).toBeGreaterThanOrEqual(400)
-            return done()
-        })
+    test('restore account when not deleted', async () => {
+        const res = await request.post('/auth/recover')
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('request account deletion with wrong pw', (done) => {
-        request
+    test('request account deletion with wrong pw', async () => {
+        const res = await request
             .post('/auth/delete')
             .send({ old_password: constants.test.wrongCredentials.password })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('request account deletion with correct pw', (done) => {
-        request
+    test('request account deletion with correct pw', async () => {
+        const res = await request
             .post('/auth/delete')
             .send({ old_password: constants.test.acceptedCredentials.password })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('restore account when deleted', (done) => {
-        request.post('/auth/recover').then((res) => {
-            expect(res.status).toBe(200)
-            return done()
-        })
+    test('restore account when deleted', async () => {
+        const res = await request.post('/auth/recover')
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('logout when user is authenticated', (done) => {
-        request.post('/auth/logout').then((res) => {
-            expect(res.status).toBe(200)
-            return done()
-        })
+    test('logout when user is authenticated', async () => {
+        const res = await request.post('/auth/logout')
+        expect(res.status).toBe(200)
     }, 20000)
 
     afterAll(async () => {
