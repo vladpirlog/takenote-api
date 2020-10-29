@@ -6,6 +6,7 @@ import {
     AddAttachmentBody,
     CheckCredentialsBody,
     CollaboratorBody,
+    CommentBody,
     EditAttachmentBody,
     EmailBody,
     LoginBody,
@@ -15,7 +16,7 @@ import {
     RegisterBody
 } from '../types/RequestBodies'
 import Color from '../enums/Color.enum'
-import NoteRole from '../enums/NoteRole.enum'
+import { NoteRole } from '../utils/accessManagement.util'
 
 const EMAIL_SCHEMA = Joi.string().required().email()
 const USERNAME_SCHEMA = Joi.string().required().regex(constants.regex.username)
@@ -76,16 +77,21 @@ const schemas = {
                 is: EMAIL_SCHEMA,
                 otherwise: USERNAME_SCHEMA
             }),
-        type: Joi.string().required().valid(NoteRole.VIEWER, NoteRole.EDITOR)
+        type: Joi.string().required().valid(
+            NoteRole.PRIMARY_COLLABORATOR, NoteRole.SECONDARY_COLLABORATOR, NoteRole.OBSERVER
+        )
     }),
     checkCredentials: Joi.object<CheckCredentialsBody>({
         username: Joi.string().regex(constants.regex.username),
         email: Joi.string().email()
-    }).or('username', 'email')
+    }).or('username', 'email'),
+    comment: Joi.object<CommentBody>({
+        text: Joi.string().required().max(120)
+    })
 }
 
-type ValidateBodyArgument = 'login' | 'register' | 'newPassword' | 'oldPassword' |
-    'email' | 'note' | 'addAttachment' | 'editAttachment' | 'collaborator' | 'checkCredentials'
+type ValidateBodyArgument = 'login' | 'register' | 'newPassword' | 'oldPassword' | 'email' | 'note'
+| 'addAttachment' | 'editAttachment' | 'collaborator' | 'checkCredentials' | 'comment'
 
 /**
  * Higher order function for checking the request body against a Joi schema.
