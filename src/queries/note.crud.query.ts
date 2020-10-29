@@ -22,7 +22,7 @@ const getAll = (
     archived?: boolean
 ) => {
     const query: any = { 'subject.id': userID }
-    if (!collaborations) query.role = 'owner'
+    if (!collaborations) query.roles = NoteRole.OWNER
     if (archived !== undefined) query.archived = archived
 
     return Note.find({ users: { $elemMatch: query } }).skip(skip).limit(limit).exec()
@@ -33,8 +33,8 @@ const getAll = (
  * @param noteID id of the note
  * @param userID id of the note's owner or collaborator
  */
-const getOneByID = (noteID: INoteSchema['id'], userID: IUserSchema['id']) => {
-    return Note.findOne({ id: noteID, 'users.subject.id': userID }).exec()
+const getOneByID = (noteID: INoteSchema['id']) => {
+    return Note.findOne({ id: noteID }).exec()
 }
 
 /**

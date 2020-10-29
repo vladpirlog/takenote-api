@@ -22,12 +22,14 @@ const tag = async (
     return note?.users.find(u => u.subject.id === userID)?.tags.length || 0
 }
 
-const attachment = (noteID: INoteSchema['id']) => {
-    return Note.findOne({ id: noteID }).then(n => n?.attachments.length || 0)
+const attachment = async (noteID: INoteSchema['id']) => {
+    const note = await Note.findOne({ id: noteID })
+    return note?.attachments.length || 0
 }
 
-const collaborator = (noteID: INoteSchema['id']) => {
-    return Note.findOne({ id: noteID }).then(n => n?.users.filter(u => !u.roles.includes(NoteRole.OWNER)).length || 0)
+const collaborator = async (noteID: INoteSchema['id']) => {
+    const note = await Note.findOne({ id: noteID })
+    return note?.users.filter(u => !u.roles.includes(NoteRole.OWNER)).length || 0
 }
 
 export default { note, tag, attachment, collaborator }
