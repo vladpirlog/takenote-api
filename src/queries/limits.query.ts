@@ -1,11 +1,16 @@
-import NoteRole from '../enums/NoteRole.enum'
 import Note from '../models/Note'
 import { INoteSchema } from '../types/Note'
 import { IUserSchema } from '../types/User'
+import { NoteRole } from '../utils/accessManagement.util'
 
 const note = (userID: IUserSchema['id']) => {
     return Note.find({
-        'users.subject.id': userID, 'users.role': NoteRole.OWNER
+        users: {
+            $elemMatch: {
+                'subject.id': userID,
+                roles: NoteRole.OWNER
+            }
+        }
     }).countDocuments().exec()
 }
 
@@ -22,7 +27,7 @@ const attachment = (noteID: INoteSchema['id']) => {
 }
 
 const collaborator = (noteID: INoteSchema['id']) => {
-    return Note.findOne({ id: noteID }).then(n => n?.users.filter(u => u.role !== NoteRole.OWNER).length || 0)
+    return Note.findOne({ id: noteID }).then(n => n?.users.filter(u => !u.roles.includes(NoteRole.OWNER)).length || 0)
 }
 
 export default { note, tag, attachment, collaborator }

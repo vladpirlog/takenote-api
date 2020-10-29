@@ -8,7 +8,11 @@ import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
-import checkNoteRole from '../middlewares/checkNoteRole.middleware'
+import checkNotePermissions, {
+    checkEditCommentPermissions,
+    checkDeleteCommentPermissions,
+    checkEditNotePermissions
+} from '../middlewares/checkNotePermissions.middleware'
 import validateBody from '../middlewares/bodyValidation.middleware'
 import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
@@ -16,7 +20,8 @@ import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
 import UserRole from '../enums/UserRole.enum'
 import AuthStatus from '../enums/AuthStatus.enum'
 import State from '../enums/State.enum'
-import NoteRole from '../enums/NoteRole.enum'
+import { NotePermission } from '../utils/accessManagement.util'
+import noteCommentsController from '../controllers/note.comments.controller'
 
 const router = Router()
 
@@ -35,50 +40,76 @@ router.get('/', noteCrudController.getAllNotes)
 router.get('/tags', requestFieldsDefined('query', ['tag']), noteTagsController.getByTag)
 
 // GET a note
-router.get('/:id', requestFieldsDefined('params', ['id']), noteCrudController.getOneNote)
+router.get(
+    '/:id',
+    checkNotePermissions([NotePermission.NOTE_VIEW]),
+    noteCrudController.getOneNote
+)
 
 // ADD a note
-router.post('/', validateBody('note', 'Note invalid.'), checkLimits.forNote, noteCrudController.addNote)
+router.post(
+    '/',
+    validateBody('note', 'Note invalid.'),
+    checkLimits.forNote,
+    noteCrudController.addNote
+)
 
 // UPDATE a note
-router.put('/:id', requestFieldsDefined('params', ['id']), validateBody('note', 'Note invalid.'), noteCrudController.editNote)
+router.put(
+    '/:id',
+    checkEditNotePermissions(),
+    validateBody('note', 'Note invalid.'),
+    noteCrudController.editNote
+)
 
 // DELETE a note
-router.delete('/:id', requestFieldsDefined('params', ['id']), noteCrudController.deleteNote)
+router.delete(
+    '/:id',
+    checkNotePermissions([NotePermission.NOTE_DELETE]),
+    noteCrudController.deleteNote
+)
 
 // DUPLICATE a note
-router.post('/:id/duplicate', requestFieldsDefined('params', ['id']), noteCrudController.duplicateNote)
+router.post(
+    '/:id/duplicate',
+    checkNotePermissions([NotePermission.NOTE_VIEW]),
+    noteCrudController.duplicateNote
+)
 
 // UPDATE sharing url and its state
 router.post(
     '/:id/share',
-    requestFieldsDefined('params', ['id']),
-    checkNoteRole([NoteRole.OWNER]),
+    checkNotePermissions([NotePermission.SHARING_EDIT]),
     noteShareController.getShareLink
 )
 
-// ADD a collaborator to a note, in the form of username/email/id and type (editor or viewer)
+// ADD a collaborator to a note, in the form of username/email/id and type
 router.post(
     '/:id/share/collaborators',
-    requestFieldsDefined('params', ['id']),
-    checkNoteRole([NoteRole.OWNER]),
+    validateBody('collaborator', 'Invalid collaborator.'),
+    checkNotePermissions([NotePermission.COLLABORATOR_ADD]),
     checkLimits.forCollaborator,
     noteShareController.addCollaborator
+)
+
+// DELETE self as a note collaborator
+router.delete(
+    '/:id/share/collaborators',
+    noteShareController.deleteSelfCollaborator
 )
 
 // DELETE a collaborator from a note
 router.delete(
     '/:id/share/collaborators/:collaboratorID',
-    requestFieldsDefined('params', ['id', 'collaboratorID']),
-    checkNoteRole([NoteRole.OWNER]),
+    checkNotePermissions([NotePermission.COLLABORATOR_DELETE]),
     noteShareController.deleteCollaborator
 )
 
 // ADD tags to a note
 router.post(
     '/:id/tags',
-    requestFieldsDefined('params', ['id']),
     requestFieldsDefined('query', ['tags']),
+    checkNotePermissions([NotePermission.NOTE_EDIT_PERSONAL_PROPERTIES]),
     checkLimits.forTag,
     noteTagsController.addTags
 )
@@ -86,8 +117,8 @@ router.post(
 // DELETE tags from a note
 router.delete(
     '/:id/tags',
-    requestFieldsDefined('params', ['id']),
     requestFieldsDefined('query', ['tags']),
+    checkNotePermissions([NotePermission.NOTE_EDIT_PERSONAL_PROPERTIES]),
     noteTagsController.deleteTags
 )
 
@@ -99,8 +130,7 @@ router.post(
         useTempFiles: true
     }),
     deleteFileOnFinish,
-    requestFieldsDefined('params', ['id']),
-    checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
+    checkNotePermissions([NotePermission.ATTACHMENT_ADD]),
     validateBody('addAttachment', 'Attachment invalid.'),
     attachmentMetadata,
     checkLimits.forAttachment,
@@ -110,8 +140,7 @@ router.post(
 // UPDATE a photo attachment of a note
 router.put(
     '/:id/attachments/:attachmentID',
-    requestFieldsDefined('params', ['id', 'attachmentID']),
-    checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
+    checkNotePermissions([NotePermission.ATTACHMENT_ADD]),
     validateBody('editAttachment', 'Attachment invalid.'),
     noteAttachmentsController.editAttachment
 )
@@ -119,9 +148,53 @@ router.put(
 // DELETE a photo attachment from a note
 router.delete(
     '/:id/attachments/:attachmentID',
-    requestFieldsDefined('params', ['id', 'attachmentID']),
-    checkNoteRole([NoteRole.OWNER, NoteRole.EDITOR]),
+    checkNotePermissions([NotePermission.ATTACHMENT_DELETE]),
     noteAttachmentsController.deleteAttachment
+)
+
+// GET all comments of a note
+router.get(
+    '/:id/comments',
+    checkNotePermissions([NotePermission.COMMENT_VIEW]),
+    noteCommentsController.getAllComments
+)
+
+// GET one comment
+router.get(
+    '/:id/comments/:commentID',
+    checkNotePermissions([NotePermission.COMMENT_VIEW]),
+    noteCommentsController.getComment
+)
+
+// ADD a comment to a note
+router.post(
+    '/:id/comments',
+    checkNotePermissions([NotePermission.COMMENT_ADD]),
+    validateBody('comment', 'Comment invalid.'),
+    noteCommentsController.addComment
+)
+
+// EDIT a comment
+router.put(
+    '/:id/comments/:commentID',
+    checkEditCommentPermissions(),
+    validateBody('comment', 'Comment invalid.'),
+    noteCommentsController.editComment
+)
+
+// DELETE a comment
+router.delete(
+    '/:id/comments/:commentID',
+    checkDeleteCommentPermissions(),
+    noteCommentsController.deleteComment
+)
+
+// SET the state of the comments section (enabled or disabled)
+router.post(
+    '/:id/comments/state',
+    requestFieldsDefined('query', ['enabled']),
+    checkNotePermissions([NotePermission.COMMENTS_CHANGE_STATE]),
+    noteCommentsController.setCommentSectionState
 )
 
 export default router
