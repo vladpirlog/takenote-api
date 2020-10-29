@@ -71,10 +71,9 @@ export const checkEditCommentPermissions = (
         try {
             const noteID = req.params[noteIDParamName]
             const commentID = req.params[commentIDParamName]
-            const userID = getAuthUser(res).id
 
-            const note = await noteCrudQuery.getOneByID(noteID, userID)
-            if (!note || !commentBelongsToUser(note, userID, commentID)) {
+            const note = await noteCrudQuery.getOneByID(noteID)
+            if (!note || !commentBelongsToUser(note, getAuthUser(res).id, commentID)) {
                 return createResponse(res, 401)
             }
 
@@ -99,7 +98,7 @@ export const checkDeleteCommentPermissions = (
             const commentID = req.params[commentIDParamName]
             const userID = getAuthUser(res).id
 
-            const note = await noteCrudQuery.getOneByID(noteID, userID)
+            const note = await noteCrudQuery.getOneByID(noteID)
             if (!note) return createResponse(res, 401)
 
             const noteRoles = note.users.find(u => u.subject.id === userID)?.roles || []

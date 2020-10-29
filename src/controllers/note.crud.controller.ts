@@ -11,7 +11,7 @@ import { NoteBody } from '../types/RequestBodies'
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const note = await noteQuery.getOneByID(id, getAuthUser(res).id)
+        const note = await noteQuery.getOneByID(id)
         return note ? createResponse(res, 200, 'Note fetched.', {
             note: note.getPublicInfo(getAuthUser(res).id)
         }) : createResponse(res)
@@ -103,7 +103,7 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const { id } = req.params
 
-        const note = await noteQuery.getOneByID(id, getAuthUser(res).id)
+        const note = await noteQuery.getOneByID(id)
         const authUser = await userQuery.getById(getAuthUser(res).id)
         if (!note || !authUser) return createResponse(res, 400, 'Couldn\'t duplicate note.')
 
