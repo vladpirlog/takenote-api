@@ -1,7 +1,7 @@
 import Color from '../enums/Color.enum'
 import { NoteRole } from '../utils/accessManagement.util'
-import { IAttachmentSchema } from './Attachment'
-import { ICommentSchema } from './Comment'
+import { IAttachmentSchema, PublicAttachmentInfo } from './Attachment'
+import { ICommentSchema, PublicCommentInfo } from './Comment'
 import { IEntity } from './Entity'
 import { IUserSchema } from './User'
 
@@ -34,8 +34,15 @@ type PublicNoteInfoMandatoryFields = Pick<INoteSchema, 'id' | 'createdAt' | 'upd
     & { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
 
 type PublicNoteInfoOptionalFields = Partial<
-        Pick<INoteSchema, 'title' | 'content' | 'comments' | 'attachments' | 'share'>
-        & { collaborators: Pick<INoteSchema['users'][0], 'subject' | 'roles'>[] }
+        Pick<INoteSchema, 'title' | 'content' | 'share'>
+        & {
+            collaborators: Pick<INoteSchema['users'][0], 'subject' | 'roles'>[]
+            comments: {
+                enabled: INoteSchema['comments']['enabled']
+                items: PublicCommentInfo[]
+            }
+            attachments: PublicAttachmentInfo[]
+        }
         & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed' | 'tags'>
     >
 
