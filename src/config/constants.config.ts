@@ -70,6 +70,7 @@ export default {
         share: { prefix: 's', length: 24 },
         reset: { prefix: 'rs', length: 24 },
         confirmation: { prefix: 'cn', length: 24 },
+        comment: { prefix: 'com', length: 32 },
         tfa: { prefix: 'tfa', length: 48 }
     },
     email: {

@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
-import { Color, NoteRole } from '../models/Note'
+import { Color } from '../models/Note'
 import { IUserSchema } from '../models/User'
+import { NoteRole } from '../utils/accessManagement.util'
 
 export interface LoginBody {
     email: IUserSchema['email'] | IUserSchema['password']
@@ -51,10 +52,14 @@ export interface EditAttachmentBody {
 
 export interface CollaboratorBody {
     user: IUserSchema['username'] | IUserSchema['email']
-    type: NoteRole.EDITOR | NoteRole.VIEWER
+    type: NoteRole.PRIMARY_COLLABORATOR | NoteRole.SECONDARY_COLLABORATOR | NoteRole.OBSERVER
 }
 
 export interface CheckCredentialsBody {
     username?: IUserSchema['username']
     email?: IUserSchema['email']
+}
+
+export interface CommentBody {
+    text: string
 }
