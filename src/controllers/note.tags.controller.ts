@@ -11,7 +11,9 @@ const getByTag = async (req: Request, res: Response, next: NextFunction) => {
             getAuthUser(res).id,
             tag as string,
             match === 'true')
-        return createResponse(res, 200, 'Notes fetched.', { notes })
+        return createResponse(res, 200, 'Notes fetched.', {
+            notes: notes.map(n => n.getPublicInfo(getAuthUser(res).id))
+        })
     } catch (err) { return next(err) }
 }
 

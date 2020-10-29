@@ -108,7 +108,6 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
         if (!note || !authUser) return createResponse(res, 400, 'Couldn\'t duplicate note.')
 
         const notePublicInfo = note.getPublicInfo(authUser.id)
-
         const newNote = await noteQuery.createOne(
             {
                 title: notePublicInfo.title,
@@ -116,7 +115,9 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
                 archived: notePublicInfo.archived,
                 color: notePublicInfo.color,
                 fixed: notePublicInfo.fixed,
-                owner: notePublicInfo.owner
+                owner: {
+                    id: authUser.id, username: authUser.username, email: authUser.email
+                }
             }
         )
 
