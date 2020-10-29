@@ -1,12 +1,10 @@
-import { Document } from 'mongoose'
 import OAuthProvider from '../enums/OAuthProvider.enum'
 import State from '../enums/State.enum'
 import UserRole from '../enums/UserRole.enum'
+import { IEntity } from './Entity'
 import { ITokenSchema } from './Token'
 
-export interface IUserSchema extends Document {
-    /** ID of the user */
-    id: string
+export interface IUserSchema extends IEntity {
     username: string
     email: string
     password: string
@@ -27,8 +25,6 @@ export interface IUserSchema extends Document {
             active: boolean
         }[]
     }
-    createdAt: Date
-    updatedAt: Date
 
     /**
      * Returns true if user was created using the OAuth 2.0 flow.

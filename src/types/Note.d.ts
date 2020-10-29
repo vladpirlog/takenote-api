@@ -1,30 +1,27 @@
-import { Document } from 'mongoose'
 import Color from '../enums/Color.enum'
-import NoteRole from '../enums/NoteRole.enum'
+import { NoteRole } from '../utils/accessManagement.util'
 import { IAttachmentSchema } from './Attachment'
+import { ICommentSchema } from './Comment'
+import { IEntity } from './Entity'
 import { IUserSchema } from './User'
 
-export interface INoteSchema extends Document {
-    /** ID of the note */
-    id: string
+export interface INoteSchema extends IEntity {
     title: string
     content: string
     attachments: IAttachmentSchema[]
+    comments: {
+        enabled: boolean
+        items: ICommentSchema[]
+    }
     share: { code: string, active: boolean }
     users: {
-        subject: {
-            id: IUserSchema['id']
-            username: IUserSchema['username']
-            email: IUserSchema['email']
-        }
+        subject: Pick<IUserSchema, 'id' | 'username' | 'email'>
         tags: string[]
         archived: boolean
         color: Color
-        role: NoteRole
+        roles: NoteRole[]
         fixed: boolean
     }[]
-    createdAt: Date
-    updatedAt: Date
 
     /**
      * Returns public note data that can be viewed by the frontend.
@@ -34,8 +31,10 @@ export interface INoteSchema extends Document {
 }
 
 export type PublicNoteInfo =
-    Pick<INoteSchema, 'id' | 'title' | 'content' | 'attachments' | 'share' | 'createdAt' | 'updatedAt'>
-    & { owner: INoteSchema['users'][0]['subject'] }
-    & Partial<Omit<INoteSchema['users'][0], 'subject'> & {
-        collaborators: Pick<INoteSchema['users'][0], 'subject' | 'role'>[],
-    }>
+    Pick<INoteSchema, 'id' | 'title' | 'content' | 'createdAt' | 'updatedAt'>
+    & { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
+    & Partial<
+        Pick<INoteSchema, 'comments' | 'attachments' | 'share'>
+        & { collaborators: Pick<INoteSchema['users'][0], 'subject' | 'roles'>[] }
+        & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed' | 'tags'>
+    >

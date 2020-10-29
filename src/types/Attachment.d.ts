@@ -1,8 +1,6 @@
-import { Document } from 'mongoose'
+import { IEntity } from './Entity'
 
-export interface IAttachmentSchema extends Document {
-    /** ID of the attachment */
-    id: string
+export interface IAttachmentSchema extends IEntity {
     url: string
     title: string
     description: string
