@@ -117,7 +117,10 @@ NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
         publicNote.tags = user.tags
     }
     if (notePermissions.includes(NotePermission.COMMENT_VIEW)) {
-        publicNote.comments = this.comments
+        publicNote.comments = {
+            enabled: this.comments.enabled,
+            items: this.comments.items.map(c => c.getPublicInfo())
+        }
     }
     if (notePermissions.includes(NotePermission.COLLABORATOR_VIEW)) {
         publicNote.collaborators = this.users.filter(u => !u.roles.includes(NoteRole.OWNER)).map(u => {
@@ -125,7 +128,7 @@ NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
         })
     }
     if (notePermissions.includes(NotePermission.ATTACHMENT_VIEW)) {
-        publicNote.attachments = this.attachments
+        publicNote.attachments = this.attachments.map(a => a.getPublicInfo())
     }
     if (notePermissions.includes(NotePermission.SHARING_VIEW)) {
         publicNote.share = this.share

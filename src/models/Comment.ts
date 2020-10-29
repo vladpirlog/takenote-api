@@ -29,4 +29,14 @@ export const CommentSchema = new Schema<ICommentSchema>({
     }
 }, { timestamps: true, id: false })
 
+CommentSchema.methods.getPublicInfo = function () {
+    return {
+        id: this.id,
+        subject: this.subject,
+        text: this.text,
+        createdAt: this.createdAt,
+        updatedAt: this.updatedAt
+    }
+}
+
 export default mongoose.model<ICommentSchema>('Comment', CommentSchema)
