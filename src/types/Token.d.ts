@@ -1,7 +1,5 @@
-import { Document } from 'mongoose'
+import { IEntity } from './Entity'
 
-export interface ITokenSchema extends Document {
-    /** ID of the token */
-    id: string
+export interface ITokenSchema extends IEntity {
     exp: number
 }
