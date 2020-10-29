@@ -9,7 +9,7 @@ import { INoteSchema } from '../src/types/Note'
 
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
-    const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
+    const pngTestImage = path.join(process.cwd(), 'test', 'img.png')
     let createdNoteID: INoteSchema['id']
     let authCookie: string
 

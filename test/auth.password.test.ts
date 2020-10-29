@@ -12,150 +12,126 @@ describe('test pw reset flows', () => {
         redisConfig.connect()
     })
 
-    test('check wrong token for expiration', (done) => {
-        request
+    test('check wrong token for expiration', async () => {
+        const res = await request
             .post('/auth/check_token')
             .query({ token: '123456' })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('request reset token with wrong email', (done) => {
-        request
+    test('request reset token with wrong email', async () => {
+        const res = await request
             .post('/auth/forgot_password')
             .send({ email: constants.test.wrongCredentials.email })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('request reset token with correct email', (done) => {
-        request
+    test('request reset token with correct email', async () => {
+        const res = await request
             .post('/auth/forgot_password')
             .send({ email: constants.test.persistentUser.email })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('check reset token for expiration', async (done) => {
+    test('check reset token for expiration', async () => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
             .select('resetToken')
             .exec()
-        request
+        const res = await request
             .get('/auth/check_token')
             .query({ token: info.resetToken.id })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('submit wrong reset token', (done) => {
-        request
+    test('submit wrong reset token', async () => {
+        const res = await request
             .post('/auth/new_password')
             .send({
                 new_password: constants.test.persistentUser.password,
                 confirm_new_password: constants.test.persistentUser.password
             })
             .query({ token: '123456' })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('submit correct reset token #1', async (done) => {
+    test('submit correct reset token #1', async () => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
             .select('resetToken')
             .exec()
-        request
+        const res = await request
             .post('/auth/new_password')
             .send({
                 new_password: constants.test.persistentUser.password,
                 confirm_new_password: constants.test.persistentUser.password
             })
             .query({ token: info.resetToken.id })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('successful username-pw login', (done) => {
-        request
+    test('successful username-pw login', async () => {
+        const res = await request
             .post('/auth/login')
             .send({
                 email: constants.test.persistentUser.username,
                 password: constants.test.persistentUser.password
             })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                expect(typeof res.body.user).toBe('object')
-                return done()
-            })
+
+        expect(res.status).toBe(200)
+        expect(typeof res.body.user).toBe('object')
     }, 20000)
 
-    test('request reset token with wrong old password', (done) => {
-        request
+    test('request reset token with wrong old password', async () => {
+        const res = await request
             .post('/auth/reset_password')
             .send({ old_password: constants.test.wrongCredentials.password })
-            .then((res) => {
-                expect(res.status).toBeGreaterThanOrEqual(400)
-                return done()
-            })
+
+        expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('request reset token with correct old password', (done) => {
-        request
+    test('request reset token with correct old password', async () => {
+        const res = await request
             .post('/auth/reset_password')
             .send({ old_password: constants.test.persistentUser.password })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('check reset token for expiration', async (done) => {
+    test('check reset token for expiration', async () => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
             .select('resetToken')
             .exec()
-        request
+        const res = await request
             .get('/auth/check_token')
             .query({ token: info.resetToken.id })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+        expect(res.status).toBe(200)
     }, 20000)
 
-    test('submit correct reset token #2', async (done) => {
+    test('submit correct reset token #2', async () => {
         const info = await User.findOne({
             email: constants.test.persistentUser.email
         })
             .select('resetToken')
             .exec()
-        request
+        const res = await request
             .post('/auth/new_password')
             .send({
                 new_password: constants.test.persistentUser.password,
                 confirm_new_password: constants.test.persistentUser.password
             })
             .query({ token: info.resetToken.id })
-            .then((res) => {
-                expect(res.status).toBe(200)
-                return done()
-            })
+        expect(res.status).toBe(200)
     }, 20000)
 
     afterAll(async () => {
