@@ -30,11 +30,13 @@ export interface INoteSchema extends IEntity {
     getPublicInfo(userID?: IUserSchema['id']): PublicNoteInfo
 }
 
-export type PublicNoteInfo =
-    Pick<INoteSchema, 'id' | 'title' | 'content' | 'createdAt' | 'updatedAt'>
+type PublicNoteInfoMandatoryFields = Pick<INoteSchema, 'id' | 'createdAt' | 'updatedAt'>
     & { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
-    & Partial<
-        Pick<INoteSchema, 'comments' | 'attachments' | 'share'>
+
+type PublicNoteInfoOptionalFields = Partial<
+        Pick<INoteSchema, 'title' | 'content' | 'comments' | 'attachments' | 'share'>
         & { collaborators: Pick<INoteSchema['users'][0], 'subject' | 'roles'>[] }
         & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed' | 'tags'>
     >
+
+export type PublicNoteInfo = PublicNoteInfoMandatoryFields & PublicNoteInfoOptionalFields

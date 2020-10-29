@@ -2,9 +2,10 @@ import mongoose, { Schema } from 'mongoose'
 import { AttachmentSchema } from './Attachment'
 import { IUserSchema } from '../types/User'
 import createID from '../utils/createID.util'
-import { INoteSchema } from '../types/Note'
+import { INoteSchema, PublicNoteInfo } from '../types/Note'
 import Color from '../enums/Color.enum'
-import NoteRole from '../enums/NoteRole.enum'
+import { CommentSchema } from './Comment'
+import { getPermissionsFromRoles, NotePermission, NoteRole } from '../utils/accessManagement.util'
 
 export const NoteSchema = new Schema<INoteSchema>(
     {
@@ -20,6 +21,17 @@ export const NoteSchema = new Schema<INoteSchema>(
         content: {
             type: String,
             required: false
+        },
+        comments: {
+            enabled: {
+                type: Boolean,
+                required: true,
+                default: true
+            },
+            items: {
+                type: [CommentSchema],
+                required: false
+            }
         },
         attachments: {
             type: [AttachmentSchema],
@@ -41,9 +53,10 @@ export const NoteSchema = new Schema<INoteSchema>(
                     required: true
                 }
             },
-            role: {
-                type: NoteRole,
-                required: true
+            roles: {
+                type: [String],
+                required: true,
+                enum: Object.values(NoteRole)
             },
             tags: {
                 type: [String],
@@ -81,41 +94,43 @@ export const NoteSchema = new Schema<INoteSchema>(
 )
 
 NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
-    const owner = this.users.find(u => u.role === 'owner')
+    const owner = this.users.find(u => u.roles.includes(NoteRole.OWNER))
     if (!owner) throw new Error('Note has no owner.')
 
-    const user = this.users.find(u => u.subject.id === userID)
-    if (!userID || !user) {
-        return {
-            id: this.id,
-            title: this.title,
-            content: this.content,
-            attachments: this.attachments,
-            createdAt: this.createdAt,
-            updatedAt: this.updatedAt,
-            share: this.share,
-            owner: owner.subject
-        }
-    }
-    return {
+    const publicNote: PublicNoteInfo = {
         id: this.id,
-        title: this.title,
-        content: this.content,
-        attachments: this.attachments,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
-        share: this.share,
-        owner: owner.subject,
-        archived: user.archived,
-        color: user.color,
-        fixed: user.fixed,
-        tags: user.tags,
-        collaborators: owner.subject.id === user.subject.id
-            ? this.users.filter(u => u.role !== 'owner').map(u => {
-                return { subject: u.subject, role: u.role }
-            })
-            : [{ subject: user.subject, role: user.role }]
+        owner: owner.subject
     }
+
+    const user = this.users.find(u => u.subject.id === userID)
+    if (!userID || !user) return publicNote
+
+    const notePermissions = getPermissionsFromRoles(user.roles)
+    if (notePermissions.includes(NotePermission.NOTE_VIEW)) {
+        publicNote.title = this.title
+        publicNote.content = this.content
+        publicNote.archived = user.archived
+        publicNote.color = user.color
+        publicNote.fixed = user.fixed
+        publicNote.tags = user.tags
+    }
+    if (notePermissions.includes(NotePermission.COMMENT_VIEW)) {
+        publicNote.comments = this.comments
+    }
+    if (notePermissions.includes(NotePermission.COLLABORATOR_VIEW)) {
+        publicNote.collaborators = this.users.filter(u => !u.roles.includes(NoteRole.OWNER)).map(u => {
+            return { subject: u.subject, roles: u.roles }
+        })
+    }
+    if (notePermissions.includes(NotePermission.ATTACHMENT_VIEW)) {
+        publicNote.attachments = this.attachments
+    }
+    if (notePermissions.includes(NotePermission.SHARING_VIEW)) {
+        publicNote.share = this.share
+    }
+    return publicNote
 }
 
 export default mongoose.model<INoteSchema>('Note', NoteSchema)

@@ -1,11 +1,10 @@
 import Note from '../models/Note'
 import { IUserSchema } from '../types/User'
 import constants from '../config/constants.config'
-import getNoteRole from './getNoteRole.query'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 import { INoteSchema } from '../types/Note'
 import Color from '../enums/Color.enum'
-import NoteRole from '../enums/NoteRole.enum'
+import { NoteRole } from '../utils/accessManagement.util'
 
 /**
  * Fetches all the notes belonging to the user.
@@ -47,13 +46,16 @@ const getOneByShareCode = (code: INoteSchema['share']['code']) => {
     return Note.findOne({ 'share.code': code }).exec()
 }
 
+type CreateNoteArg = Partial<
+    Pick<INoteSchema, 'title' | 'content'> &
+    Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed' | 'tags'>>
+& { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
+
 /**
  * Creates a new note with the specified properties.
  * @param props object containing the note properties and the owner
  */
-const createOne = (props: Partial<Pick<INoteSchema, 'title' | 'content'>
-    & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed'>>
-    & {owner: INoteSchema['users'][0]['subject']}) => {
+const createOne = (props: CreateNoteArg) => {
     const newNote = new Note({
         title: props.title || '',
         content: props.content || '',
@@ -64,7 +66,7 @@ const createOne = (props: Partial<Pick<INoteSchema, 'title' | 'content'>
                 fixed: props.fixed || false,
                 subject: props.owner,
                 tags: [],
-                role: NoteRole.OWNER
+                roles: [NoteRole.OWNER]
             }
         ]
     })
@@ -72,61 +74,29 @@ const createOne = (props: Partial<Pick<INoteSchema, 'title' | 'content'>
 }
 
 /**
- * Delete a note where the user is the owner. If user is only a collab, only the matching
- * permission is deleted.
+ * Delete a note.
  * @param noteID id of the note
  * @param userID id of the note's owner or collaborator
  */
-const deleteOneByID = async (
+const deleteOneByID = (
     noteID: INoteSchema['id'],
     userID: IUserSchema['id']
 ) => {
-    const note = await Note.findOneAndDelete(
-        { id: noteID, users: { $elemMatch: { 'subject.id': userID, role: NoteRole.OWNER } } }
-    ).exec()
-    if (note) { return note }
-
-    return Note.findOneAndUpdate(
-        {
-            id: noteID,
-            'users.subject.id': userID
-        },
-        {
-            $pull: {
-                users: {
-                    // @ts-ignore
-                    'subject.id': userID
-                }
-            }
-        },
-        { new: true }
-    ).exec()
+    return Note.findOneAndDelete({ id: noteID, 'users.subject.id': userID }).exec()
 }
 
 /**
- * Updates a note where the user is the owner or a collaborator.
- * Updating a collaborating note does not return the full permissions array.
+ * Updates a note. Updated properties depend on the user's role.
  * @param noteID id of the note
  * @param userID id of the note's owner
  * @param props object containing the new note properties
  */
-const updateOneByID = async (
+const updateOneByID = (
     noteID: INoteSchema['id'],
     userID: IUserSchema['id'],
     props: Partial<Pick<INoteSchema, 'title' | 'content'>
         & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed'>>
 ) => {
-    if (await getNoteRole(noteID, userID) === NoteRole.VIEWER) {
-        return Note.findOneAndUpdate(
-            { id: noteID, 'users.subject.id': userID },
-            removeUndefinedProps({
-                'users.$.archived': props.archived,
-                'users.$.color': props.color,
-                'users.$.fixed': props.fixed
-            }),
-            { new: true }
-        ).exec()
-    }
     return Note.findOneAndUpdate(
         { id: noteID, 'users.subject.id': userID },
         removeUndefinedProps({

@@ -1,26 +1,26 @@
 import Color from '../enums/Color.enum'
-import NoteRole from '../enums/NoteRole.enum'
 import Note from '../models/Note'
 import { INoteSchema } from '../types/Note'
 import { IUserSchema } from '../types/User'
+import { NoteRole } from '../utils/accessManagement.util'
 
 /**
  * Adds a collaborator to a note.
  * @param noteID id of the note
  * @param collaborator id, username and email of the collaborator
- * @param role the role to be assigned to that user (EDITOR or VIEWER)
+ * @param roles the role to be assigned to that user
  */
 const addCollaborator = async (
     noteID: INoteSchema['id'],
     collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
-    role: NoteRole.EDITOR | NoteRole.VIEWER
+    roles: NoteRole[]
 ) => {
     const note = await Note.findOne({ id: noteID, 'users.subject.id': collaborator.id }).exec()
 
     if (note) {
         return Note.findOneAndUpdate(
             { id: noteID, 'users.subject.id': collaborator.id },
-            { $set: { 'users.$.role': role } },
+            { $set: { 'users.$.roles': roles } },
             { new: true }
         ).exec()
     }
@@ -35,7 +35,7 @@ const addCollaborator = async (
                         username: collaborator.username,
                         email: collaborator.email
                     },
-                    role,
+                    roles,
                     tags: [],
                     archived: false,
                     color: Color.DEFAULT,
