@@ -7,7 +7,7 @@ import { ITokenSchema } from '../types/Token'
 /**
  * Middleware used for checking the expiration time of a given token.
  */
-const validateToken = async (req: Request, res: Response, next: NextFunction) => {
+const checkTokenExpiration = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { token } = req.query
         const user = await userQuery.getByToken(token as ITokenSchema['id'])
@@ -24,4 +24,4 @@ const validateToken = async (req: Request, res: Response, next: NextFunction) =>
     } catch (err) { return next(err) }
 }
 
-export default validateToken
+export default checkTokenExpiration

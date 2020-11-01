@@ -75,26 +75,26 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
     } catch (err) { return next(err) }
 }
 
-const deleteCollaborator = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { id, collaboratorID } = req.params
+const deleteCollaborator = (self: boolean = false) => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id, collaboratorID } = req.params
 
-        const newNote = await noteShareQuery.deleteCollaborator(id, collaboratorID)
-        return newNote
-            ? createResponse(res, 200, 'Collaborator deleted.')
-            : createResponse(res, 400, 'Couldn\'t delete collaborator.')
-    } catch (err) { return next(err) }
+            const newNote = await noteShareQuery.deleteCollaborator(
+                id,
+                self ? getAuthUser(res).id : collaboratorID
+            )
+            return newNote
+                ? createResponse(res, 200, 'Collaborator deleted.')
+                : createResponse(res, 400, 'Couldn\'t delete collaborator.')
+        } catch (err) { return next(err) }
+    }
 }
 
-const deleteSelfCollaborator = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const { id } = req.params
-
-        const newNote = await noteShareQuery.deleteCollaborator(id, getAuthUser(res).id)
-        return newNote
-            ? createResponse(res, 200, 'Collaborator deleted.')
-            : createResponse(res, 400, 'Couldn\'t delete collaborator.')
-    } catch (err) { return next(err) }
+export default {
+    getNote,
+    getShareLink,
+    addCollaborator,
+    deleteCollaborator: deleteCollaborator(),
+    deleteSelfCollaborator: deleteCollaborator(true)
 }
-
-export default { getNote, getShareLink, addCollaborator, deleteCollaborator, deleteSelfCollaborator }
