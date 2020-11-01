@@ -15,7 +15,7 @@ const getNote = async (req: Request, res: Response, next: NextFunction) => {
         const note = await noteCrudQuery.getOneByShareCode(code)
 
         return note && note.share.active
-            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo() })
+            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo('shared') })
             : next()
     } catch (err) { return next(err) }
 }

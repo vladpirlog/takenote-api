@@ -25,7 +25,8 @@ export interface INoteSchema extends IEntity {
 
     /**
      * Returns public note data that can be viewed by the frontend.
-     * @param userID id of the user which requests the note
+     * @param userID id of the user which requests the note or `shared` if the note is
+     * available through the sharing code
      */
     getPublicInfo(userID?: IUserSchema['id']): PublicNoteInfo
 }

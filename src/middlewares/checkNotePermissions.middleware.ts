@@ -28,14 +28,15 @@ const checkNotePermissions = (requiredPermissions: NotePermission[], paramName: 
 
 /**
  * A special case of permission checking.
- * Only allow note title and content edits if the user has the NOTE_EDIT_COMMON_PROPERTIES permission.
+ * Only allow note title and content edits if the user has the `NOTE_EDIT_COMMON_PROPERTIES` permission.
  * @param paramName the req.params field where the noteID is located; defaults to 'id'
  */
 export const checkEditNotePermissions = (paramName: string = 'id') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const userID = getAuthUser(res).id
-            const notePermissions = getPermissionsFromRoles(await getNoteRoles(req.params[paramName], userID))
+            const noteRoles = await getNoteRoles(req.params[paramName], userID)
+            const notePermissions = getPermissionsFromRoles(noteRoles)
 
             if (notePermissions.includes(NotePermission.NOTE_EDIT_COMMON_PROPERTIES)) {
                 return next()
@@ -85,7 +86,7 @@ export const checkEditCommentPermissions = (
 /**
  * A special case of permission checking.
  * Only allow comment deletion if the user is the creator of that comment or it has the
- * COMMENT_DELETE permission for the note.
+ * `COMMENT_DELETE` permission for the note.
  * @param noteIDParamName the req.params field where the noteID is located; defaults to 'id'
  * @param commentIDParamName the req.params field where the commentID is located; defaults to 'commentID'
  */

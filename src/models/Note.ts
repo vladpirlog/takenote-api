@@ -93,7 +93,7 @@ export const NoteSchema = new Schema<INoteSchema>(
     { timestamps: true, id: false }
 )
 
-NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
+NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id'] | 'shared') {
     const owner = this.users.find(u => u.roles.includes(NoteRole.OWNER))
     if (!owner) throw new Error('Note has no owner.')
 
@@ -106,6 +106,12 @@ NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
 
     const user = this.users.find(u => u.subject.id === userID)
     if (!userID || !user) return publicNote
+
+    if (userID === 'shared') {
+        publicNote.title = this.title
+        publicNote.content = this.content
+        return publicNote
+    }
 
     const notePermissions = getPermissionsFromRoles(user.roles)
     if (notePermissions.includes(NotePermission.NOTE_VIEW)) {
@@ -123,9 +129,11 @@ NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id']) {
         }
     }
     if (notePermissions.includes(NotePermission.COLLABORATOR_VIEW)) {
-        publicNote.collaborators = this.users.filter(u => !u.roles.includes(NoteRole.OWNER)).map(u => {
-            return { subject: u.subject, roles: u.roles }
-        })
+        publicNote.collaborators = this.users
+            .filter(u => !u.roles.includes(NoteRole.OWNER))
+            .map(u => {
+                return { subject: u.subject, roles: u.roles }
+            })
     }
     if (notePermissions.includes(NotePermission.ATTACHMENT_VIEW)) {
         publicNote.attachments = this.attachments.map(a => a.getPublicInfo())
