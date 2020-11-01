@@ -21,9 +21,9 @@ const addOrDeleteTags = (operation: 'add' | 'delete') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params
-            const { tags } = req.query
+            const { tag } = req.query
 
-            const tagsArray = splitTagsString(tags as string)
+            const tagsArray = splitTagsString(tag as string)
             if (!tagsArray) return createResponse(res, 400)
 
             const newNote = operation === 'add'

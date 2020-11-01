@@ -14,6 +14,7 @@ describe('test note-related operations', () => {
 
     const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
     let createdNoteID: INoteSchema['id']
+    let duplicatedNoteID: INoteSchema['id']
     let createdNoteShareObject: INoteSchema['share']
     let attachmentID: INoteSchema['attachments'][0]['id']
     let collaboratorID: IUserSchema['id']
@@ -99,6 +100,7 @@ describe('test note-related operations', () => {
     test('duplicate note', async () => {
         const res = await request
             .post(`/notes/${createdNoteID}/duplicate`)
+        duplicatedNoteID = res.body.note.id
         expect(res.status).toBe(200)
         expect(res.body.note.title).toBe('my-new-title')
         expect(res.body.note.content).toBe('my-new-content')
@@ -108,7 +110,7 @@ describe('test note-related operations', () => {
     test('add tags', async () => {
         const res = await request
             .post(`/notes/${createdNoteID}/tags`)
-            .query({ tags: 'tag1,tag2,tag3' })
+            .query({ tag: 'tag1,tag2,tag3' })
         expect(res.status).toBe(200)
         expect(res.body.tags).toEqual(['tag1', 'tag2', 'tag3'])
     }, 20000)
@@ -148,7 +150,7 @@ describe('test note-related operations', () => {
     test('delete tags', async () => {
         const res = await request
             .delete(`/notes/${createdNoteID}/tags`)
-            .query({ tags: 'tag3,tag4' })
+            .query({ tag: 'tag3,tag4' })
         expect(res.status).toBe(200)
     }, 20000)
 
@@ -273,6 +275,11 @@ describe('test note-related operations', () => {
 
     test('delete note', async () => {
         const res = await request.delete(`/notes/${createdNoteID}`)
+        expect(res.status).toBe(200)
+    }, 20000)
+
+    test('delete duplicated note', async () => {
+        const res = await request.delete(`/notes/${duplicatedNoteID}`)
         expect(res.status).toBe(200)
     }, 20000)
 

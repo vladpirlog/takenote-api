@@ -32,11 +32,11 @@ describe('testing the security features of the api', () => {
     test('limit for # of tags per note', async () => {
         const res = await request
             .post(`/notes/${createdNoteID}/tags`)
-            .query({ tags: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20' })
+            .query({ tag: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20' })
         expect(res.status).toBe(200)
         const res2 = await request
             .post(`/notes/${createdNoteID}/tags`)
-            .query({ tags: '21' })
+            .query({ tag: '21' })
         expect(res2.status).toBe(400)
     }, 20000)
 
