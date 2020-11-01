@@ -32,6 +32,8 @@ tags:
     description: Words used for grouping notes around a theme
   - name: password
     description: Password-related operations
+  - name: comments
+    description: Comment-related operations
 paths:
   /:
     get:
@@ -570,7 +572,6 @@ paths:
         - name: remember
           in: query
           description: If true, 2fa will not be required on login for 30 days, else will be required on every login
-          required: true
           schema:
             type: boolean
       responses:
@@ -677,7 +678,7 @@ paths:
           required: false
           schema:
             type: boolean
-            description: Specifies whether the notes archived/not archived should be sent; if undefined, all the notes are sent
+            description: Specifies whether the notes archived/not archived should be fetched; if undefined, all the notes are fetched
       responses:
         default:
           description: Error
@@ -1112,6 +1113,37 @@ paths:
                             minLength: 3
       requestBody:
         $ref: "#/components/requestBodies/AddCollaborator"
+    delete:
+      tags:
+        - notes
+        - collaborators
+      summary: Delete self as a note collaborator
+      operationId: deleteSelfCollaborator
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to delete self as collab from
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Self as collaborator deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   "/notes/{noteID}/share/collaborators/{collaboratorID}":
     delete:
       tags:
@@ -1172,7 +1204,7 @@ paths:
             pattern: /^n[a-zA-Z0-9_-]{24}$/
             maxLength: 25
             minLength: 25
-        - name: tags
+        - name: tag
           in: query
           description: Tags to add to the note, separated with commas
           schema:
@@ -1228,7 +1260,7 @@ paths:
             pattern: /^n[a-zA-Z0-9_-]{24}$/
             maxLength: 25
             minLength: 25
-        - name: tags
+        - name: tag
           in: query
           description: Tags to delete from the note, separated with commas
           schema:
@@ -1411,6 +1443,296 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
+  "/notes/{noteID}/comments":
+    get:
+      tags:
+        - notes
+        - comments
+      summary: Get all comments of a note
+      operationId: getAllComments
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to get comments from
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Comments fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  comments:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      enabled:
+                        type: boolean
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Comment"
+    post:
+      tags:
+        - notes
+        - comments
+      summary: Add a comment to note
+      operationId: addComment
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to add comment to
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  comment:
+                    $ref: "#/components/schemas/Comment"
+      requestBody:
+        $ref: "#/components/requestBodies/AddComment"
+  "/notes/{noteID}/comments/{commentID}":
+    get:
+      tags:
+        - notes
+        - comments
+      summary: Get a comment
+      operationId: getComment
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to get comment from
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+        - name: commentID
+          in: path
+          description: ID of comment to get
+          required: true
+          schema:
+            type: string
+            pattern: /^com[a-zA-Z0-9_-]{32}$/
+            maxLength: 35
+            minLength: 35
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Comment fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  comment:
+                    $ref: "#/components/schemas/Comment"
+    put:
+      tags:
+        - notes
+        - comments
+      summary: Update a comment
+      operationId: updateComment
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to update comment from
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+        - name: commentID
+          in: path
+          description: ID of comment to update
+          required: true
+          schema:
+            type: string
+            pattern: /^com[a-zA-Z0-9_-]{32}$/
+            maxLength: 35
+            minLength: 35
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Comment updated
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  comment:
+                    $ref: "#/components/schemas/Comment"
+      requestBody:
+        $ref: "#/components/requestBodies/UpdateComment"
+    delete:
+      tags:
+        - notes
+        - comments
+      summary: Delete a comment
+      operationId: deleteComment
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to delete comment from
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+        - name: commentID
+          in: path
+          description: ID of comment to delete
+          required: true
+          schema:
+            type: string
+            pattern: /^com[a-zA-Z0-9_-]{32}$/
+            maxLength: 35
+            minLength: 35
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Comment deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
+  "/notes/{noteID}/comments/state":
+    post:
+      tags:
+        - notes
+        - comments
+      summary: Update the comments section state
+      operationId: updateCommentsSection
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note whose comments section will be updated
+          required: true
+          schema:
+            type: string
+            pattern: /^n[a-zA-Z0-9_-]{24}$/
+            maxLength: 25
+            minLength: 25
+        - name: enabled
+          in: query
+          description: Set the comments section state
+          required: true
+          schema:
+            type: boolean
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: State updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
 externalDocs:
   description: Find out more about Swagger
   url: "http://swagger.io"
@@ -1437,6 +1759,49 @@ components:
         description:
           type: string
           maxLength: 256
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Comment:
+      additionalProperties: false
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: /^a[a-zA-Z0-9_-]{24}$/
+          maxLength: 25
+          minLength: 25
+        subject:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              pattern: /^u[a-zA-Z0-9_-]{24}$/
+              maxLength: 25
+              minLength: 25
+            username:
+              type: string
+              pattern: /^[a-zA-Z0-9_-]{4,20}$/
+              maxLength: 20
+              minLength: 4
+            email:
+              type: string
+              format: email
+              maxLength: 254
+              minLength: 3
+        text:
+          type: string
+          maxLength: 120
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     Tag:
       type: string
       pattern: /^[ -~]{1,20}$/
@@ -1447,16 +1812,7 @@ components:
       type: object
       required:
         - id
-        - title
-        - content
-        - collaborators
         - owner
-        - archived
-        - fixed
-        - attachments
-        - share
-        - color
-        - tags
         - createdAt
         - updatedAt
       properties:
@@ -1564,11 +1920,9 @@ components:
         createdAt:
           type: string
           format: date-time
-          maxLength: 100
         updatedAt:
           type: string
           format: date-time
-          maxLength: 100
     ResponseBody:
       additionalProperties: false
       type: object
@@ -2027,6 +2381,54 @@ components:
                 enum:
                   - viewer
                   - editor
+    AddComment:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                type: string
+                maxLength: 120
+                description: The text of the comment to be added
+        application/json:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                type: string
+                maxLength: 120
+                description: The text of the comment to be added
+    UpdateComment:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                type: string
+                maxLength: 120
+                description: The new text of the comment
+        application/json:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - text
+            properties:
+              text:
+                type: string
+                maxLength: 120
+                description: The new text of the comment
     AddAttachment:
       content:
         multipart/formdata:
