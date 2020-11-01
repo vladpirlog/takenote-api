@@ -183,6 +183,12 @@ describe('test note-related operations', () => {
         expect(res.body.collaborator.subject).toHaveProperty('email')
     }, 20000)
 
+    test('delete self from own note', async () => {
+        const res = await request
+            .delete(`/notes/${createdNoteID}/share/collaborators`)
+        expect(res.status).toBeGreaterThanOrEqual(400)
+    }, 20000)
+
     test('delete collaborator', async () => {
         const res = await request
             .delete(`/notes/${createdNoteID}/share/collaborators/${collaboratorID}`)
