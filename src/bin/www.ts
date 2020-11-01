@@ -85,7 +85,7 @@ function onListening () {
         .all([mongodbConfig.connect(), redisConfig.connect()])
         .then(() => console.log('MongoDB and Redis connected...'))
         .catch(err => {
-            console.log(err)
+            console.error(err)
             process.exit(-1)
         })
 }
@@ -96,5 +96,5 @@ function onListening () {
 function onClosing () {
     Promise
         .all([mongodbConfig.close(), redisConfig.close()])
-        .catch(err => console.log(err))
+        .catch(err => console.error(err))
 }
