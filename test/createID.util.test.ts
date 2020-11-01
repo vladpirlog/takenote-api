@@ -57,4 +57,11 @@ describe('id creation testing', () => {
             constants.idInfo.tfa.prefix.length)
         expect(/tfa[a-zA-Z0-9_-]{48}$/.test(id)).toBeTruthy()
     })
+
+    test('create comment id', () => {
+        const id = createID('comment')
+        expect(id).toHaveLength(constants.idInfo.comment.length +
+            constants.idInfo.comment.prefix.length)
+        expect(/com[a-zA-Z0-9_-]{32}$/.test(id)).toBeTruthy()
+    })
 })
