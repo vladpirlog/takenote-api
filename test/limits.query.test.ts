@@ -50,7 +50,7 @@ describe('test queries for limit-checking', () => {
             .attach('photo', pngTestImage, { contentType: 'image/png' })
         const n = await limitsQuery.attachment(createdNotesID[0])
         expect(n).toBe(expectedN)
-    })
+    }, 20000)
 
     test('get number of tags - should be 0', async () => {
         const n = await limitsQuery.tag(createdNotesID[0], userID)
@@ -60,7 +60,7 @@ describe('test queries for limit-checking', () => {
     test.each([1, 2, 3])('get number of tags - should be %d', async (expectedN) => {
         await request
             .post(`/notes/${createdNotesID[0]}/tags`)
-            .query({ tags: `tag${expectedN}` })
+            .query({ tag: `tag${expectedN}` })
         const n = await limitsQuery.tag(createdNotesID[0], userID)
         expect(n).toBe(expectedN)
     })

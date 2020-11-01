@@ -5,16 +5,16 @@ import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
 import authConfirmationController from '../controllers/auth.confirmation.controller'
-import validateToken from '../middlewares/validateToken.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
 import rateLimiting from '../middlewares/rateLimiting.middleware'
-import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import auth2faController from '../controllers/auth.2fa.controller'
 import extractUser from '../middlewares/extractUser.middleware'
 import authOauthController from '../controllers/auth.oauth.controller'
 import recaptcha from '../middlewares/recaptcha.middleware'
 import State from '../enums/State.enum'
 import AuthStatus from '../enums/AuthStatus.enum'
+import validateQuery from '../middlewares/queryValidation.middleware'
+import checkTokenExpiration from '../middlewares/checkTokenExpiration.middleware'
 
 const router = Router()
 
@@ -55,7 +55,7 @@ router.post(
 
 router.post(
     '/confirm',
-    requestFieldsDefined('query', ['token']),
+    validateQuery('confirmationToken', 'Token invalid.'),
     authConfirmationController.confirm
 )
 
@@ -80,7 +80,7 @@ router.post(
 // New password submition handler
 router.post(
     '/new_password',
-    requestFieldsDefined('query', ['token']),
+    validateQuery('resetToken', 'Token invalid.'),
     validateBody('newPassword', 'Credentials invalid.'),
     recaptcha,
     authPasswordController.submitToken
@@ -89,8 +89,8 @@ router.post(
 // Token validation handler
 router.get(
     '/check_token',
-    requestFieldsDefined('query', ['token']),
-    validateToken
+    validateQuery('resetToken', 'Token invalid.'),
+    checkTokenExpiration
 )
 
 // Check user existence handler
@@ -129,14 +129,14 @@ router.post(
     '/2fa/verify',
     extractUser.fromTfaTempCookie,
     checkAuthStatus([AuthStatus.LOGGED_IN, AuthStatus.TFA_LOGGED_IN]),
-    requestFieldsDefined('query', ['code']),
+    validateQuery('tfa', 'Code invalid.'),
     auth2faController.verify2faCode
 )
 
 router.delete(
     '/2fa',
     checkAuthStatus([AuthStatus.LOGGED_IN]),
-    requestFieldsDefined('query', ['code']),
+    validateQuery('tfa', 'Code invalid.'),
     auth2faController.disable2fa
 )
 
@@ -144,7 +144,7 @@ router.delete(
 router.get(
     '/google',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    requestFieldsDefined('query', ['code']),
+    validateQuery('googleOauth', 'Code invalid.'),
     authOauthController.google
 )
 

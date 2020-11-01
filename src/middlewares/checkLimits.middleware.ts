@@ -22,9 +22,9 @@ const forNote = async (req: Request, res: Response, next: NextFunction) => {
 const forTag = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const { tags } = req.query
+        const { tag } = req.query
 
-        const tagsArray = splitTagsString(tags as string)
+        const tagsArray = splitTagsString(tag as string)
         if (!tagsArray) return createResponse(res, 400)
         const length = await limitsQuery.tag(id, getAuthUser(res).id)
         if (length === undefined || length + tagsArray.length > constants.limits.perNote.tags) {

@@ -14,7 +14,6 @@ import checkNotePermissions, {
     checkEditNotePermissions
 } from '../middlewares/checkNotePermissions.middleware'
 import validateBody from '../middlewares/bodyValidation.middleware'
-import requestFieldsDefined from '../middlewares/requestFieldsDefined.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
 import UserRole from '../enums/UserRole.enum'
@@ -22,6 +21,7 @@ import AuthStatus from '../enums/AuthStatus.enum'
 import State from '../enums/State.enum'
 import { NotePermission } from '../utils/accessManagement.util'
 import noteCommentsController from '../controllers/note.comments.controller'
+import validateQuery from '../middlewares/queryValidation.middleware'
 
 const router = Router()
 
@@ -34,10 +34,18 @@ router.all(
 )
 
 // GET all notes
-router.get('/', noteCrudController.getAllNotes)
+router.get(
+    '/',
+    validateQuery('notes'),
+    noteCrudController.getAllNotes
+)
 
 // GET notes by tag or tag RegExp
-router.get('/tags', requestFieldsDefined('query', ['tag']), noteTagsController.getByTag)
+router.get(
+    '/tags',
+    validateQuery('tag', 'Tag invalid.'),
+    noteTagsController.getByTag
+)
 
 // GET a note
 router.get(
@@ -80,6 +88,7 @@ router.post(
 router.post(
     '/:id/share',
     checkNotePermissions([NotePermission.SHARING_EDIT]),
+    validateQuery('share'),
     noteShareController.getShareLink
 )
 
@@ -108,8 +117,8 @@ router.delete(
 // ADD tags to a note
 router.post(
     '/:id/tags',
-    requestFieldsDefined('query', ['tags']),
     checkNotePermissions([NotePermission.NOTE_EDIT_PERSONAL_PROPERTIES]),
+    validateQuery('tag', 'Tag invalid.'),
     checkLimits.forTag,
     noteTagsController.addTags
 )
@@ -117,8 +126,8 @@ router.post(
 // DELETE tags from a note
 router.delete(
     '/:id/tags',
-    requestFieldsDefined('query', ['tags']),
     checkNotePermissions([NotePermission.NOTE_EDIT_PERSONAL_PROPERTIES]),
+    validateQuery('tag', 'Tag invalid.'),
     noteTagsController.deleteTags
 )
 
@@ -192,8 +201,8 @@ router.delete(
 // SET the state of the comments section (enabled or disabled)
 router.post(
     '/:id/comments/state',
-    requestFieldsDefined('query', ['enabled']),
     checkNotePermissions([NotePermission.COMMENTS_CHANGE_STATE]),
+    validateQuery('commentsSectionState', 'State invalid.'),
     noteCommentsController.setCommentSectionState
 )
 
