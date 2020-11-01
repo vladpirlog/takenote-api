@@ -48,7 +48,7 @@ const addCollaborator = async (
 }
 
 /**
- * Remove a collaborator from a note.
+ * Remove a collaborator from a note. The query prevents from removing the owner of the note.
  * @param noteID id of the note
  * @param collaboratorID id of the collaborator to be removed
  */
@@ -57,7 +57,15 @@ const deleteCollaborator = (
     collaboratorID: IUserSchema['id']
 ) => {
     return Note.findOneAndUpdate(
-        { id: noteID },
+        {
+            id: noteID,
+            users: {
+                $elemMatch: {
+                    'subject.id': collaboratorID,
+                    roles: { $nin: [NoteRole.OWNER] }
+                }
+            }
+        },
         {
             $pull: {
                 users: {
