@@ -8,20 +8,22 @@ import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
-import checkNotePermissions, {
-    checkEditCommentPermissions,
-    checkDeleteCommentPermissions,
-    checkEditNotePermissions
-} from '../middlewares/checkNotePermissions.middleware'
 import validateBody from '../middlewares/bodyValidation.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
 import UserRole from '../enums/UserRole.enum'
 import AuthStatus from '../enums/AuthStatus.enum'
 import State from '../enums/State.enum'
-import { NotePermission } from '../utils/accessManagement.util'
 import noteCommentsController from '../controllers/note.comments.controller'
 import validateQuery from '../middlewares/queryValidation.middleware'
+import { Permission } from '../enums/Permission.enum'
+import {
+    checkEditNotePermissions,
+    checkEditCommentPermissions,
+    checkDeleteCommentPermissions,
+    checkNotePermissions,
+    checkNoteMovingPermissions
+} from '../middlewares/checkPermissions.middleware'
 
 const router = Router()
 
@@ -36,7 +38,7 @@ router.all(
 // GET all notes
 router.get(
     '/',
-    validateQuery('notes'),
+    validateQuery('getAllNotes'),
     noteCrudController.getAllNotes
 )
 
@@ -50,7 +52,7 @@ router.get(
 // GET a note
 router.get(
     '/:id',
-    checkNotePermissions([NotePermission.NOTE_VIEW]),
+    checkNotePermissions([Permission.NOTE_VIEW]),
     noteCrudController.getOneNote
 )
 
@@ -73,30 +75,30 @@ router.put(
 // DELETE a note
 router.delete(
     '/:id',
-    checkNotePermissions([NotePermission.NOTE_DELETE]),
+    checkNotePermissions([Permission.NOTE_DELETE]),
     noteCrudController.deleteNote
 )
 
 // DUPLICATE a note
 router.post(
     '/:id/duplicate',
-    checkNotePermissions([NotePermission.NOTE_VIEW]),
+    checkNotePermissions([Permission.NOTE_VIEW]),
     noteCrudController.duplicateNote
 )
 
 // UPDATE sharing url and its state
 router.post(
     '/:id/share',
-    checkNotePermissions([NotePermission.SHARING_EDIT]),
+    checkNotePermissions([Permission.NOTE_SHARING_EDIT]),
     validateQuery('share'),
     noteShareController.getShareLink
 )
 
-// ADD a collaborator to a note, in the form of username/email/id and type
+// ADD a collaborator to a note
 router.post(
     '/:id/share/collaborators',
+    checkNotePermissions([Permission.NOTE_COLLABORATOR_ADD]),
     validateBody('collaborator', 'Invalid collaborator.'),
-    checkNotePermissions([NotePermission.COLLABORATOR_ADD]),
     checkLimits.forCollaborator,
     noteShareController.addCollaborator
 )
@@ -110,14 +112,14 @@ router.delete(
 // DELETE a collaborator from a note
 router.delete(
     '/:id/share/collaborators/:collaboratorID',
-    checkNotePermissions([NotePermission.COLLABORATOR_DELETE]),
+    checkNotePermissions([Permission.NOTE_COLLABORATOR_DELETE]),
     noteShareController.deleteCollaborator
 )
 
 // ADD tags to a note
 router.post(
     '/:id/tags',
-    checkNotePermissions([NotePermission.NOTE_EDIT_PERSONAL_PROPERTIES]),
+    checkNotePermissions([Permission.NOTE_EDIT_PERSONAL_PROPERTIES]),
     validateQuery('tag', 'Tag invalid.'),
     checkLimits.forTag,
     noteTagsController.addTags
@@ -126,7 +128,7 @@ router.post(
 // DELETE tags from a note
 router.delete(
     '/:id/tags',
-    checkNotePermissions([NotePermission.NOTE_EDIT_PERSONAL_PROPERTIES]),
+    checkNotePermissions([Permission.NOTE_EDIT_PERSONAL_PROPERTIES]),
     validateQuery('tag', 'Tag invalid.'),
     noteTagsController.deleteTags
 )
@@ -139,7 +141,7 @@ router.post(
         useTempFiles: true
     }),
     deleteFileOnFinish,
-    checkNotePermissions([NotePermission.ATTACHMENT_ADD]),
+    checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
     validateBody('addAttachment', 'Attachment invalid.'),
     attachmentMetadata,
     checkLimits.forAttachment,
@@ -149,7 +151,7 @@ router.post(
 // UPDATE a photo attachment of a note
 router.put(
     '/:id/attachments/:attachmentID',
-    checkNotePermissions([NotePermission.ATTACHMENT_ADD]),
+    checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
     validateBody('editAttachment', 'Attachment invalid.'),
     noteAttachmentsController.editAttachment
 )
@@ -157,28 +159,28 @@ router.put(
 // DELETE a photo attachment from a note
 router.delete(
     '/:id/attachments/:attachmentID',
-    checkNotePermissions([NotePermission.ATTACHMENT_DELETE]),
+    checkNotePermissions([Permission.NOTE_ATTACHMENT_DELETE]),
     noteAttachmentsController.deleteAttachment
 )
 
 // GET all comments of a note
 router.get(
     '/:id/comments',
-    checkNotePermissions([NotePermission.COMMENT_VIEW]),
+    checkNotePermissions([Permission.NOTE_COMMENT_VIEW]),
     noteCommentsController.getAllComments
 )
 
 // GET one comment
 router.get(
     '/:id/comments/:commentID',
-    checkNotePermissions([NotePermission.COMMENT_VIEW]),
+    checkNotePermissions([Permission.NOTE_COMMENT_VIEW]),
     noteCommentsController.getComment
 )
 
 // ADD a comment to a note
 router.post(
     '/:id/comments',
-    checkNotePermissions([NotePermission.COMMENT_ADD]),
+    checkNotePermissions([Permission.NOTE_COMMENT_ADD]),
     validateBody('comment', 'Comment invalid.'),
     noteCommentsController.addComment
 )
@@ -201,9 +203,17 @@ router.delete(
 // SET the state of the comments section (enabled or disabled)
 router.post(
     '/:id/comments/state',
-    checkNotePermissions([NotePermission.COMMENTS_CHANGE_STATE]),
+    checkNotePermissions([Permission.NOTE_COMMENTS_CHANGE_STATE]),
     validateQuery('commentsSectionState', 'State invalid.'),
     noteCommentsController.setCommentSectionState
+)
+
+// MOVE a note between a notepad and the user's personal notes or another notepad
+router.post(
+    '/:id/move',
+    checkNoteMovingPermissions,
+    validateQuery('moveNote'),
+    noteCrudController.moveNote
 )
 
 export default router

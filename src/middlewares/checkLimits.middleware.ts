@@ -6,14 +6,20 @@ import createResponse from '../utils/createResponse.util'
 import splitTagsString from '../utils/splitTagsString.util'
 
 /**
- * Middleware function for checking the note limit.
+ * Higher-order function.
+ * Returns a middleware function for checking the notes or notepads limit for a user.
  */
-const forNote = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        const length = await limitsQuery.note(getAuthUser(res).id)
-        if (length + 1 <= constants.limits.perUser.notes) return next()
-        return createResponse(res, 400, 'Notes limit exceeded.')
-    } catch (err) { return next(err) }
+const forNoteOrNotepad = (type: 'note' | 'notepad') => {
+    return async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const length = await limitsQuery[type](getAuthUser(res).id)
+            const limit = type === 'note'
+                ? constants.limits.perUser.notes
+                : constants.limits.perUser.notepads
+            if (length + 1 <= limit) return next()
+            return createResponse(res, 400, `Limit for ${type}s exceeded.`)
+        } catch (err) { return next(err) }
+    }
 }
 
 /**
@@ -56,7 +62,8 @@ const forAttachmentOrCollaborator = (type: 'attachment' | 'collaborator') => {
 }
 
 export default {
-    forNote,
+    forNote: forNoteOrNotepad('note'),
+    forNotepad: forNoteOrNotepad('notepad'),
     forTag,
     forAttachment: forAttachmentOrCollaborator('attachment'),
     forCollaborator: forAttachmentOrCollaborator('collaborator')

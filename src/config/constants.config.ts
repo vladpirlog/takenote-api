@@ -62,13 +62,14 @@ export default {
         password: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\]:;<>,.?/~_+\-=|\\]).{8,40}$/
     },
     idInfo: {
-        user: { prefix: 'u', length: 24 },
-        note: { prefix: 'n', length: 24 },
-        attachment: { prefix: 'a', length: 24 },
-        jwt: { prefix: 'j', length: 24 },
-        share: { prefix: 's', length: 24 },
-        reset: { prefix: 'rs', length: 24 },
-        confirmation: { prefix: 'cn', length: 24 },
+        user: { prefix: 'usr', length: 24 },
+        note: { prefix: 'not', length: 24 },
+        notepad: { prefix: 'npd', length: 24 },
+        attachment: { prefix: 'att', length: 24 },
+        jwt: { prefix: 'jwt', length: 24 },
+        share: { prefix: 'shr', length: 24 },
+        reset: { prefix: 'rst', length: 24 },
+        confirmation: { prefix: 'cnf', length: 24 },
         comment: { prefix: 'com', length: 32 },
         tfa: { prefix: 'tfa', length: 48 }
     },
@@ -83,7 +84,8 @@ export default {
         perUser: {
             request: 100, // # of requests per minute from an IP addr
             email: 4, // # of emails per minute sent to an IP addr
-            notes: 1000
+            notes: 1000,
+            notepads: 100
         },
         perNote: {
             attachments: 10,
@@ -95,29 +97,6 @@ export default {
         expires: 30 * 60 * 1000 // time in ms
     },
     test: {
-        persistentUser: {
-            // a user which isn't deleted from the testing db
-            email: 'Fludersomand31@einrot.com',
-            username: 'test',
-            password: 'Qwerty1!'
-        },
-        persistentUser2: {
-            email: 'xiteson610@wwmails.com',
-            username: 'test2',
-            password: 'Qwerty1!'
-        },
-        acceptedCredentials: {
-            // valid credentials used for testing the auth flows
-            email: 'Hons1948@fleckens.hu',
-            username: 'test1234',
-            password: 'Qwerty1!'
-        },
-        wrongCredentials: {
-            // invalid credentials used for testing the auth flows
-            email: '(^&*%*HB*GUHI',
-            username: 'aa',
-            password: 'password'
-        },
         mongodbURI: process.env.MONGODB_TESTING_URI || ''
     }
 }

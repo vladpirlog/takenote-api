@@ -1,20 +1,20 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import noteQuery from '../queries/note.crud.query'
+import noteCrudQuery from '../queries/note.crud.query'
 import getAuthUser from '../utils/getAuthUser.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
-import isPositiveInteger from '../utils/isPositiveInteger.util'
-import User from '../models/User'
 import userQuery from '../queries/user.query'
 import { NoteBody } from '../types/RequestBodies'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
-        const note = await noteQuery.getOneByID(id)
-        return note ? createResponse(res, 200, 'Note fetched.', {
-            note: note.getPublicInfo(getAuthUser(res).id)
-        }) : createResponse(res)
+        const note = await noteCrudQuery.getOneByID(id)
+        return note
+            ? createResponse(res, 200, 'Note fetched.', {
+                note: note.getPublicInfo(res)
+            })
+            : next()
     } catch (err) { return next(err) }
 }
 
@@ -22,24 +22,21 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { collaborations, skip, limit, archived } = req.query
 
-        if (skip && !isPositiveInteger(skip as string)) {
-            return createResponse(res, 422, 'The skip param is invalid.')
-        }
+        const skipParam = skip ? parseInt(skip as string) : undefined
+        const limitParam = limit ? parseInt(limit as string) : undefined
+        const collaborationsParam = stringToBoolean(collaborations as string | undefined)
+        const archivedParam = stringToBoolean(archived as string | undefined)
 
-        if (limit && !isPositiveInteger(limit as string)) {
-            return createResponse(res, 422, 'The limit param is invalid.')
-        }
-
-        const notes = await noteQuery.getAll(
+        const notes = await noteCrudQuery.getAll(
             getAuthUser(res).id,
-            skip ? parseInt(skip as string) : undefined,
-            limit ? parseInt(limit as string) : undefined,
-            stringToBoolean(collaborations as string | undefined),
-            stringToBoolean(archived as string | undefined)
+            skipParam,
+            limitParam,
+            collaborationsParam,
+            archivedParam
         )
 
         return createResponse(res, 200, 'Notes fetched.', {
-            notes: notes.map(n => n.getPublicInfo(getAuthUser(res).id))
+            notes: notes.map(n => n.getPublicInfo(res))
         })
     } catch (err) { return next(err) }
 }
@@ -47,20 +44,23 @@ const getAllNotes = async (req: Request, res: Response, next: NextFunction) => {
 const addNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { title, content, archived, color, fixed } = req.body as NoteBody
-
-        const authUser = await User.findOne({ id: getAuthUser(res).id })
+        const authUser = await userQuery.getById(getAuthUser(res).id)
         if (!authUser) return createResponse(res, 400)
-        const newNote = await noteQuery.createOne({
+
+        const archivedParam = typeof archived === 'string' ? stringToBoolean(archived) : archived
+        const fixedParam = typeof fixed === 'string' ? stringToBoolean(fixed) : fixed
+
+        const newNote = await noteCrudQuery.createOne({
             title,
             content,
-            archived: typeof archived === 'string' ? stringToBoolean(archived) : archived,
+            archived: archivedParam,
             color,
-            fixed: typeof fixed === 'string' ? stringToBoolean(fixed) : fixed,
+            fixed: fixedParam,
             owner: { id: authUser.id, username: authUser.username, email: authUser.email }
         })
         return newNote
             ? createResponse(res, 201, 'Note created.', {
-                note: newNote.getPublicInfo(getAuthUser(res).id)
+                note: newNote.getPublicInfo(res)
             }) : createResponse(res, 400, 'Couldn\'t create note.')
     } catch (err) { return next(err) }
 }
@@ -70,22 +70,26 @@ const editNote = async (req: Request, res: Response, next: NextFunction) => {
         const { id } = req.params
         const { title, content, archived, color, fixed } = req.body as NoteBody
 
-        const updatedNote = await noteQuery.updateOneByID(
+        const archivedParam = typeof archived === 'string' ? stringToBoolean(archived) : archived
+        const fixedParam = typeof fixed === 'string' ? stringToBoolean(fixed) : fixed
+
+        const updatedNote = await noteCrudQuery.updateOneByID(
             id,
             getAuthUser(res).id,
             {
                 title,
                 content,
-                archived: typeof archived === 'string' ? stringToBoolean(archived) : archived,
+                archived: archivedParam,
                 color,
-                fixed: typeof fixed === 'string' ? stringToBoolean(fixed) : fixed
+                fixed: fixedParam
             }
         )
 
         return updatedNote
             ? createResponse(res, 200, 'Note updated.', {
-                note: updatedNote.getPublicInfo(getAuthUser(res).id)
-            }) : createResponse(res, 400, 'Couldn\'t update note.')
+                note: updatedNote.getPublicInfo(res)
+            })
+            : createResponse(res, 400, 'Couldn\'t update note.')
     } catch (err) { return next(err) }
 }
 
@@ -93,8 +97,9 @@ const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
-        const note = await noteQuery.deleteOneByID(id, getAuthUser(res).id)
-        return note ? createResponse(res, 200, 'Note deleted.')
+        const note = await noteCrudQuery.deleteOneByID(id)
+        return note
+            ? createResponse(res, 200, 'Note deleted.')
             : createResponse(res, 400, 'Couldn\'t delete note.')
     } catch (err) { return next(err) }
 }
@@ -103,12 +108,12 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const { id } = req.params
 
-        const note = await noteQuery.getOneByID(id)
+        const note = await noteCrudQuery.getOneByID(id)
         const authUser = await userQuery.getById(getAuthUser(res).id)
         if (!note || !authUser) return createResponse(res, 400, 'Couldn\'t duplicate note.')
 
-        const notePublicInfo = note.getPublicInfo(authUser.id)
-        const newNote = await noteQuery.createOne(
+        const notePublicInfo = note.getPublicInfo(res)
+        const newNote = await noteCrudQuery.createOne(
             {
                 title: notePublicInfo.title,
                 content: notePublicInfo.content,
@@ -121,10 +126,34 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
             }
         )
 
-        return newNote ? createResponse(res, 200, 'Note duplicated.', {
-            note: newNote.getPublicInfo(getAuthUser(res).id)
-        }) : createResponse(res, 400, 'Couldn\'t duplicate note.')
+        return newNote
+            ? createResponse(res, 200, 'Note duplicated.', {
+                note: newNote.getPublicInfo(res)
+            })
+            : createResponse(res, 400, 'Couldn\'t duplicate note.')
     } catch (err) { return next(err) }
 }
 
-export default { getOneNote, getAllNotes, addNote, editNote, deleteNote, duplicateNote }
+const moveNote = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { id } = req.params
+        const { to } = req.query
+
+        const destinationNotepadID = to === 'default' ? undefined : (to as string)
+
+        const note = await noteCrudQuery.moveOne(id, getAuthUser(res).id, destinationNotepadID)
+        return note
+            ? createResponse(res, 200, 'Note moved.')
+            : createResponse(res, 400, 'Couldn\'t move note.')
+    } catch (err) { return next(err) }
+}
+
+export default {
+    getOneNote,
+    getAllNotes,
+    addNote,
+    editNote,
+    deleteNote,
+    duplicateNote,
+    moveNote
+}
