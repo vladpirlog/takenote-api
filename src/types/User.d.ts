@@ -34,7 +34,7 @@ export interface IUserSchema extends IEntity {
     /**
      * Returns public user data that can be viewed by the frontend.
      */
-    getPublicInfo(): PublicUserInfo
+    getPublicInfo(): Readonly<PublicUserInfo>
 
     /**
      * Checks if the user has confirmed their email address

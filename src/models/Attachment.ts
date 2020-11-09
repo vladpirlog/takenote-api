@@ -23,14 +23,14 @@ export const AttachmentSchema = new Schema<IAttachmentSchema>({
 }, { timestamps: true, id: false })
 
 AttachmentSchema.methods.getPublicInfo = function () {
-    return {
+    return Object.freeze({
         id: this.id,
         title: this.title,
         description: this.description,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
         url: this.url
-    }
+    })
 }
 
 export default mongoose.model<IAttachmentSchema>('Attachment', AttachmentSchema)
