@@ -24,6 +24,8 @@ tags:
     description: Endpoints related to two-factor authentication
   - name: notes
     description: Everything related to the users' notes
+  - name: notepads
+    description: Everything related to the users' notepads
   - name: collaborators
     description: Other users with the ability to view or edit some user's note
   - name: attachments
@@ -197,9 +199,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^cn[a-zA-Z0-9_-]{24}$/
-            maxLength: 26
-            minLength: 26
+            pattern: /^cnf[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -301,9 +303,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^rs[a-zA-Z0-9_-]{24}$/
-            maxLength: 26
-            minLength: 26
+            pattern: /^rst[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -333,9 +335,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^(rs|cn)[a-zA-Z0-9_-]{24}$/
-            maxLength: 26
-            minLength: 26
+            pattern: /^(rst|cnf)[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -710,6 +712,7 @@ paths:
                     maxLength: 1000
                   notes:
                     type: array
+                    maxItems: 1000
                     items:
                       $ref: "#/components/schemas/Note"
     post:
@@ -801,6 +804,7 @@ paths:
                     maxLength: 1000
                   notes:
                     type: array
+                    maxItems: 1000
                     items:
                       $ref: "#/components/schemas/Note"
   "/notes/{noteID}":
@@ -808,7 +812,7 @@ paths:
       tags:
         - notes
       summary: One user's note
-      operationId: oneNote
+      operationId: getOneNote
       security:
         - cookieAccessToken: []
       parameters:
@@ -818,9 +822,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -862,9 +866,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -908,9 +912,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -939,9 +943,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -974,7 +978,7 @@ paths:
       tags:
         - notes
       summary: Get sharing URL for a note
-      operationId: shareLink
+      operationId: shareNote
       security:
         - cookieAccessToken: []
       parameters:
@@ -984,9 +988,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: active
           in: query
           description: Set the sharing URL state
@@ -1036,9 +1040,9 @@ paths:
                         description: State of the sharing code
                       code:
                         type: string
-                        pattern: /^s[a-zA-Z0-9_-]{24}$/
-                        maxLength: 25
-                        minLength: 25
+                        pattern: /^shr[a-zA-Z0-9_-]{24}$/
+                        maxLength: 27
+                        minLength: 27
                         description: Sharing code
   "/notes/{noteID}/share/collaborators":
     post:
@@ -1046,7 +1050,7 @@ paths:
         - notes
         - collaborators
       summary: Add note collaborator
-      operationId: addCollaborator
+      operationId: addNoteCollaborator
       security:
         - cookieAccessToken: []
       parameters:
@@ -1056,9 +1060,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1087,20 +1091,23 @@ paths:
                   collaborator:
                     type: object
                     properties:
-                      role:
-                        type: string
-                        enum:
-                          - viewer
-                          - editor
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - primary_collaborator
+                            - secondary_collaborator
+                            - observer
                       subject:
                         type: object
                         additionalProperties: false
                         properties:
                           id:
                             type: string
-                            pattern: /^u[a-zA-Z0-9_-]{24}$/
-                            maxLength: 25
-                            minLength: 25
+                            pattern: /^usr[a-zA-Z0-9_-]{24}$/
+                            maxLength: 27
+                            minLength: 27
                           username:
                             type: string
                             pattern: /^[a-zA-Z0-9_-]{4,20}$/
@@ -1118,7 +1125,8 @@ paths:
         - notes
         - collaborators
       summary: Delete self as a note collaborator
-      operationId: deleteSelfCollaborator
+      description: Operation is forbidden for the note owner
+      operationId: deleteNoteSelfCollaborator
       security:
         - cookieAccessToken: []
       parameters:
@@ -1128,9 +1136,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1150,7 +1158,7 @@ paths:
         - notes
         - collaborators
       summary: Delete note collaborator
-      operationId: deleteCollaborator
+      operationId: deleteNoteCollaborator
       security:
         - cookieAccessToken: []
       parameters:
@@ -1160,18 +1168,18 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: collaboratorID
           in: path
           description: ID of the collaborator to delete
           required: true
           schema:
             type: string
-            pattern: /^u[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^usr[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1201,9 +1209,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: tag
           in: query
           description: Tags to add to the note, separated with commas
@@ -1257,9 +1265,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: tag
           in: query
           description: Tags to delete from the note, separated with commas
@@ -1298,6 +1306,49 @@ paths:
                     maxItems: 20
                     items:
                       $ref: "#/components/schemas/Tag"
+  "/notes/{noteID}/move":
+    post:
+      tags:
+        - notes
+        - notepads
+      summary: Move a note between notepads and the user's personal notes.
+      description: Only the owner of the notepad can move a note from the notepad to the personal notes.
+                   A user loses ownership of the note when moving it to a not-owned notepad.
+      operationId: moveNote
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of a note to move
+          required: true
+          schema:
+            type: string
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+        - name: to
+          in: query
+          required: true
+          description: The notepadID where the note will be moved, or 'default' if moving it to the personal notes.
+          schema:
+            type: string
+            pattern: /^(npd[a-zA-Z0-9_-]{24}|default)$/
+            maxLength: 27
+            minLength: 7
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Note moved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   "/notes/{noteID}/attachments":
     post:
       tags:
@@ -1314,9 +1365,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1362,18 +1413,18 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: attachmentID
           in: path
           description: ID of attachment to update
           required: true
           schema:
             type: string
-            pattern: /^a[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^att[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1418,18 +1469,18 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: attachmentID
           in: path
           description: ID of attachment to delete
           required: true
           schema:
             type: string
-            pattern: /^a[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^att[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1459,9 +1510,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1512,9 +1563,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
       responses:
         default:
           description: Error
@@ -1543,7 +1594,7 @@ paths:
                   comment:
                     $ref: "#/components/schemas/Comment"
       requestBody:
-        $ref: "#/components/requestBodies/AddComment"
+        $ref: "#/components/requestBodies/AddOrUpdateComment"
   "/notes/{noteID}/comments/{commentID}":
     get:
       tags:
@@ -1560,9 +1611,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: commentID
           in: path
           description: ID of comment to get
@@ -1614,9 +1665,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: commentID
           in: path
           description: ID of comment to update
@@ -1654,7 +1705,7 @@ paths:
                   comment:
                     $ref: "#/components/schemas/Comment"
       requestBody:
-        $ref: "#/components/requestBodies/UpdateComment"
+        $ref: "#/components/requestBodies/AddOrUpdateComment"
     delete:
       tags:
         - notes
@@ -1670,9 +1721,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: commentID
           in: path
           description: ID of comment to delete
@@ -1711,9 +1762,9 @@ paths:
           required: true
           schema:
             type: string
-            pattern: /^n[a-zA-Z0-9_-]{24}$/
-            maxLength: 25
-            minLength: 25
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
         - name: enabled
           in: query
           description: Set the comments section state
@@ -1733,6 +1784,602 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
+  "/notepads":
+    get:
+      tags:
+        - notepads
+      summary: Get all the user's notepads
+      operationId: allNotepads
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: collaborations
+          in: query
+          required: false
+          schema:
+            type: boolean
+            description: Specifies whether the notepads where the user is collaborating should be included
+            default: true
+        - name: skip
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            description: The number of notepads to skip from the result
+            default: 0
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+            description: The maximum number of notepads to return
+            default: 1000
+        - name: include_notes
+          in: query
+          required: false
+          schema:
+            default: true
+            type: boolean
+            description: Specifies whether the notes inside the notepad should be returned as well
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Notepads fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                required:
+                  - status
+                  - message
+                  - notepads
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  notepads:
+                    type: array
+                    maxItems: 100
+                    items:
+                      $ref: "#/components/schemas/Notepad"
+    post:
+      tags:
+        - notepads
+      summary: Add an empty notepad
+      operationId: addNotepad
+      security:
+        - cookieAccessToken: []
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Notepad created
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 201
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  notepad:
+                    $ref: "#/components/schemas/Notepad"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateNotepad"
+  "/notepads/{notepadID}":
+    get:
+      tags:
+        - notepads
+      summary: Get one of the user's notepads
+      operationId: getOneNotepad
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+        - name: include_notes
+          in: query
+          required: false
+          schema:
+            default: true
+            type: boolean
+            description: Specifies whether the notes inside the notepad should be returned as well
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Notepad fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                required:
+                  - status
+                  - message
+                  - notepad
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  notepad:
+                    $ref: "#/components/schemas/Notepad"
+    put:
+      tags:
+        - notepads
+      summary: Update an existing notepad
+      operationId: updateNotepad
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Notepad updated; notes are not included in the response
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  notepad:
+                    $ref: "#/components/schemas/Notepad"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateNotepad"
+    delete:
+      tags:
+        - notepads
+      summary: Delete an existing notepad
+      operationId: deleteNotepad
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Notepad deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
+  "/notepads/{notepadID}/share":
+    post:
+      tags:
+        - notepads
+      summary: Get sharing URL for a notepad
+      operationId: shareNotepad
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          description: ID of notepad to share
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+        - name: active
+          in: query
+          description: Set the sharing URL state
+          required: false
+          schema:
+            type: boolean
+        - name: get_new
+          in: query
+          description: Create a new URL instead of retrieving the old one
+          required: false
+          schema:
+            type: boolean
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Link fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  share:
+                    type: object
+                    additionalProperties: false
+                    required:
+                      - active
+                      - code
+                    properties:
+                      active:
+                        type: boolean
+                        description: State of the sharing code
+                      code:
+                        type: string
+                        pattern: /^shr[a-zA-Z0-9_-]{24}$/
+                        maxLength: 27
+                        minLength: 27
+                        description: Sharing code
+  "/notepads/{notepadID}/share/collaborators":
+    post:
+      tags:
+        - notepads
+        - collaborators
+      summary: Add notepad collaborator
+      operationId: addNotepadCollaborator
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          description: ID of notepad to add collab to
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Collaborator added
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  collaborator:
+                    type: object
+                    properties:
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                          enum:
+                            - primary_collaborator
+                            - secondary_collaborator
+                            - observer
+                      subject:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          id:
+                            type: string
+                            pattern: /^usr[a-zA-Z0-9_-]{24}$/
+                            maxLength: 27
+                            minLength: 27
+                          username:
+                            type: string
+                            pattern: /^[a-zA-Z0-9_-]{4,20}$/
+                            maxLength: 20
+                            minLength: 4
+                          email:
+                            type: string
+                            format: email
+                            maxLength: 254
+                            minLength: 3
+      requestBody:
+        $ref: "#/components/requestBodies/AddCollaborator"
+    delete:
+      tags:
+        - notepads
+        - collaborators
+      summary: Delete self as a notepad collaborator
+      description: Operation is forbidden for the notepad owner
+      operationId: deleteNotepadSelfCollaborator
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          description: ID of notepad to delete self as collab from
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Self as collaborator deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
+  "/notepads/{notepadID}/share/collaborators/{collaboratorID}":
+    delete:
+      tags:
+        - notepads
+        - collaborators
+      summary: Delete notepad collaborator
+      operationId: deleteNotepadCollaborator
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          description: ID of notepad to delete collab from
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+        - name: collaboratorID
+          in: path
+          description: ID of the collaborator to delete
+          required: true
+          schema:
+            type: string
+            pattern: /^usr[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Collaborator deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
+  "/notepads/{notepadID}/notes":
+    post:
+      tags:
+        - notepads
+        - notes
+      summary: Create a new note and add it to a notepad
+      operationId: addNoteToNotepad
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: notepadID
+          in: path
+          description: ID of notepad to delete collab from
+          required: true
+          schema:
+            type: string
+            pattern: /^npd[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Note created and added to the notepad
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 201
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  note:
+                    $ref: "#/components/schemas/Note"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateNote"
+  "/shared/note/{shareCode}":
+    get:
+      tags:
+        - notes
+      summary: Fetch one note shared using the code
+      operationId: getSharedNote
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: shareCode
+          in: path
+          description: Sharing code of the note
+          required: true
+          schema:
+            type: string
+            pattern: /^shr[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Note fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  note:
+                    $ref: "#/components/schemas/Note"
+  "/shared/notepad/{shareCode}":
+    get:
+      tags:
+        - notepads
+      summary: Fetch one notepad shared using the code, including the notes inside
+      operationId: getSharedNotepad
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: shareCode
+          in: path
+          description: Sharing code of the notepad
+          required: true
+          schema:
+            type: string
+            pattern: /^shr[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Notepad fetched
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  notepad:
+                    $ref: "#/components/schemas/Notepad"
 externalDocs:
   description: Find out more about Swagger
   url: "http://swagger.io"
@@ -1744,9 +2391,9 @@ components:
       properties:
         id:
           type: string
-          pattern: /^a[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
+          pattern: /^att[a-zA-Z0-9_-]{24}$/
+          maxLength: 27
+          minLength: 27
         url:
           type: string
           description: A valid URL of a photo
@@ -1771,18 +2418,18 @@ components:
       properties:
         id:
           type: string
-          pattern: /^a[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
+          pattern: /^att[a-zA-Z0-9_-]{24}$/
+          maxLength: 27
+          minLength: 27
         subject:
           type: object
           additionalProperties: false
           properties:
             id:
               type: string
-              pattern: /^u[a-zA-Z0-9_-]{24}$/
-              maxLength: 25
-              minLength: 25
+              pattern: /^usr[a-zA-Z0-9_-]{24}$/
+              maxLength: 27
+              minLength: 27
             username:
               type: string
               pattern: /^[a-zA-Z0-9_-]{4,20}$/
@@ -1818,9 +2465,9 @@ components:
       properties:
         id:
           type: string
-          pattern: /^n[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
+          pattern: /^not[a-zA-Z0-9_-]{24}$/
+          maxLength: 27
+          minLength: 27
         title:
           type: string
           maxLength: 100
@@ -1833,9 +2480,9 @@ components:
           properties:
             id:
               type: string
-              pattern: /^u[a-zA-Z0-9_-]{24}$/
-              maxLength: 25
-              minLength: 25
+              pattern: /^usr[a-zA-Z0-9_-]{24}$/
+              maxLength: 27
+              minLength: 27
             username:
               type: string
               pattern: /^[a-zA-Z0-9_-]{4,20}$/
@@ -1848,7 +2495,7 @@ components:
               minLength: 3
         collaborators:
           type: array
-          maxLength: 10
+          maxItems: 10
           items:
             type: object
             additionalProperties: false
@@ -1856,20 +2503,23 @@ components:
                 - role
                 - subject
             properties:
-              role:
-                type: string
-                enum:
-                  - viewer
-                  - editor
+              roles:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - primary_collaborator
+                    - secondary_collaborator
+                    - observer
               subject:
                 type: object
                 additionalProperties: false
                 properties:
                   id:
                     type: string
-                    pattern: /^u[a-zA-Z0-9_-]{24}$/
-                    maxLength: 25
-                    minLength: 25
+                    pattern: /^usr[a-zA-Z0-9_-]{24}$/
+                    maxLength: 27
+                    minLength: 27
                   username:
                     type: string
                     pattern: /^[a-zA-Z0-9_-]{4,20}$/
@@ -1900,9 +2550,9 @@ components:
               type: boolean
             code:
               type: string
-              pattern: /^s[a-zA-Z0-9_-]{24}$/
-              maxLength: 25
-              minLength: 25
+              pattern: /^shr[a-zA-Z0-9_-]{24}$/
+              maxLength: 27
+              minLength: 27
         archived:
           type: boolean
         fixed:
@@ -1923,6 +2573,109 @@ components:
         updatedAt:
           type: string
           format: date-time
+        notepadID:
+          type: string
+          default: ''
+          pattern: /(^npd[a-zA-Z0-9_-]{24}$)|(^$)/
+          maxLength: 27
+          minLength: 0
+    Notepad:
+      additionalProperties: false
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - owner
+      properties:
+        id:
+          type: string
+          pattern: /^not[a-zA-Z0-9_-]{24}$/
+          maxLength: 27
+          minLength: 27
+        title:
+          type: string
+          maxLength: 100
+        owner:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: string
+              pattern: /^usr[a-zA-Z0-9_-]{24}$/
+              maxLength: 27
+              minLength: 27
+            username:
+              type: string
+              pattern: /^[a-zA-Z0-9_-]{4,20}$/
+              maxLength: 20
+              minLength: 4
+            email:
+              type: string
+              format: email
+              maxLength: 254
+              minLength: 3
+        collaborators:
+          type: array
+          maxItems: 10
+          items:
+            type: object
+            additionalProperties: false
+            required:
+                - role
+                - subject
+            properties:
+              roles:
+                type: array
+                items:
+                  type: string
+                  enum:
+                    - primary_collaborator
+                    - secondary_collaborator
+                    - observer
+              subject:
+                type: object
+                additionalProperties: false
+                properties:
+                  id:
+                    type: string
+                    pattern: /^usr[a-zA-Z0-9_-]{24}$/
+                    maxLength: 27
+                    minLength: 27
+                  username:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_-]{4,20}$/
+                    maxLength: 20
+                    minLength: 4
+                  email:
+                    type: string
+                    format: email
+                    maxLength: 254
+                    minLength: 3
+        share:
+          additionalProperties: false
+          type: object
+          required:
+            - active
+          properties:
+            active:
+              type: boolean
+            code:
+              type: string
+              pattern: /^shr[a-zA-Z0-9_-]{24}$/
+              maxLength: 27
+              minLength: 27
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        notes:
+          type: array
+          maxItems: 1000
+          items:
+            $ref: "#/components/schemas/Note"
     ResponseBody:
       additionalProperties: false
       type: object
@@ -1953,9 +2706,9 @@ components:
       properties:
         id:
           type: string
-          pattern: /^u[a-zA-Z0-9_-]{24}$/
-          maxLength: 25
-          minLength: 25
+          pattern: /^usr[a-zA-Z0-9_-]{24}$/
+          maxLength: 27
+          minLength: 27
         username:
           type: string
           pattern: /^[a-zA-Z0-9_-]{4,20}$/
@@ -2381,7 +3134,7 @@ components:
                 enum:
                   - viewer
                   - editor
-    AddComment:
+    AddOrUpdateComment:
       content:
         application/x-www-form-urlencoded:
           schema:
@@ -2393,7 +3146,7 @@ components:
               text:
                 type: string
                 maxLength: 120
-                description: The text of the comment to be added
+                description: The text of the comment to be added or updated
         application/json:
           schema:
             additionalProperties: false
@@ -2404,8 +3157,8 @@ components:
               text:
                 type: string
                 maxLength: 120
-                description: The text of the comment to be added
-    UpdateComment:
+                description: The text of the comment to be added or updated
+    AddOrUpdateNotepad:
       content:
         application/x-www-form-urlencoded:
           schema:
@@ -2417,7 +3170,7 @@ components:
               text:
                 type: string
                 maxLength: 120
-                description: The new text of the comment
+                description: The title of the notepad to be added or updated
         application/json:
           schema:
             additionalProperties: false
@@ -2428,7 +3181,7 @@ components:
               text:
                 type: string
                 maxLength: 120
-                description: The new text of the comment
+                description: The title of the notepad to be added or updated
     AddAttachment:
       content:
         multipart/formdata:
