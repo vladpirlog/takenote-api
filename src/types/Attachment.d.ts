@@ -7,5 +7,5 @@ export interface IAttachmentSchema extends IEntity {
     title: string
     description: string
 
-    getPublicInfo(): PublicAttachmentInfo
+    getPublicInfo(): Readonly<PublicAttachmentInfo>
 }

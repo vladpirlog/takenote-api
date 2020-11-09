@@ -6,5 +6,5 @@ export interface ICommentSchema extends IEntity {
     subject: Pick<IUserSchema, 'id' | 'username' | 'email'>
     text: string
 
-    getPublicInfo(): PublicCommentInfo
+    getPublicInfo(): Readonly<PublicCommentInfo>
 }

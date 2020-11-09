@@ -91,10 +91,10 @@ export const UserSchema = new Schema<IUserSchema>(
     { timestamps: true, writeConcern: { w: 'majority', wtimeout: 1000 }, id: false }
 )
 
-UserSchema.pre('save', function (next) {
-    if (!(<IUserSchema> this).isOAuthUser()) {
-        bcrypt.hash((<IUserSchema> this).password, 12).then(hash => {
-            (<IUserSchema> this).password = hash
+UserSchema.pre<IUserSchema>('save', function (next) {
+    if (!this.isOAuthUser()) {
+        bcrypt.hash(this.password, 12).then(hash => {
+            this.password = hash
             return next()
         })
     } else { return next() }
@@ -108,7 +108,7 @@ UserSchema.methods.isOAuthUser = function () {
 }
 
 UserSchema.methods.getPublicInfo = function () {
-    return {
+    return Object.freeze({
         id: this.id,
         username: this.username,
         email: this.email,
@@ -118,7 +118,7 @@ UserSchema.methods.getPublicInfo = function () {
             active: this.twoFactorAuth.active,
             nextCheck: this.twoFactorAuth.nextCheck
         }
-    }
+    })
 }
 
 UserSchema.methods.validPassword = function (password: string): Promise<boolean> {
