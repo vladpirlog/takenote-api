@@ -6,22 +6,26 @@ import app from '../src/app'
 import constants from '../src/config/constants.config'
 import Note from '../src/models/Note'
 import { INoteSchema } from '../src/types/Note'
+import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
     const pngTestImage = path.join(process.cwd(), 'test', 'img.png')
     let createdNoteID: INoteSchema['id']
     let authCookie: string
+    let acceptedCredentials
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         redisConfig.connect()
 
+        acceptedCredentials = await registerTestUser(request)
+
         const res = await request
             .post('/auth/login')
             .send({
-                email: constants.test.persistentUser.username,
-                password: constants.test.persistentUser.password
+                email: acceptedCredentials.username,
+                password: acceptedCredentials.password
             })
         authCookie = res.header['set-cookie'][0]
 
@@ -70,23 +74,10 @@ describe('testing the security features of the api', () => {
         expect(res.status).toBe(500)
     }, 20000)
 
-    // this test should be run independently from the others, because it would
-    // deplete the requests allowed in the time frame; all the other
-    // requests would get a 429 Too Many Requests error
-    xtest('rate limiting for requests', async () => {
-        const statuses: number[] = []
-        while (true) {
-            const res = await request.get('/')
-            statuses.push(res.status)
-            if (res.header['x-ratelimit-remaining-minute'] === '0') break
-        }
-        expect(statuses).toEqual(new Array(statuses.length).fill(200))
-        expect((await request.get('/')).status).toBe(429)
-    })
-
     afterAll(async () => {
-        await Note.findOneAndDelete({ id: createdNoteID })
+        await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
         await redisConfig.close()
-    })
+    }, 30000)
 })
