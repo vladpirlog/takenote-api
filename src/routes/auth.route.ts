@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import authController from '../controllers/auth.controller'
 import validateBody from '../middlewares/bodyValidation.middleware'
-import checkUniqueUser from '../middlewares/uniqueUser.middlelware'
+import checkUniqueUser from '../middlewares/uniqueUser.middleware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
 import authConfirmationController from '../controllers/auth.confirmation.controller'
