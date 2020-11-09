@@ -6,49 +6,56 @@ describe('id creation testing', () => {
         const id = createID('note')
         expect(id).toHaveLength(constants.idInfo.note.length +
             constants.idInfo.note.prefix.length)
-        expect(/^n[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^not[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+    })
+
+    test('create notepad id', () => {
+        const id = createID('notepad')
+        expect(id).toHaveLength(constants.idInfo.notepad.length +
+            constants.idInfo.notepad.prefix.length)
+        expect(/^npd[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create user id', () => {
         const id = createID('user')
         expect(id).toHaveLength(constants.idInfo.user.length +
             constants.idInfo.user.prefix.length)
-        expect(/^u[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^usr[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create jwt id', () => {
         const id = createID('jwt')
         expect(id).toHaveLength(constants.idInfo.jwt.length +
             constants.idInfo.jwt.prefix.length)
-        expect(/^j[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^jwt[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create attachment id', () => {
         const id = createID('attachment')
         expect(id).toHaveLength(constants.idInfo.attachment.length +
             constants.idInfo.attachment.prefix.length)
-        expect(/^a[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^att[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create share id', () => {
         const id = createID('share')
         expect(id).toHaveLength(constants.idInfo.share.length +
             constants.idInfo.share.prefix.length)
-        expect(/^s[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^shr[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create reset token id', () => {
         const id = createID('reset')
         expect(id).toHaveLength(constants.idInfo.reset.length +
             constants.idInfo.reset.prefix.length)
-        expect(/^rs[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^rst[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create confirmation token id', () => {
         const id = createID('confirmation')
         expect(id).toHaveLength(constants.idInfo.confirmation.length +
             constants.idInfo.confirmation.prefix.length)
-        expect(/^cn[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
+        expect(/^cnf[a-zA-Z0-9_-]{24}$/.test(id)).toBeTruthy()
     })
 
     test('create tfa cookie token', () => {

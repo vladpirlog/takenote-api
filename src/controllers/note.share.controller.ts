@@ -12,10 +12,10 @@ import { CollaboratorBody } from '../types/RequestBodies'
 const getNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { code } = req.params
-        const note = await noteCrudQuery.getOneByShareCode(code)
+        const note = await noteShareQuery.getOneByShareCode(code)
 
         return note && note.share.active
-            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo('shared') })
+            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo(res, true) })
             : next()
     } catch (err) { return next(err) }
 }
@@ -45,9 +45,11 @@ const getShareLink = async (req: Request, res: Response, next: NextFunction) => 
         const newNote = await noteShareQuery.updateSharing(note.id, {
             active: newActiveState, code: newShareCode
         })
-        return newNote ? createResponse(res, 200, 'Link fetched.', {
-            share: newNote.share
-        }) : createResponse(res, 400)
+        return newNote
+            ? createResponse(res, 200, 'Link fetched.', {
+                share: newNote.share
+            })
+            : createResponse(res, 400)
     } catch (err) { return next(err) }
 }
 
@@ -66,7 +68,7 @@ const addCollaborator = async (req: Request, res: Response, next: NextFunction) 
             { id: collaborator.id, username: collaborator.username, email: collaborator.email },
             [type]
         )
-        const newCollaborator = newNote?.users.find(u => u.subject.id === collaborator.id)
+        const newCollaborator = newNote?.users.get(collaborator.id)
         if (!newNote || !newCollaborator) return createResponse(res, 400)
 
         return createResponse(res, 200, 'Collaborator added.', {
