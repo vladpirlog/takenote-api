@@ -7,10 +7,14 @@ import path from 'path'
 import { INoteSchema } from '../src/types/Note'
 import { IUserSchema } from '../src/types/User'
 import Color from '../src/enums/Color.enum'
-import { NoteRole } from '../src/utils/accessManagement.util'
+import { Role } from '../src/enums/Role.enum'
+import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('test note-related operations', () => {
     const request = supertest.agent(app)
+
+    let acceptedCredentials1
+    let acceptedCredentials2
 
     const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
     let createdNoteID: INoteSchema['id']
@@ -18,14 +22,19 @@ describe('test note-related operations', () => {
     let createdNoteShareObject: INoteSchema['share']
     let attachmentID: INoteSchema['attachments'][0]['id']
     let collaboratorID: IUserSchema['id']
+
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         redisConfig.connect()
+
+        acceptedCredentials1 = await registerTestUser(request)
+        acceptedCredentials2 = await registerTestUser(request)
+
         await request
             .post('/auth/login')
             .send({
-                email: constants.test.persistentUser.email,
-                password: constants.test.persistentUser.password
+                email: acceptedCredentials1.email,
+                password: acceptedCredentials1.password
             })
     }, 30000)
 
@@ -158,12 +167,12 @@ describe('test note-related operations', () => {
         const res = await request
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
-                user: constants.test.persistentUser2.username,
-                type: NoteRole.OBSERVER
+                user: acceptedCredentials2.username,
+                type: Role.OBSERVER
             })
         collaboratorID = res.body.collaborator.subject.id
         expect(res.status).toBe(200)
-        expect(res.body.collaborator.roles).toEqual([NoteRole.OBSERVER])
+        expect(res.body.collaborator.roles).toEqual([Role.OBSERVER])
         expect(res.body.collaborator.subject).toHaveProperty('id')
         expect(res.body.collaborator.subject).toHaveProperty('username')
         expect(res.body.collaborator.subject).toHaveProperty('email')
@@ -173,11 +182,11 @@ describe('test note-related operations', () => {
         const res = await request
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
-                user: constants.test.persistentUser2.email,
-                type: NoteRole.PRIMARY_COLLABORATOR
+                user: acceptedCredentials2.email,
+                type: Role.PRIMARY_COLLABORATOR
             })
         expect(res.status).toBe(200)
-        expect(res.body.collaborator.roles).toEqual([NoteRole.PRIMARY_COLLABORATOR])
+        expect(res.body.collaborator.roles).toEqual([Role.PRIMARY_COLLABORATOR])
         expect(res.body.collaborator.subject).toHaveProperty('id')
         expect(res.body.collaborator.subject).toHaveProperty('username')
         expect(res.body.collaborator.subject).toHaveProperty('email')
@@ -207,7 +216,7 @@ describe('test note-related operations', () => {
     }, 20000)
 
     test('get shared note with the URL provided', async () => {
-        const res = await request.get(`/shared/${createdNoteShareObject.code}`)
+        const res = await request.get(`/shared/note/${createdNoteShareObject.code}`)
         expect(res.status).toBe(200)
         expect(res.body).toHaveProperty('note')
     }, 20000)
@@ -290,7 +299,8 @@ describe('test note-related operations', () => {
     }, 20000)
 
     afterAll(async () => {
+        await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
         await mongodbConfig.close()
         await redisConfig.close()
-    })
+    }, 30000)
 })

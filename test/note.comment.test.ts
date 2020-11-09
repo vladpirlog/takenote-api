@@ -3,22 +3,27 @@ import app from '../src/app'
 import constants from '../src/config/constants.config'
 import mongodbConfig from '../src/config/mongodb.config'
 import redisConfig from '../src/config/redis.config'
+import Note from '../src/models/Note'
 import { ICommentSchema } from '../src/types/Comment'
 import { INoteSchema } from '../src/types/Note'
+import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('test note comment-related operations', () => {
     const request = supertest.agent(app)
     let createdNoteID: INoteSchema['id']
     let createdCommentID: ICommentSchema['id']
+    let acceptedCredentials
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         redisConfig.connect()
+        acceptedCredentials = await registerTestUser(request)
+
         await request
             .post('/auth/login')
             .send({
-                email: constants.test.persistentUser.email,
-                password: constants.test.persistentUser.password
+                email: acceptedCredentials.email,
+                password: acceptedCredentials.password
             })
         const res = await request.post('/notes')
         createdNoteID = res.body.note.id
@@ -32,8 +37,8 @@ describe('test note comment-related operations', () => {
         expect(res.body.status).toBe(201)
         expect(res.body.comment.id).toBeDefined()
         expect(res.body.comment.subject.id).toBeDefined()
-        expect(res.body.comment.subject.username).toBe(constants.test.persistentUser.username)
-        expect(res.body.comment.subject.email).toBe(constants.test.persistentUser.email)
+        expect(res.body.comment.subject.username).toBe(acceptedCredentials.username)
+        expect(res.body.comment.subject.email).toBe(acceptedCredentials.email)
         expect(res.body.comment.text).toBe('my-comment')
         expect(res.body.comment.createdAt).toBeDefined()
         expect(res.body.comment.updatedAt).toBeDefined()
@@ -46,8 +51,8 @@ describe('test note comment-related operations', () => {
         expect(res.body.status).toBe(200)
         expect(res.body.comment.id).toBe(createdCommentID)
         expect(res.body.comment.subject.id).toBeDefined()
-        expect(res.body.comment.subject.username).toBe(constants.test.persistentUser.username)
-        expect(res.body.comment.subject.email).toBe(constants.test.persistentUser.email)
+        expect(res.body.comment.subject.username).toBe(acceptedCredentials.username)
+        expect(res.body.comment.subject.email).toBe(acceptedCredentials.email)
         expect(res.body.comment.text).toBe('my-new-comment')
         expect(res.body.comment.createdAt).toBeDefined()
         expect(res.body.comment.updatedAt).toBeDefined()
@@ -59,8 +64,8 @@ describe('test note comment-related operations', () => {
         expect(res.body.status).toBe(200)
         expect(res.body.comment.id).toBe(createdCommentID)
         expect(res.body.comment.subject.id).toBeDefined()
-        expect(res.body.comment.subject.username).toBe(constants.test.persistentUser.username)
-        expect(res.body.comment.subject.email).toBe(constants.test.persistentUser.email)
+        expect(res.body.comment.subject.username).toBe(acceptedCredentials.username)
+        expect(res.body.comment.subject.email).toBe(acceptedCredentials.email)
         expect(res.body.comment.text).toBe('my-new-comment')
         expect(res.body.comment.createdAt).toBeDefined()
         expect(res.body.comment.updatedAt).toBeDefined()
@@ -96,8 +101,9 @@ describe('test note comment-related operations', () => {
     })
 
     afterAll(async () => {
-        await request.delete(`/notes/${createdNoteID}`)
+        await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
         await redisConfig.close()
-    }, 20000)
+    }, 30000)
 })

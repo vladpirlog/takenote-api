@@ -7,25 +7,30 @@ import limitsQuery from '../src/queries/limits.query'
 import { INoteSchema } from '../src/types/Note'
 import { IUserSchema } from '../src/types/User'
 import path from 'path'
-import { NoteRole } from '../src/utils/accessManagement.util'
+import { Role } from '../src/enums/Role.enum'
+import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('test queries for limit-checking', () => {
     const request = supertest.agent(app)
     const pngTestImage = path.join(process.cwd(), 'test', 'img.png')
     let userID: IUserSchema['id']
     const createdNotesID: INoteSchema['id'][] = []
+    let acceptedCredentials1
+    let acceptedCredentials2
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         redisConfig.connect()
-        const res = await request
-            .post('/auth/login')
-            .send({
-                email: constants.test.persistentUser2.email,
-                password: constants.test.persistentUser2.password
-            })
+
+        acceptedCredentials1 = await registerTestUser(request)
+        acceptedCredentials2 = await registerTestUser(request)
+
+        const res = await request.post('/auth/login').send({
+            email: acceptedCredentials1.email,
+            password: acceptedCredentials1.password
+        })
         userID = res.body.user.id
-    }, 20000)
+    }, 30000)
 
     test('get number of notes owned - should be 0', async () => {
         const n = await limitsQuery.note(userID)
@@ -74,16 +79,17 @@ describe('test queries for limit-checking', () => {
         await request
             .post(`/notes/${createdNotesID[0]}/share/collaborators`)
             .send({
-                user: constants.test.persistentUser.username,
-                type: NoteRole.OBSERVER
+                user: acceptedCredentials2.username,
+                type: Role.OBSERVER
             })
         const n = await limitsQuery.collaborator(createdNotesID[0])
         expect(n).toBe(1)
     })
 
     afterAll(async () => {
+        await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
         await Promise.all(createdNotesID.map(id => request.delete(`/notes/${id}`)))
         await mongodbConfig.close()
         await redisConfig.close()
-    }, 20000)
+    }, 30000)
 })

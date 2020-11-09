@@ -4,13 +4,17 @@ import mongodbConfig from '../src/config/mongodb.config'
 import redisConfig from '../src/config/redis.config'
 import constants from '../src/config/constants.config'
 import User from '../src/models/User'
+import { deleteTestUsers, generateRejectedCredentials, generateValidCredentials } from './testingUtils'
 
 describe('test registration and authentication flows', () => {
     const request = supertest.agent(app)
+    const acceptedCredentials = generateValidCredentials()
+    const rejectedCredentials = generateRejectedCredentials()
+
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
         redisConfig.connect()
-    })
+    }, 30000)
 
     test('server status', async () => {
         const res = await request.get('/')
@@ -34,10 +38,10 @@ describe('test registration and authentication flows', () => {
         const res = await request
             .post('/auth/register')
             .send({
-                email: constants.test.wrongCredentials.email,
-                username: constants.test.wrongCredentials.username,
-                password: constants.test.wrongCredentials.password,
-                confirm_password: constants.test.wrongCredentials.password
+                email: rejectedCredentials.email,
+                username: rejectedCredentials.username,
+                password: rejectedCredentials.password,
+                confirm_password: rejectedCredentials.password
             })
         expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
@@ -46,15 +50,15 @@ describe('test registration and authentication flows', () => {
         const res = await request
             .post('/auth/register')
             .send({
-                email: constants.test.acceptedCredentials.email,
-                username: constants.test.acceptedCredentials.username,
-                password: constants.test.acceptedCredentials.password,
-                confirm_password: constants.test.acceptedCredentials.password
+                email: acceptedCredentials.email,
+                username: acceptedCredentials.username,
+                password: acceptedCredentials.password,
+                confirm_password: acceptedCredentials.password
             })
         expect(res.status).toBe(201)
         expect(res.body).toHaveProperty('user')
-        expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
-        expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
+        expect(res.body.user.username).toBe(acceptedCredentials.username)
+        expect(res.body.user.email).toBe(acceptedCredentials.email)
         expect(res.body.user).toHaveProperty('id')
         expect(res.body.user).toHaveProperty('state')
         expect(res.body.user).toHaveProperty('twoFactorAuth')
@@ -71,8 +75,8 @@ describe('test registration and authentication flows', () => {
         const res = await request
             .post('/auth/login')
             .send({
-                email: constants.test.wrongCredentials.username,
-                password: constants.test.wrongCredentials.password
+                email: rejectedCredentials.username,
+                password: rejectedCredentials.password
             })
         expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
@@ -81,13 +85,13 @@ describe('test registration and authentication flows', () => {
         const res = await request
             .post('/auth/login')
             .send({
-                email: constants.test.acceptedCredentials.username,
-                password: constants.test.acceptedCredentials.password
+                email: acceptedCredentials.username,
+                password: acceptedCredentials.password
             })
         expect(res.status).toBe(200)
         expect(res.body).toHaveProperty('user')
-        expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
-        expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
+        expect(res.body.user.email).toBe(acceptedCredentials.email)
+        expect(res.body.user.username).toBe(acceptedCredentials.username)
         expect(res.body.user).toHaveProperty('id')
         expect(res.body.user).toHaveProperty('state')
         expect(res.body.user).toHaveProperty('twoFactorAuth')
@@ -102,7 +106,7 @@ describe('test registration and authentication flows', () => {
 
     test('confirm account', async () => {
         const info = await User.findOne({
-            email: constants.test.acceptedCredentials.email
+            email: acceptedCredentials.email
         }).select('confirmationToken').exec()
         const res = await request
             .post('/auth/confirm')
@@ -114,8 +118,8 @@ describe('test registration and authentication flows', () => {
         const res = await request.get('/auth/me')
         expect(res.status).toBe(200)
         expect(res.body).toHaveProperty('user')
-        expect(res.body.user.email).toBe(constants.test.acceptedCredentials.email)
-        expect(res.body.user.username).toBe(constants.test.acceptedCredentials.username)
+        expect(res.body.user.email).toBe(acceptedCredentials.email)
+        expect(res.body.user.username).toBe(acceptedCredentials.username)
         expect(res.body.user).toHaveProperty('id')
         expect(res.body.user).toHaveProperty('state')
         expect(res.body.user).toHaveProperty('twoFactorAuth')
@@ -130,14 +134,14 @@ describe('test registration and authentication flows', () => {
     test('request account deletion with wrong pw', async () => {
         const res = await request
             .post('/auth/delete')
-            .send({ old_password: constants.test.wrongCredentials.password })
+            .send({ old_password: rejectedCredentials.password })
         expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
     test('request account deletion with correct pw', async () => {
         const res = await request
             .post('/auth/delete')
-            .send({ old_password: constants.test.acceptedCredentials.password })
+            .send({ old_password: acceptedCredentials.password })
         expect(res.status).toBe(200)
     }, 20000)
 
@@ -152,10 +156,8 @@ describe('test registration and authentication flows', () => {
     }, 20000)
 
     afterAll(async () => {
-        await User.findOneAndDelete({
-            email: constants.test.acceptedCredentials.email
-        }).exec()
+        await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
         await redisConfig.close()
-    })
+    }, 30000)
 })
