@@ -12,11 +12,12 @@ import {
     LoginBody,
     NewPasswordBody,
     NoteBody,
+    NotepadBody,
     OldPasswordBody,
     RegisterBody
 } from '../types/RequestBodies'
 import Color from '../enums/Color.enum'
-import { NoteRole } from '../utils/accessManagement.util'
+import { Role } from '../enums/Role.enum'
 
 const EMAIL_SCHEMA = Joi.string().required().email()
 const USERNAME_SCHEMA = Joi.string().required().regex(constants.regex.username)
@@ -78,7 +79,7 @@ const schemas = {
                 otherwise: USERNAME_SCHEMA
             }),
         type: Joi.string().required().valid(
-            NoteRole.PRIMARY_COLLABORATOR, NoteRole.SECONDARY_COLLABORATOR, NoteRole.OBSERVER
+            Role.PRIMARY_COLLABORATOR, Role.SECONDARY_COLLABORATOR, Role.OBSERVER
         )
     }),
     checkCredentials: Joi.object<CheckCredentialsBody>({
@@ -87,11 +88,11 @@ const schemas = {
     }).or('username', 'email'),
     comment: Joi.object<CommentBody>({
         text: Joi.string().required().max(120)
+    }),
+    notepad: Joi.object<NotepadBody>({
+        title: Joi.string().max(100).allow('')
     })
 }
-
-type ValidateBodyArgument = 'login' | 'register' | 'newPassword' | 'oldPassword' | 'email' | 'note'
-| 'addAttachment' | 'editAttachment' | 'collaborator' | 'checkCredentials' | 'comment'
 
 /**
  * Higher order function for checking the request body against a Joi schema.
@@ -99,7 +100,7 @@ type ValidateBodyArgument = 'login' | 'register' | 'newPassword' | 'oldPassword'
  * @param rejectMessage the message to be sent in case of failure; defaults to 'Unprocessable Entity'
  * @returns a middleware function
  */
-const validateBody = (type: ValidateBodyArgument, rejectMessage?: string) => {
+const validateBody = (type: keyof typeof schemas, rejectMessage?: string) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             await schemas[type].validateAsync(req.body)

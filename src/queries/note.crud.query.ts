@@ -4,10 +4,12 @@ import constants from '../config/constants.config'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 import { INoteSchema } from '../types/Note'
 import Color from '../enums/Color.enum'
-import { NoteRole } from '../utils/accessManagement.util'
+import { Role } from '../enums/Role.enum'
+import { INotepadSchema } from '../types/Notepad'
+import Notepad from '../models/Notepad'
 
 /**
- * Fetches all the notes belonging to the user.
+ * Fetches all the notes that belong to a user and are not part of a notepad.
  * @param userID id of the user
  * @param skip number of notes to skip; defaults to 0
  * @param limit maximum number of notes to return; defaults to the note limit per user
@@ -21,34 +23,28 @@ const getAll = (
     collaborations: boolean = true,
     archived?: boolean
 ) => {
-    const query: any = { 'subject.id': userID }
-    if (!collaborations) query.roles = NoteRole.OWNER
-    if (archived !== undefined) query.archived = archived
+    const query: any = { [`users.${userID}.subject.id`]: userID }
+    if (!collaborations) query[`users.${userID}.roles`] = Role.OWNER
+    if (archived !== undefined) query[`users.${userID}.archived`] = archived
 
-    return Note.find({ users: { $elemMatch: query } }).skip(skip).limit(limit).exec()
+    return Note.find(query).skip(skip).limit(limit).exec()
 }
 
 /**
- * Fetches a note by the id property.
+ * Fetches a note by the id property (the note mustn't be part of a notepad).
  * @param noteID id of the note
- * @param userID id of the note's owner or collaborator
  */
 const getOneByID = (noteID: INoteSchema['id']) => {
     return Note.findOne({ id: noteID }).exec()
 }
 
-/**
- * Fetches a note by the share code.
- * The note does not include the permissions array.
- * @param code share code of the note
- */
-const getOneByShareCode = (code: INoteSchema['share']['code']) => {
-    return Note.findOne({ 'share.code': code }).exec()
-}
-
 type CreateNoteArg = Partial<
     Pick<INoteSchema, 'title' | 'content'> &
-    Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed' | 'tags'>>
+    {
+        archived: boolean
+        color: Color
+        fixed: boolean
+    }>
 & { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
 
 /**
@@ -59,30 +55,71 @@ const createOne = (props: CreateNoteArg) => {
     const newNote = new Note({
         title: props.title || '',
         content: props.content || '',
-        users: [
-            {
-                archived: props.archived || false,
-                color: props.color || Color.DEFAULT,
-                fixed: props.fixed || false,
-                subject: props.owner,
-                tags: [],
-                roles: [NoteRole.OWNER]
-            }
-        ]
+        [`users.${props.owner.id}`]: {
+            archived: props.archived || false,
+            color: props.color || Color.DEFAULT,
+            fixed: props.fixed || false,
+            subject: props.owner,
+            tags: [],
+            roles: [Role.OWNER]
+        }
     })
+    return newNote.save()
+}
+
+type CreateNoteInNotepadArg = Partial<Pick<INoteSchema, 'title' | 'content'> &
+    {
+        archived: boolean
+        color: Color
+        fixed: boolean
+    }>
+
+const createOneInNotepad = async (
+    userID: IUserSchema['id'],
+    notepadID: INotepadSchema['id'],
+    props: CreateNoteInNotepadArg
+) => {
+    const notepad = await Notepad.findOne({ id: notepadID }).exec()
+    if (!notepad) return null
+
+    const users: INoteSchema['users'] = new Map()
+
+    Array.from(notepad.users.entries()).forEach(([key, value]) => {
+        users.set(key, {
+            subject: value.subject,
+            roles: value.roles,
+            archived: false,
+            color: Color.DEFAULT,
+            tags: [],
+            fixed: false
+        })
+    })
+    const userProps = users.get(userID)
+    if (!userProps) throw new Error()
+    users.set(userID, {
+        subject: userProps.subject,
+        roles: userProps.roles,
+        archived: props.archived || false,
+        color: props.color || Color.DEFAULT,
+        tags: [],
+        fixed: props.fixed || false
+    })
+    const newNote = new Note({
+        title: props.title || '',
+        content: props.content || '',
+        notepadID,
+        users
+    })
+
     return newNote.save()
 }
 
 /**
  * Delete a note.
  * @param noteID id of the note
- * @param userID id of the note's owner or collaborator
  */
-const deleteOneByID = (
-    noteID: INoteSchema['id'],
-    userID: IUserSchema['id']
-) => {
-    return Note.findOneAndDelete({ id: noteID, 'users.subject.id': userID }).exec()
+const deleteOneByID = (noteID: INoteSchema['id']) => {
+    return Note.findOneAndDelete({ id: noteID }).exec()
 }
 
 /**
@@ -95,14 +132,18 @@ const updateOneByID = (
     noteID: INoteSchema['id'],
     userID: IUserSchema['id'],
     props: Partial<Pick<INoteSchema, 'title' | 'content'>
-        & Pick<INoteSchema['users'][0], 'archived' | 'color' | 'fixed'>>
+        & {
+            archived: boolean
+            color: Color
+            fixed: boolean
+        }>
 ) => {
     return Note.findOneAndUpdate(
-        { id: noteID, 'users.subject.id': userID },
+        { id: noteID, [`users.${userID}.subject.id`]: userID },
         removeUndefinedProps({
-            'users.$.archived': props.archived,
-            'users.$.color': props.color,
-            'users.$.fixed': props.fixed,
+            [`users.${userID}.archived`]: props.archived,
+            [`users.${userID}.color`]: props.color,
+            [`users.${userID}.fixed`]: props.fixed,
             title: props.title,
             content: props.content
         }),
@@ -110,11 +151,48 @@ const updateOneByID = (
     ).exec()
 }
 
+/**
+ * The user loses ownership of a note when moving it to a not-owned notepad.
+*/
+const moveOne = async (
+    noteID: INoteSchema['id'],
+    userID: IUserSchema['id'],
+    destinationNotepadID: INotepadSchema['id'] = ''
+): Promise<INoteSchema | null> => {
+    const users: INoteSchema['users'] = new Map()
+    if (destinationNotepadID) {
+        const notepad = await Notepad.findOne({ id: destinationNotepadID }).exec()
+        if (!notepad) return null
+
+        Array.from(notepad.users.entries()).forEach(([key, value]) => {
+            users.set(key, {
+                ...value,
+                archived: false,
+                color: Color.DEFAULT,
+                tags: [],
+                fixed: false
+            })
+        })
+    } else {
+        const note = await Note.findOne({ id: noteID, notepadID: { $ne: '' } }).exec()
+        const userData = note?.users.get(userID)
+        if (!userData) return null
+        users.set(userID, userData)
+    }
+
+    return Note.findOneAndUpdate(
+        { id: noteID, notepadID: { $ne: destinationNotepadID } },
+        { notepadID: destinationNotepadID, users, share: { active: false } },
+        { new: true }
+    ).exec()
+}
+
 export default {
     getAll,
     getOneByID,
-    getOneByShareCode,
     createOne,
     deleteOneByID,
-    updateOneByID
+    updateOneByID,
+    createOneInNotepad,
+    moveOne
 }

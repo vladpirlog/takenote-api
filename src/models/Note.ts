@@ -1,11 +1,14 @@
 import mongoose, { Schema } from 'mongoose'
 import { AttachmentSchema } from './Attachment'
-import { IUserSchema } from '../types/User'
 import createID from '../utils/createID.util'
 import { INoteSchema, PublicNoteInfo } from '../types/Note'
 import Color from '../enums/Color.enum'
 import { CommentSchema } from './Comment'
-import { getPermissionsFromRoles, NotePermission, NoteRole } from '../utils/accessManagement.util'
+import { Permission } from '../enums/Permission.enum'
+import { Response } from 'express'
+import getAuthUser from '../utils/getAuthUser.util'
+import { Role } from '../enums/Role.enum'
+import { getPermissionsFromRoles } from '../utils/accessManagement.util'
 
 export const NoteSchema = new Schema<INoteSchema>(
     {
@@ -25,7 +28,6 @@ export const NoteSchema = new Schema<INoteSchema>(
         comments: {
             enabled: {
                 type: Boolean,
-                required: true,
                 default: true
             },
             items: {
@@ -37,47 +39,48 @@ export const NoteSchema = new Schema<INoteSchema>(
             type: [AttachmentSchema],
             required: false
         },
-        users: [{
-            subject: {
-                id: {
-                    type: String,
+        users: {
+            type: Map,
+            of: {
+                subject: {
+                    id: {
+                        type: String,
+                        required: true,
+                        ref: 'User'
+                    },
+                    username: {
+                        type: String,
+                        required: true
+                    },
+                    email: {
+                        type: String,
+                        required: true
+                    }
+                },
+                roles: {
+                    type: [String],
                     required: true,
-                    ref: 'User'
+                    enum: Object.values(Role)
                 },
-                username: {
-                    type: String,
-                    required: true
+                tags: {
+                    type: [String],
+                    required: false,
+                    default: []
                 },
-                email: {
-                    type: String,
-                    required: true
+                color: {
+                    type: Color,
+                    default: Color.DEFAULT
+                },
+                archived: {
+                    type: Boolean,
+                    default: false
+                },
+                fixed: {
+                    type: Boolean,
+                    default: false
                 }
-            },
-            roles: {
-                type: [String],
-                required: true,
-                enum: Object.values(NoteRole)
-            },
-            tags: {
-                type: [String],
-                required: false
-            },
-            color: {
-                type: Color,
-                default: Color.DEFAULT,
-                required: true
-            },
-            archived: {
-                type: Boolean,
-                default: false,
-                required: true
-            },
-            fixed: {
-                type: Boolean,
-                default: false,
-                required: true
             }
-        }],
+        },
         share: {
             code: {
                 type: String,
@@ -85,63 +88,80 @@ export const NoteSchema = new Schema<INoteSchema>(
             },
             active: {
                 type: Boolean,
-                default: false,
-                required: true
+                default: false
             }
+        },
+        notepadID: {
+            type: String,
+            default: '',
+            ref: 'Notepad'
         }
     },
     { timestamps: true, id: false }
 )
 
-NoteSchema.methods.getPublicInfo = function (userID?: IUserSchema['id'] | 'shared') {
-    const owner = this.users.find(u => u.roles.includes(NoteRole.OWNER))
-    if (!owner) throw new Error('Note has no owner.')
+NoteSchema.methods.getPublicInfo = function (
+    res: Response,
+    isShared: boolean = false
+) {
+    const ownerData = Array
+        .from(this.users.values())
+        .find(val => val.roles.includes(Role.OWNER) || val.roles.includes(Role.OWNER))
+    if (!ownerData) throw new Error('Note has no owner.')
 
     const publicNote: PublicNoteInfo = {
         id: this.id,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
-        owner: owner.subject
+        owner: ownerData.subject
     }
 
-    const user = this.users.find(u => u.subject.id === userID)
-    if (!userID || !user) return publicNote
-
-    if (userID === 'shared') {
+    if (isShared) {
         publicNote.title = this.title
         publicNote.content = this.content
         return publicNote
     }
 
-    const notePermissions = getPermissionsFromRoles(user.roles)
-    if (notePermissions.includes(NotePermission.NOTE_VIEW)) {
+    const userData = this.users.get(getAuthUser(res).id)
+
+    if (!userData) throw new Error()
+    const permissionsHeldByUser = getPermissionsFromRoles('note', userData.roles)
+
+    const canViewNote = permissionsHeldByUser.includes(Permission.NOTE_VIEW)
+    if (canViewNote) {
         publicNote.title = this.title
         publicNote.content = this.content
-        publicNote.archived = user.archived
-        publicNote.color = user.color
-        publicNote.fixed = user.fixed
-        publicNote.tags = user.tags
+        publicNote.archived = userData.archived
+        publicNote.color = userData.color
+        publicNote.fixed = userData.fixed
+        publicNote.tags = userData.tags
     }
-    if (notePermissions.includes(NotePermission.COMMENT_VIEW)) {
+
+    const canViewComments = permissionsHeldByUser.includes(Permission.NOTE_COMMENT_VIEW)
+    if (canViewComments) {
         publicNote.comments = {
             enabled: this.comments.enabled,
             items: this.comments.items.map(c => c.getPublicInfo())
         }
     }
-    if (notePermissions.includes(NotePermission.COLLABORATOR_VIEW)) {
-        publicNote.collaborators = this.users
-            .filter(u => !u.roles.includes(NoteRole.OWNER))
-            .map(u => {
-                return { subject: u.subject, roles: u.roles }
-            })
+
+    const canViewCollaborators = permissionsHeldByUser.includes(Permission.NOTE_COLLABORATOR_VIEW) && !this.notepadID
+    if (canViewCollaborators) {
+        publicNote.collaborators = Array.from(this.users.values())
+            .filter(val => !val.roles.includes(Role.OWNER))
+            .map(val => ({ subject: val.subject, roles: val.roles }))
     }
-    if (notePermissions.includes(NotePermission.ATTACHMENT_VIEW)) {
+
+    const canViewAttachments = permissionsHeldByUser.includes(Permission.NOTE_ATTACHMENT_VIEW)
+    if (canViewAttachments) {
         publicNote.attachments = this.attachments.map(a => a.getPublicInfo())
     }
-    if (notePermissions.includes(NotePermission.SHARING_VIEW)) {
+
+    const canViewSharing = permissionsHeldByUser.includes(Permission.NOTE_SHARING_VIEW) && !this.notepadID
+    if (canViewSharing) {
         publicNote.share = this.share
     }
-    return publicNote
+    return Object.freeze(publicNote)
 }
 
 export default mongoose.model<INoteSchema>('Note', NoteSchema)

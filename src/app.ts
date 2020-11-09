@@ -6,10 +6,11 @@ import compression from 'compression'
 import constants from './config/constants.config'
 import extractUser from './middlewares/extractUser.middleware'
 import rateLimiting from './middlewares/rateLimiting.middleware'
-import send404 from './middlewares/send404.util'
+import send404 from './middlewares/send404.middleware'
 import authRoute from './routes/auth.route'
 import noteRoute from './routes/note.route'
-import sharedNoteRoute from './routes/note.share.route'
+import notepadRoute from './routes/notepad.route'
+import sharedRoute from './routes/share.route'
 import createResponse from './utils/createResponse.util'
 import helmet from 'helmet'
 import errorHandler from './middlewares/errorHandler.middleware'
@@ -50,12 +51,15 @@ app.use(cors({
 }))
 
 app.use(extractUser.fromAuthCookie)
-if (app.get('env') === 'production') app.use(moesifLoggingMiddleware)
-app.use(rateLimiting.forRequests)
+if (app.get('env') === 'production') {
+    app.use(moesifLoggingMiddleware)
+    app.use(rateLimiting.forRequests)
+}
 
 app.use('/auth', authRoute)
 app.use('/notes', noteRoute)
-app.use('/shared', sharedNoteRoute)
+app.use('/notepads', notepadRoute)
+app.use('/shared', sharedRoute)
 
 app.get('/', (req: Request, res: Response) => createResponse(res, 200))
 
