@@ -68,7 +68,7 @@ const editComment = async (req: Request, res: Response, next: NextFunction) => {
         if (!note) return createResponse(res, 400)
 
         const comment = note
-            .getPublicInfo(getAuthUser(res).id)
+            .getPublicInfo(res)
             .comments?.items.find(c => c.id === commentID)
 
         return createResponse(res, 200, 'Comment edited.', { comment })

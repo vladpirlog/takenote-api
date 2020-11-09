@@ -14,13 +14,8 @@ const getByTag = (
     exactMatch: boolean
 ) => {
     return Note.find({
-        users: {
-            $elemMatch: {
-                'subject.id': userID,
-                tags: (exactMatch ? tag : new RegExp(tag))
-            }
-        }
-    }).exec()
+        [`users.${userID}.tags`]: exactMatch ? tag : new RegExp(tag)
+    })
 }
 
 /**
@@ -34,10 +29,10 @@ const addDeleteTags = (type: 'add' | 'delete') => {
         tags: string[]
     ) => {
         return Note.findOneAndUpdate(
-            { id: noteID, 'users.subject.id': userID },
+            { id: noteID, [`users.${userID}.subject.id`]: userID },
             type === 'add'
-                ? { $addToSet: { 'users.$.tags': { $each: tags } } }
-                : { $pull: { 'users.$.tags': { $in: tags } } },
+                ? { $addToSet: { [`users.${userID}.tags`]: { $each: tags } } }
+                : { $pull: { [`users.${userID}.tags`]: { $in: tags } } },
             { new: true }
         ).exec()
     }

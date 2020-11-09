@@ -1,8 +1,20 @@
 import Color from '../enums/Color.enum'
+import { Role } from '../enums/Role.enum'
 import Note from '../models/Note'
 import { INoteSchema } from '../types/Note'
 import { IUserSchema } from '../types/User'
-import { NoteRole } from '../utils/accessManagement.util'
+
+/**
+ * All sharing-related operations are only allowed on notes which are not part of a notepad.
+*/
+
+/**
+ * Fetches a note by the share code.
+ * @param code share code of the note
+ */
+const getOneByShareCode = (code: INoteSchema['share']['code']) => {
+    return Note.findOne({ 'share.code': code, notepadID: '' }).exec()
+}
 
 /**
  * Adds a collaborator to a note.
@@ -13,28 +25,14 @@ import { NoteRole } from '../utils/accessManagement.util'
 const addCollaborator = async (
     noteID: INoteSchema['id'],
     collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
-    roles: NoteRole[]
+    roles: Role[]
 ) => {
-    const note = await Note.findOne({ id: noteID, 'users.subject.id': collaborator.id }).exec()
-
-    if (note) {
-        return Note.findOneAndUpdate(
-            { id: noteID, 'users.subject.id': collaborator.id },
-            { $set: { 'users.$.roles': roles } },
-            { new: true }
-        ).exec()
-    }
-
     return Note.findOneAndUpdate(
-        { id: noteID },
+        { id: noteID, notepadID: '' },
         {
-            $push: {
-                users: {
-                    subject: {
-                        id: collaborator.id,
-                        username: collaborator.username,
-                        email: collaborator.email
-                    },
+            $set: {
+                [`users.${collaborator.id}`]: {
+                    subject: collaborator,
                     roles,
                     tags: [],
                     archived: false,
@@ -59,19 +57,12 @@ const deleteCollaborator = (
     return Note.findOneAndUpdate(
         {
             id: noteID,
-            users: {
-                $elemMatch: {
-                    'subject.id': collaboratorID,
-                    roles: { $nin: [NoteRole.OWNER] }
-                }
-            }
+            notepadID: '',
+            [`users.${collaboratorID}.roles`]: { $nin: [Role.OWNER] }
         },
         {
-            $pull: {
-                users: {
-                    // @ts-ignore
-                    'subject.id': collaboratorID
-                }
+            $unset: {
+                [`users.${collaboratorID}`]: ''
             }
         },
         { new: true }
@@ -88,7 +79,7 @@ const updateSharing = (
     newShare: INoteSchema['share']
 ) => {
     return Note.findOneAndUpdate(
-        { id: noteID },
+        { id: noteID, notepadID: '' },
         { share: newShare },
         { new: true }
     ).exec()
@@ -97,5 +88,6 @@ const updateSharing = (
 export default {
     addCollaborator,
     deleteCollaborator,
-    updateSharing
+    updateSharing,
+    getOneByShareCode
 }

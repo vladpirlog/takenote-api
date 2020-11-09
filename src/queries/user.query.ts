@@ -1,11 +1,13 @@
 import User from '../models/User'
 import { IUserSchema } from '../types/User'
-import createNewToken from '../utils/createNewToken.util'
 import bcrypt from 'bcrypt'
-import { MongooseUpdateQuery } from 'mongoose'
 import { ITokenSchema } from '../types/Token'
 import removeUndefinedProps from '../utils/removeUndefinedProps.util'
 import State from '../enums/State.enum'
+import Token from '../models/Token'
+import createID from '../utils/createID.util'
+import getUnixTime from '../utils/getUnixTime.util'
+import constants from '../config/constants.config'
 
 /**
  * Searches for and returns a user using its id.
@@ -65,7 +67,11 @@ const getByToken = (
  * @param props object representing basic user info to be added to the database
  */
 const createNewUser = (props: Pick<IUserSchema, 'username' | 'email' | 'password'>) => {
-    const newUser = new User({ ...props, confirmationToken: createNewToken('confirmation') })
+    const token = new Token({
+        id: createID('confirmation'),
+        exp: Math.floor(getUnixTime() + constants.token.expires / 1000)
+    })
+    const newUser = new User({ ...props, confirmationToken: token })
     return newUser.save()
 }
 
@@ -108,9 +114,13 @@ const setNewToken = (
         | IUserSchema['id'],
     type: 'reset' | 'confirmation'
 ) => {
-    let updateQuery: MongooseUpdateQuery<IUserSchema>
-    if (type === 'reset') updateQuery = { resetToken: createNewToken('reset') }
-    else updateQuery = { confirmationToken: createNewToken('confirmation') }
+    const token = new Token({
+        id: createID(type),
+        exp: Math.floor(getUnixTime() + constants.token.expires / 1000)
+    })
+    const updateQuery = type === 'reset'
+        ? { resetToken: token }
+        : { confirmationToken: token }
 
     return User.findOneAndUpdate(
         {
@@ -152,12 +162,10 @@ const setNewPassword = async (
  * @param userID id of a user
  * @param data 2fa data to be set
  */
-const set2faData = (userID: IUserSchema['id'], data: {
-    active?: IUserSchema['twoFactorAuth']['active'],
-    nextCheck?: IUserSchema['twoFactorAuth']['nextCheck'],
-    secret?: IUserSchema['twoFactorAuth']['secret'],
-    backupCodes?: IUserSchema['twoFactorAuth']['backupCodes']
-}) => {
+const set2faData = (
+    userID: IUserSchema['id'],
+    data: Partial<IUserSchema['twoFactorAuth']>
+) => {
     return User.findOneAndUpdate(
         { id: userID },
         removeUndefinedProps({

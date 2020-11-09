@@ -10,9 +10,10 @@ const getByTag = async (req: Request, res: Response, next: NextFunction) => {
         const notes = await noteTagsQuery.get(
             getAuthUser(res).id,
             tag as string,
-            match === 'true')
+            match === 'true'
+        )
         return createResponse(res, 200, 'Notes fetched.', {
-            notes: notes.map(n => n.getPublicInfo(getAuthUser(res).id))
+            notes: notes.map(n => n.getPublicInfo(res))
         })
     } catch (err) { return next(err) }
 }
@@ -31,8 +32,9 @@ const addOrDeleteTags = (operation: 'add' | 'delete') => {
                 : await noteTagsQuery.delete(id, getAuthUser(res).id, tagsArray)
             return newNote
                 ? createResponse(res, 200, operation === 'add' ? 'Tags added.' : 'Tags deleted.', {
-                    tags: newNote.getPublicInfo(getAuthUser(res).id).tags || []
-                }) : createResponse(res, 400, 'Couldn\'t add tags.')
+                    tags: newNote.getPublicInfo(res).tags || []
+                })
+                : createResponse(res, 400, 'Couldn\'t modify tags.')
         } catch (err) { return next(err) }
     }
 }
