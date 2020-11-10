@@ -1,17 +1,16 @@
 import { Router } from 'express'
 import notepadCrudController from '../controllers/notepad.crud.controller'
-import notepadShareController from '../controllers/notepad.share.controller'
 import AuthStatus from '../enums/AuthStatus.enum'
 import { Permission } from '../enums/Permission.enum'
 import State from '../enums/State.enum'
 import UserRole from '../enums/UserRole.enum'
-import validateBody from '../middlewares/bodyValidation.middleware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import { checkNotepadPermissions } from '../middlewares/checkPermissions.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
-import validateQuery from '../middlewares/queryValidation.middleware'
+import { validateBody, validateQuery } from '../middlewares/requestValidation.middleware'
+import shareController from '../controllers/share.controller'
 
 const router = Router()
 
@@ -65,7 +64,7 @@ router.post(
     '/:id/share',
     checkNotepadPermissions([Permission.NOTEPAD_SHARING_EDIT]),
     validateQuery('share'),
-    notepadShareController.getShareLink
+    shareController.getNotepadShareLink
 )
 
 // ADD a collaborator to a notepad
@@ -73,20 +72,20 @@ router.post(
     '/:id/share/collaborators',
     checkNotepadPermissions([Permission.NOTEPAD_COLLABORATOR_ADD]),
     validateBody('collaborator'),
-    notepadShareController.addCollaborator
+    shareController.addNotepadCollaborator
 )
 
 // DELETE self as a notepad collaborator
 router.delete(
     '/:id/share/collaborators',
-    notepadShareController.deleteSelfCollaborator
+    shareController.deleteNotepadSelfCollaborator
 )
 
 // DELETE a collaborator
 router.delete(
     '/:id/share/collaborators/:collaboratorID',
     checkNotepadPermissions([Permission.NOTEPAD_COLLABORATOR_DELETE]),
-    notepadShareController.deleteCollaborator
+    shareController.deleteNotepadCollaborator
 )
 
 // ADD a new note to a notepad

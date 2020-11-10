@@ -3,19 +3,16 @@ import fileUpload from 'express-fileupload'
 import noteCrudController from '../controllers/note.crud.controller'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
-import noteShareController from '../controllers/note.share.controller'
 import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
 import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
-import validateBody from '../middlewares/bodyValidation.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
 import UserRole from '../enums/UserRole.enum'
 import AuthStatus from '../enums/AuthStatus.enum'
 import State from '../enums/State.enum'
 import noteCommentsController from '../controllers/note.comments.controller'
-import validateQuery from '../middlewares/queryValidation.middleware'
 import { Permission } from '../enums/Permission.enum'
 import {
     checkEditNotePermissions,
@@ -24,6 +21,8 @@ import {
     checkNotePermissions,
     checkNoteMovingPermissions
 } from '../middlewares/checkPermissions.middleware'
+import { validateBody, validateQuery } from '../middlewares/requestValidation.middleware'
+import shareController from '../controllers/share.controller'
 
 const router = Router()
 
@@ -91,7 +90,7 @@ router.post(
     '/:id/share',
     checkNotePermissions([Permission.NOTE_SHARING_EDIT]),
     validateQuery('share'),
-    noteShareController.getShareLink
+    shareController.getNoteShareLink
 )
 
 // ADD a collaborator to a note
@@ -100,20 +99,20 @@ router.post(
     checkNotePermissions([Permission.NOTE_COLLABORATOR_ADD]),
     validateBody('collaborator', 'Invalid collaborator.'),
     checkLimits.forCollaborator,
-    noteShareController.addCollaborator
+    shareController.addNoteCollaborator
 )
 
 // DELETE self as a note collaborator
 router.delete(
     '/:id/share/collaborators',
-    noteShareController.deleteSelfCollaborator
+    shareController.deleteNoteSelfCollaborator
 )
 
 // DELETE a collaborator from a note
 router.delete(
     '/:id/share/collaborators/:collaboratorID',
     checkNotePermissions([Permission.NOTE_COLLABORATOR_DELETE]),
-    noteShareController.deleteCollaborator
+    shareController.deleteNoteCollaborator
 )
 
 // ADD tags to a note
