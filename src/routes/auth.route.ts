@@ -1,6 +1,5 @@
 import { Router } from 'express'
 import authController from '../controllers/auth.controller'
-import validateBody from '../middlewares/bodyValidation.middleware'
 import checkUniqueUser from '../middlewares/uniqueUser.middleware'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import authPasswordController from '../controllers/auth.password.controller'
@@ -13,8 +12,8 @@ import authOauthController from '../controllers/auth.oauth.controller'
 import recaptcha from '../middlewares/recaptcha.middleware'
 import State from '../enums/State.enum'
 import AuthStatus from '../enums/AuthStatus.enum'
-import validateQuery from '../middlewares/queryValidation.middleware'
 import checkTokenExpiration from '../middlewares/checkTokenExpiration.middleware'
+import { validateBody, validateQuery } from '../middlewares/requestValidation.middleware'
 
 const router = Router()
 
