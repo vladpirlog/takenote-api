@@ -5,13 +5,13 @@ import { IAttachmentSchema } from '../types/Attachment'
 import { INoteSchema } from '../types/Note'
 
 /**
- * Adds an attachment (title, description, url) to a note.
+ * Adds an attachment (title, description, url, type) to a note.
  * @param noteID id of the note
  * @param data object of mandatory url field and optional title and description fields
  */
 const addAttachment = (
     noteID: INoteSchema['id'],
-    data: Pick<IAttachmentSchema, 'url'> & Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
+    data: Pick<IAttachmentSchema, 'url' | 'type'> & Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
     return Note.findOneAndUpdate(
         { id: noteID },

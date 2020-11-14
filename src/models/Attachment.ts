@@ -1,4 +1,5 @@
 import mongoose, { Schema } from 'mongoose'
+import { AttachmentType } from '../enums/AttachmentType.enum'
 import { IAttachmentSchema } from '../types/Attachment'
 import createID from '../utils/createID.util'
 
@@ -19,6 +20,10 @@ export const AttachmentSchema = new Schema<IAttachmentSchema>({
     description: {
         type: String,
         required: false
+    },
+    type: {
+        type: AttachmentType,
+        required: true
     }
 }, { timestamps: true, id: false })
 
@@ -29,7 +34,8 @@ AttachmentSchema.methods.getPublicInfo = function () {
         description: this.description,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
-        url: this.url
+        url: this.url,
+        type: this.type
     })
 }
 

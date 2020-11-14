@@ -42,7 +42,7 @@ export interface NoteBody {
 export interface AddAttachmentBody {
     title?: string
     description?: string
-    photo: File
+    image: File
 }
 
 export interface EditAttachmentBody {
