@@ -29,7 +29,7 @@ tags:
   - name: collaborators
     description: Other users with the ability to view or edit some user's note
   - name: attachments
-    description: Images, alongside a title and a description, attached to a note
+    description: Images or audio files attached to a note; may have a title and a description
   - name: tags
     description: Words used for grouping notes around a theme
   - name: password
@@ -518,6 +518,7 @@ paths:
                     maxLength: 1000
                   image:
                     type: string
+                    format: byte
                     pattern: /^[a-zA-Z0-9_\-]*$/
                     description: Base64-encoded image which needs to be scanned by the user with an Authenticator app
     delete:
@@ -1349,13 +1350,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
-  "/notes/{noteID}/attachments":
+  "/notes/{noteID}/attachments/image":
     post:
       tags:
         - notes
         - attachments
-      summary: Add attachment
-      operationId: addAttachment
+      summary: Add image attachment
+      operationId: addImageAttachment
       security:
         - cookieAccessToken: []
       parameters:
@@ -1375,7 +1376,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-        "200":
+        "201":
           description: Attachment added
           content:
             application/json:
@@ -1387,7 +1388,7 @@ paths:
                     type: integer
                     format: int32
                     enum:
-                      - 200
+                      - 201
                     description: HTTP success status code
                   message:
                     type: string
@@ -1396,13 +1397,61 @@ paths:
                   attachment:
                     $ref: "#/components/schemas/Attachment"
       requestBody:
-        $ref: "#/components/requestBodies/AddAttachment"
+        $ref: "#/components/requestBodies/AddImageAttachment"
+  "/notes/{noteID}/attachments/audio":
+    post:
+      tags:
+        - notes
+        - attachments
+      summary: Add audio attachment
+      operationId: addAudioAttachment
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to add attachment to
+          required: true
+          schema:
+            type: string
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Attachment added
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 201
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  attachment:
+                    $ref: "#/components/schemas/Attachment"
+      requestBody:
+        $ref: "#/components/requestBodies/AddAudioAttachment"
   "/notes/{noteID}/attachments/{attachmentID}":
     put:
       tags:
         - notes
         - attachments
-      summary: Update attachment
+      summary: Update attachment title and description
       operationId: updateAttachment
       security:
         - cookieAccessToken: []
@@ -2396,7 +2445,7 @@ components:
           minLength: 27
         url:
           type: string
-          description: A valid URL of a photo
+          description: A valid URL of an image
           pattern: /^[a-zA-Z0-9_\-.:\/\\?!=+\|]$/
           maxLength: 300
           minLength: 5
@@ -3182,25 +3231,50 @@ components:
                 type: string
                 maxLength: 120
                 description: The title of the notepad to be added or updated
-    AddAttachment:
+    AddImageAttachment:
       content:
         multipart/formdata:
           schema:
             additionalProperties: false
             type: object
             required:
-              - photo
+              - image
             properties:
-              photo:
+              image:
                 type: string
                 format: binary
-                description: Image to be added as attachment
+                description: Image file to be added as attachment
               title:
                 type: string
                 maxLength: 32
               description:
                 type: string
                 maxLength: 256
+          encoding:
+            image:
+              contentType: image/jpeg, image/png
+    AddAudioAttachment:
+      content:
+        multipart/formdata:
+          schema:
+            additionalProperties: false
+            type: object
+            required:
+              - audio
+            properties:
+              audio:
+                type: string
+                format: binary
+                description: Audio file to be added as attachment
+              title:
+                type: string
+                maxLength: 32
+              description:
+                type: string
+                maxLength: 256
+          encoding:
+            audio:
+              contentType: audio/aac, audio/mpeg, audio/wav, audio/wave, audio/ogg, audio/webm, video/webm
     UpdateAttachment:
       content:
         application/x-www-form-urlencoded:
