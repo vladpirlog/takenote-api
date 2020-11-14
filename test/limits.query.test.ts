@@ -12,7 +12,7 @@ import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('test queries for limit-checking', () => {
     const request = supertest.agent(app)
-    const pngTestImage = path.join(process.cwd(), 'test', 'img.png')
+    const pngTestImage = path.join(process.cwd(), 'test', 'media', 'test-image.png')
     let userID: IUserSchema['id']
     const createdNotesID: INoteSchema['id'][] = []
     let acceptedCredentials1
@@ -51,8 +51,8 @@ describe('test queries for limit-checking', () => {
 
     test.each([1, 2, 3])('get number of attachments - should be %d', async (expectedN) => {
         await request
-            .post(`/notes/${createdNotesID[0]}/attachments`)
-            .attach('photo', pngTestImage, { contentType: 'image/png' })
+            .post(`/notes/${createdNotesID[0]}/attachments/image`)
+            .attach('image', pngTestImage)
         const n = await limitsQuery.attachment(createdNotesID[0])
         expect(n).toBe(expectedN)
     }, 20000)

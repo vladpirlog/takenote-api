@@ -9,6 +9,7 @@ import { IUserSchema } from '../src/types/User'
 import Color from '../src/enums/Color.enum'
 import { Role } from '../src/enums/Role.enum'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
+import { AttachmentType } from '../src/enums/AttachmentType.enum'
 
 describe('test note-related operations', () => {
     const request = supertest.agent(app)
@@ -16,7 +17,7 @@ describe('test note-related operations', () => {
     let acceptedCredentials1
     let acceptedCredentials2
 
-    const pngTestImage: string = path.join(process.cwd(), 'test', 'img.png')
+    const pngTestImage = path.join(process.cwd(), 'test', 'media', 'test-image.png')
     let createdNoteID: INoteSchema['id']
     let duplicatedNoteID: INoteSchema['id']
     let createdNoteShareObject: INoteSchema['share']
@@ -234,16 +235,17 @@ describe('test note-related operations', () => {
 
     test('add attachment', async () => {
         const res = await request
-            .post(`/notes/${createdNoteID}/attachments`)
+            .post(`/notes/${createdNoteID}/attachments/image`)
             .field('title', 'my-title')
             .field('description', 'my-description')
-            .attach('photo', pngTestImage, { contentType: 'image/png' })
+            .attach('image', pngTestImage)
         attachmentID = res.body.attachment.id
-        expect(res.status).toBe(200)
+        expect(res.status).toBe(201)
         expect(res.body.attachment.title).toBe('my-title')
         expect(res.body.attachment.description).toBe('my-description')
         expect(res.body.attachment).toHaveProperty('id')
         expect(res.body.attachment).toHaveProperty('url')
+        expect(res.body.attachment.type).toBe(AttachmentType.IMAGE)
     }, 20000)
 
     test('edit attachment', async () => {
@@ -258,6 +260,7 @@ describe('test note-related operations', () => {
         expect(res.body.attachment.description).toBe('my-new-description')
         expect(res.body.attachment).toHaveProperty('id')
         expect(res.body.attachment).toHaveProperty('url')
+        expect(res.body.attachment.type).toBe(AttachmentType.IMAGE)
     }, 20000)
 
     test('delete attachment', async () => {
