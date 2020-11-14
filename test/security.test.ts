@@ -10,7 +10,7 @@ import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
-    const pngTestImage = path.join(process.cwd(), 'test', 'img.png')
+    const pngTestImage = path.join(process.cwd(), 'test', 'media', 'test-image.png')
     let createdNoteID: INoteSchema['id']
     let authCookie: string
     let acceptedCredentials
@@ -48,19 +48,19 @@ describe('testing the security features of the api', () => {
         const statuses: number[] = []
         for (let i = 0; i < 10; ++i) {
             const res = await request
-                .post(`/notes/${createdNoteID}/attachments`)
+                .post(`/notes/${createdNoteID}/attachments/image`)
                 .field('title', 'my-title')
                 .field('description', 'my-description')
-                .attach('photo', pngTestImage, { contentType: 'image/png' })
+                .attach('image', pngTestImage)
             statuses.push(res.status)
         }
-        expect(statuses).toEqual(new Array(statuses.length).fill(200))
+        expect(statuses).toEqual(new Array(statuses.length).fill(201))
 
         const res2 = await request
-            .post(`/notes/${createdNoteID}/attachments`)
+            .post(`/notes/${createdNoteID}/attachments/image`)
             .field('title', 'my-title')
             .field('description', 'my-description')
-            .attach('photo', pngTestImage, { contentType: 'image/png' })
+            .attach('image', pngTestImage)
         expect(res2.status).toBe(400)
     }, 50000)
 

@@ -6,7 +6,7 @@ import User from '../src/models/User'
 export const generateValidCredentials = () => {
     const username = nanoid(12)
     const email = `${username}@example.com`
-    const password = 'Qwerty1!'
+    const password = `${nanoid(10)}aA1!`
 
     return { username, email, password }
 }
