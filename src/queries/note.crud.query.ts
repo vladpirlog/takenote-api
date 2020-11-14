@@ -8,8 +8,18 @@ import { Role } from '../enums/Role.enum'
 import { INotepadSchema } from '../types/Notepad'
 import Notepad from '../models/Notepad'
 
+type AddOrUpdateNoteProps = Partial<Pick<INoteSchema, 'title' | 'content'> & {
+    archived: boolean
+    color: Color
+    fixed: boolean
+}>
+
+type CreateNoteArg = AddOrUpdateNoteProps & {
+    owner: Pick<IUserSchema, 'id' | 'username' | 'email'>
+}
+
 /**
- * Fetches all the notes that belong to a user and are not part of a notepad.
+ * Fetches all the notes that belong to a user.
  * @param userID id of the user
  * @param skip number of notes to skip; defaults to 0
  * @param limit maximum number of notes to return; defaults to the note limit per user
@@ -38,15 +48,6 @@ const getOneByID = (noteID: INoteSchema['id']) => {
     return Note.findOne({ id: noteID }).exec()
 }
 
-type CreateNoteArg = Partial<
-    Pick<INoteSchema, 'title' | 'content'> &
-    {
-        archived: boolean
-        color: Color
-        fixed: boolean
-    }>
-& { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
-
 /**
  * Creates a new note with the specified properties.
  * @param props object containing the note properties and the owner
@@ -67,17 +68,10 @@ const createOne = (props: CreateNoteArg) => {
     return newNote.save()
 }
 
-type CreateNoteInNotepadArg = Partial<Pick<INoteSchema, 'title' | 'content'> &
-    {
-        archived: boolean
-        color: Color
-        fixed: boolean
-    }>
-
 const createOneInNotepad = async (
     userID: IUserSchema['id'],
     notepadID: INotepadSchema['id'],
-    props: CreateNoteInNotepadArg
+    props: AddOrUpdateNoteProps
 ) => {
     const notepad = await Notepad.findOne({ id: notepadID }).exec()
     if (!notepad) return null
@@ -131,12 +125,7 @@ const deleteOneByID = (noteID: INoteSchema['id']) => {
 const updateOneByID = (
     noteID: INoteSchema['id'],
     userID: IUserSchema['id'],
-    props: Partial<Pick<INoteSchema, 'title' | 'content'>
-        & {
-            archived: boolean
-            color: Color
-            fixed: boolean
-        }>
+    props: AddOrUpdateNoteProps
 ) => {
     return Note.findOneAndUpdate(
         { id: noteID, [`users.${userID}.subject.id`]: userID },

@@ -106,7 +106,7 @@ NoteSchema.methods.getPublicInfo = function (
 ) {
     const ownerData = Array
         .from(this.users.values())
-        .find(val => val.roles.includes(Role.OWNER) || val.roles.includes(Role.OWNER))
+        .find(val => val.roles.includes(Role.OWNER))
     if (!ownerData) throw new Error('Note has no owner.')
 
     const publicNote: PublicNoteInfo = {

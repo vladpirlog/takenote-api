@@ -67,9 +67,7 @@ const editComment = async (req: Request, res: Response, next: NextFunction) => {
         const note = await noteCommentsQuery.editComment(id, commentID, text)
         if (!note) return createResponse(res, 400)
 
-        const comment = note
-            .getPublicInfo(res)
-            .comments?.items.find(c => c.id === commentID)
+        const comment = note.comments?.items.find(c => c.id === commentID)?.getPublicInfo()
 
         return createResponse(res, 200, 'Comment edited.', { comment })
     } catch (err) { return next(err) }

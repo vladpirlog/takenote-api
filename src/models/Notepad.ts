@@ -61,7 +61,9 @@ NotepadSchema.methods.getPublicInfo = function (
     res: Response,
     isShared: boolean = false
 ) {
-    const ownerData = Array.from(this.users.values()).find(val => val.roles.includes(Role.OWNER))
+    const ownerData = Array
+        .from(this.users.values())
+        .find(val => val.roles.includes(Role.OWNER))
     if (!ownerData) throw new Error('Notepad has no owner.')
 
     const publicNotepad: PublicNotepadInfo = {
