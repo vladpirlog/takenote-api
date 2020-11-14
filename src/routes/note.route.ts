@@ -1,11 +1,10 @@
-import { Router } from 'express'
-import fileUpload from 'express-fileupload'
+import { Request, Router } from 'express'
+import multer from 'multer'
 import noteCrudController from '../controllers/note.crud.controller'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
 import noteTagsController from '../controllers/note.tags.controller'
 import noteAttachmentsController from '../controllers/note.attachments.controller'
-import attachmentMetadata from '../middlewares/attachmentMetadata.middleware'
 import checkUserRole from '../middlewares/checkUserRole.middleware'
 import checkLimits from '../middlewares/checkLimits.middleware'
 import deleteFileOnFinish from '../middlewares/deleteFileOnFinish.middleware'
@@ -23,8 +22,34 @@ import {
 } from '../middlewares/checkPermissions.middleware'
 import { validateBody, validateQuery } from '../middlewares/requestValidation.middleware'
 import shareController from '../controllers/share.controller'
+import { AttachmentType } from '../enums/AttachmentType.enum'
+import constants from '../config/constants.config'
 
 const router = Router()
+
+const uploadImage = multer({
+    dest: './temp/',
+    fileFilter: (req: Request, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
+        const accepted = constants.mimeTypes.image.includes(file.mimetype)
+        return callback(null, accepted)
+    },
+    limits: {
+        files: 1,
+        fileSize: 8388608 // 8 MB
+    }
+})
+
+const uploadAudio = multer({
+    dest: './temp/',
+    fileFilter: (req: Request, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
+        const accepted = constants.mimeTypes.audio.includes(file.mimetype)
+        return callback(null, accepted)
+    },
+    limits: {
+        files: 1,
+        fileSize: 12582912 // 12 MB
+    }
+})
 
 // Check authentication status, the role and the state of the user making the request.
 router.all(
@@ -132,22 +157,29 @@ router.delete(
     noteTagsController.deleteTags
 )
 
-// ADD a photo attachment to a note
+// ADD an image attachment to a note
 router.post(
-    '/:id/attachments',
-    fileUpload({
-        tempFileDir: './temp/',
-        useTempFiles: true
-    }),
+    '/:id/attachments/image',
+    uploadImage.single('image'),
     deleteFileOnFinish,
     checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
     validateBody('addAttachment', 'Attachment invalid.'),
-    attachmentMetadata,
     checkLimits.forAttachment,
-    noteAttachmentsController.addAttachment
+    noteAttachmentsController.addAttachment(AttachmentType.IMAGE)
 )
 
-// UPDATE a photo attachment of a note
+// ADD an audio attachment to a note
+router.post(
+    '/:id/attachments/audio',
+    uploadAudio.single('audio'),
+    deleteFileOnFinish,
+    checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
+    validateBody('addAttachment', 'Attachment invalid.'),
+    checkLimits.forAttachment,
+    noteAttachmentsController.addAttachment(AttachmentType.AUDIO)
+)
+
+// UPDATE a note attachment
 router.put(
     '/:id/attachments/:attachmentID',
     checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
@@ -155,7 +187,7 @@ router.put(
     noteAttachmentsController.editAttachment
 )
 
-// DELETE a photo attachment from a note
+// DELETE a note attachment
 router.delete(
     '/:id/attachments/:attachmentID',
     checkNotePermissions([Permission.NOTE_ATTACHMENT_DELETE]),
