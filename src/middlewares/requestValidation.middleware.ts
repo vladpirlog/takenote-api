@@ -19,9 +19,26 @@ import {
 import Color from '../enums/Color.enum'
 import { Role } from '../enums/Role.enum'
 
+/**
+ * Creates a Joi schema for a required string that matches the given regex.
+ * @param regex a regex that the string must match; if undefined, no regex matching is done
+ */
+const getJoiStringSchema = (regex?: RegExp) => {
+    if (regex) return Joi.string().required().regex(regex)
+    return Joi.string().required()
+}
+
 const EMAIL_SCHEMA = Joi.string().required().email()
-const ATTACHMENT_TITLE_SCHEMA = Joi.string().max(32)
-const ATTACHMENT_DESCRIPTION_SCHEMA = Joi.string().max(256)
+const EMAIL_OR_USERNAME_SCHEMA = Joi
+    .when(Joi.ref('.'), {
+        is: EMAIL_SCHEMA,
+        otherwise: getJoiStringSchema(constants.regex.username)
+    })
+const ATTACHMENT_TITLE_SCHEMA = Joi.string().max(32).allow('')
+const ATTACHMENT_DESCRIPTION_SCHEMA = Joi.string().max(256).allow('')
+const COMMENT_TEXT_SCHEMA = Joi.string().required().max(120)
+const NOTE_AND_NOTEPAD_TITLE_SCHEMA = Joi.string().max(100).allow('')
+const NOTE_CONTENT_SCHEMA = Joi.string().max(10000).allow('')
 const POSITIVE_INTEGER_SCHEMA = Joi.number().integer().positive()
 
 const RESET_TOKEN_REGEX = new RegExp(
@@ -38,22 +55,9 @@ const NOTEPAD_ID_REGEX = new RegExp(
     `^${constants.idInfo.notepad.prefix}[a-zA-Z0-9_-]{${constants.idInfo.notepad.length}}$`
 )
 
-/**
- * Creates a Joi schema for a required string that matches the given regex.
- * @param regex a regex that the string must match; if undefined, no regex matching is done
- */
-const getJoiStringSchema = (regex?: RegExp) => {
-    if (regex) return Joi.string().required().regex(regex)
-    return Joi.string().required()
-}
-
 const bodySchemas = {
     login: Joi.object<LoginBody>({
-        email: Joi
-            .when(Joi.ref('.'), {
-                is: EMAIL_SCHEMA,
-                otherwise: getJoiStringSchema(constants.regex.username)
-            }),
+        email: EMAIL_OR_USERNAME_SCHEMA,
         password: getJoiStringSchema(constants.regex.password),
         'g-recaptcha-response': Joi.string()
     }),
@@ -73,15 +77,11 @@ const bodySchemas = {
         old_password: getJoiStringSchema(constants.regex.password)
     }),
     email: Joi.object<EmailBody>({
-        email: Joi
-            .when(Joi.ref('.'), {
-                is: EMAIL_SCHEMA,
-                otherwise: getJoiStringSchema(constants.regex.username)
-            })
+        email: EMAIL_OR_USERNAME_SCHEMA
     }),
     note: Joi.object<NoteBody>({
-        title: Joi.string().max(100).allow(''),
-        content: Joi.string().max(10000).allow(''),
+        title: NOTE_AND_NOTEPAD_TITLE_SCHEMA,
+        content: NOTE_CONTENT_SCHEMA,
         archived: Joi.boolean(),
         fixed: Joi.boolean(),
         color: Joi.valid(...Object.values(Color))
@@ -95,11 +95,7 @@ const bodySchemas = {
         description: ATTACHMENT_DESCRIPTION_SCHEMA
     }).or('title', 'description'),
     collaborator: Joi.object<CollaboratorBody>({
-        user: Joi
-            .when(Joi.ref('.'), {
-                is: EMAIL_SCHEMA,
-                otherwise: getJoiStringSchema(constants.regex.username)
-            }),
+        user: EMAIL_OR_USERNAME_SCHEMA,
         type: Joi.string().required().valid(
             Role.PRIMARY_COLLABORATOR, Role.SECONDARY_COLLABORATOR, Role.OBSERVER
         )
@@ -109,10 +105,10 @@ const bodySchemas = {
         email: Joi.string().email()
     }).or('username', 'email'),
     comment: Joi.object<CommentBody>({
-        text: Joi.string().required().max(120)
+        text: COMMENT_TEXT_SCHEMA
     }),
     notepad: Joi.object<NotepadBody>({
-        title: Joi.string().max(100).allow('')
+        title: NOTE_AND_NOTEPAD_TITLE_SCHEMA
     })
 }
 
