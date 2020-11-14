@@ -1,6 +1,6 @@
 # TakeNote REST API
 
-The REST API of a note-taking application. Create notes, add photo attachments and share them for the world to see.
+The REST API of a note-taking application. Create notes, add image and audio attachments and share them with others.
 
 [![Node.js CI](https://github.com/vladpirlog/takenote-api/workflows/Node.js%20CI/badge.svg)](https://github.com/vladpirlog/takenote-api/actions)
 [![Maintainability](https://api.codeclimate.com/v1/badges/316551b9d8d1679e51b0/maintainability)](https://codeclimate.com/github/vladpirlog/takenote-api/maintainability)

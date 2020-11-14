@@ -61,6 +61,10 @@ export default {
         username: /^[a-zA-Z0-9_-]{4,20}$/,
         password: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\]:;<>,.?/~_+\-=|\\]).{8,40}$/
     },
+    mimeTypes: {
+        image: ['image/jpeg', 'image/png'],
+        audio: ['audio/aac', 'audio/x-aac', 'audio/mpeg', 'audio/wav', 'audio/wave', 'audio/ogg', 'audio/webm', 'video/webm']
+    },
     idInfo: {
         user: { prefix: 'usr', length: 24 },
         note: { prefix: 'not', length: 24 },
