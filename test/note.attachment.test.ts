@@ -6,6 +6,7 @@ import path from 'path'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 import { AttachmentType } from '../src/enums/AttachmentType.enum'
 import Note from '../src/models/Note'
+import constants from '../src/config/constants.config'
 
 describe('testing attachments of different types', () => {
     const request = supertest.agent(app)
@@ -36,7 +37,7 @@ describe('testing attachments of different types', () => {
 
     beforeAll(async () => {
         redisConfig.connect()
-        await mongodbConfig.connect()
+        await mongodbConfig.connect(constants.test.mongodbURI)
 
         acceptedCredentials = await registerTestUser(request)
         await request
