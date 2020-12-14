@@ -29,10 +29,15 @@ const attachment = async (noteID: INoteSchema['id']) => {
     return note?.attachments.length || 0
 }
 
+const drawing = async (noteID: INoteSchema['id']) => {
+    const note = await Note.findOne({ id: noteID })
+    return note?.drawings.length || 0
+}
+
 const collaborator = async (noteID: INoteSchema['id']) => {
     const note = await Note.findOne({ id: noteID })
     if (!note) return 0
     return Array.from(note.users.values()).filter(val => !val.roles.includes(Role.OWNER)).length || 0
 }
 
-export default { note, tag, attachment, collaborator, notepad }
+export default { note, tag, attachment, drawing, collaborator, notepad }

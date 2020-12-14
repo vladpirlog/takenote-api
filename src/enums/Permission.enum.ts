@@ -14,6 +14,10 @@ export enum Permission {
     NOTE_ATTACHMENT_DELETE = 'note_attachment_delete',
     NOTE_ATTACHMENT_VIEW = 'note_attachment_view',
 
+    NOTE_DRAWING_ADD = 'note_drawing_add',
+    NOTE_DRAWING_DELETE = 'note_drawing_delete',
+    NOTE_DRAWING_VIEW = 'note_drawing_view',
+
     NOTE_COMMENT_ADD = 'note_comment_add',
     NOTE_COMMENT_DELETE = 'note_comment_delete',
     NOTE_COMMENT_VIEW = 'note_comment_view',

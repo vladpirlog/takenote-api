@@ -70,6 +70,7 @@ export default {
         note: { prefix: 'not', length: 24 },
         notepad: { prefix: 'npd', length: 24 },
         attachment: { prefix: 'att', length: 24 },
+        drawing: { prefix: 'drw', length: 24 },
         jwt: { prefix: 'jwt', length: 24 },
         share: { prefix: 'shr', length: 24 },
         reset: { prefix: 'rst', length: 24 },
@@ -93,6 +94,7 @@ export default {
         },
         perNote: {
             attachments: 10,
+            drawings: 10,
             collaborators: 10,
             tags: 20
         }

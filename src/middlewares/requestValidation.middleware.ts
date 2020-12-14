@@ -7,6 +7,7 @@ import {
     CheckCredentialsBody,
     CollaboratorBody,
     CommentBody,
+    DrawingBody,
     EditAttachmentBody,
     EmailBody,
     LoginBody,
@@ -18,6 +19,7 @@ import {
 } from '../types/RequestBodies'
 import Color from '../enums/Color.enum'
 import { Role } from '../enums/Role.enum'
+import { DrawingBackgroundPattern, DrawingBrushType } from '../enums/Drawing.enum'
 
 /**
  * Creates a Joi schema for a required string that matches the given regex.
@@ -40,6 +42,7 @@ const COMMENT_TEXT_SCHEMA = Joi.string().required().max(120)
 const NOTE_AND_NOTEPAD_TITLE_SCHEMA = Joi.string().max(100).allow('')
 const NOTE_CONTENT_SCHEMA = Joi.string().max(10000).allow('')
 const POSITIVE_INTEGER_SCHEMA = Joi.number().integer().positive()
+const BOOLEAN_AS_STRING_SCHEMA = Joi.string().valid('true', 'false')
 
 const RESET_TOKEN_REGEX = new RegExp(
     `^${constants.idInfo.reset.prefix}[a-zA-Z0-9_-]{${constants.idInfo.reset.length}}$`
@@ -54,6 +57,7 @@ const TFA_BACKUP_CODE_REGEX = new RegExp(
 const NOTEPAD_ID_REGEX = new RegExp(
     `^${constants.idInfo.notepad.prefix}[a-zA-Z0-9_-]{${constants.idInfo.notepad.length}}$`
 )
+const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/
 
 const bodySchemas = {
     login: Joi.object<LoginBody>({
@@ -82,8 +86,8 @@ const bodySchemas = {
     note: Joi.object<NoteBody>({
         title: NOTE_AND_NOTEPAD_TITLE_SCHEMA,
         content: NOTE_CONTENT_SCHEMA,
-        archived: Joi.boolean(),
-        fixed: Joi.boolean(),
+        archived: BOOLEAN_AS_STRING_SCHEMA,
+        fixed: BOOLEAN_AS_STRING_SCHEMA,
         color: Joi.valid(...Object.values(Color))
     }),
     addAttachment: Joi.object<AddAttachmentBody>({
@@ -94,6 +98,14 @@ const bodySchemas = {
         title: ATTACHMENT_TITLE_SCHEMA,
         description: ATTACHMENT_DESCRIPTION_SCHEMA
     }).or('title', 'description'),
+    drawing: Joi.object<DrawingBody>({
+        brush_color: getJoiStringSchema(HEX_COLOR_REGEX),
+        brush_size: Joi.number().positive().required(),
+        brush_type: Joi.valid(...Object.values(DrawingBrushType)).required(),
+        background_pattern: Joi.valid(...Object.values(DrawingBackgroundPattern)).required(),
+        background_color: getJoiStringSchema(HEX_COLOR_REGEX),
+        variable_pen_pressure: BOOLEAN_AS_STRING_SCHEMA.required()
+    }),
     collaborator: Joi.object<CollaboratorBody>({
         user: EMAIL_OR_USERNAME_SCHEMA,
         type: Joi.string().required().valid(
@@ -132,27 +144,27 @@ const querySchemas = {
                 is: getJoiStringSchema(TFA_OTP_REGEX),
                 otherwise: getJoiStringSchema(TFA_BACKUP_CODE_REGEX)
             }),
-        remember: Joi.boolean()
+        remember: BOOLEAN_AS_STRING_SCHEMA
     }),
     googleOauth: Joi.object({
         code: getJoiStringSchema()
     }),
     tag: Joi.object({
         tag: getJoiStringSchema().max(200),
-        match: Joi.boolean()
+        match: BOOLEAN_AS_STRING_SCHEMA
     }),
     commentsSectionState: Joi.object({
-        enabled: Joi.boolean().required()
+        enabled: BOOLEAN_AS_STRING_SCHEMA.required()
     }),
     getAllNotes: Joi.object({
-        collaborations: Joi.boolean(),
+        collaborations: BOOLEAN_AS_STRING_SCHEMA,
         skip: POSITIVE_INTEGER_SCHEMA,
         limit: POSITIVE_INTEGER_SCHEMA,
-        archived: Joi.boolean()
+        archived: BOOLEAN_AS_STRING_SCHEMA
     }),
     share: Joi.object({
-        active: Joi.boolean(),
-        get_new: Joi.boolean()
+        active: BOOLEAN_AS_STRING_SCHEMA,
+        get_new: BOOLEAN_AS_STRING_SCHEMA
     }),
     moveNote: Joi.object({
         to: Joi.when(Joi.ref('.'), {
@@ -161,13 +173,13 @@ const querySchemas = {
         })
     }),
     getAllNotepads: Joi.object({
-        collaborations: Joi.boolean(),
+        collaborations: BOOLEAN_AS_STRING_SCHEMA,
         skip: POSITIVE_INTEGER_SCHEMA,
         limit: POSITIVE_INTEGER_SCHEMA,
-        include_notes: Joi.boolean()
+        include_notes: BOOLEAN_AS_STRING_SCHEMA
     }),
     getOneNotepad: Joi.object({
-        include_notes: Joi.boolean()
+        include_notes: BOOLEAN_AS_STRING_SCHEMA
     })
 }
 

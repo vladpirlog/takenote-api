@@ -3,6 +3,7 @@ import Color from '../enums/Color.enum'
 import { Role } from '../enums/Role.enum'
 import { IAttachmentSchema, PublicAttachmentInfo } from './Attachment'
 import { ICommentSchema, PublicCommentInfo } from './Comment'
+import { IDrawingSchema, PublicDrawingInfo } from './Drawing'
 import { IEntity } from './Entity'
 import { INotepadSchema } from './Notepad'
 import { IUserSchema } from './User'
@@ -11,6 +12,7 @@ export interface INoteSchema extends IEntity {
     title: string
     content: string
     attachments: IAttachmentSchema[]
+    drawings: IDrawingSchema[]
     comments: {
         enabled: boolean
         items: ICommentSchema[]
@@ -49,6 +51,7 @@ type PublicNoteInfoOptionalFields = Partial<
                 items: PublicCommentInfo[]
             }
             attachments: PublicAttachmentInfo[]
+            drawings: PublicDrawingInfo[]
             archived: boolean
             color: Color
             fixed: boolean

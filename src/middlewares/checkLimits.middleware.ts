@@ -42,17 +42,26 @@ const forTag = async (req: Request, res: Response, next: NextFunction) => {
 
 /**
  * Higher-order function.
- * Returns a middleware function for checking the attachments or collaborators limit for a note.
+ * @returns a middleware function for checking the attachments, drawings or collaborators limit for a note.
  */
-const forAttachmentOrCollaborator = (type: 'attachment' | 'collaborator') => {
+const forAttachmentDrawingOrCollaborator = (type: 'attachment' | 'drawing' | 'collaborator') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.params
 
             const length = await limitsQuery[type](id)
-            const limit = type === 'attachment'
-                ? constants.limits.perNote.attachments
-                : constants.limits.perNote.collaborators
+            let limit: number
+            switch (type) {
+            case 'attachment':
+                limit = constants.limits.perNote.attachments
+                break
+            case 'drawing':
+                limit = constants.limits.perNote.drawings
+                break
+            default:
+                limit = constants.limits.perNote.collaborators
+                break
+            }
             if (length + 1 > limit) {
                 return createResponse(res, 400, `Limit for ${type}s exceeded.`)
             }
@@ -65,6 +74,7 @@ export default {
     forNote: forNoteOrNotepad('note'),
     forNotepad: forNoteOrNotepad('notepad'),
     forTag,
-    forAttachment: forAttachmentOrCollaborator('attachment'),
-    forCollaborator: forAttachmentOrCollaborator('collaborator')
+    forAttachment: forAttachmentDrawingOrCollaborator('attachment'),
+    forDrawing: forAttachmentDrawingOrCollaborator('drawing'),
+    forCollaborator: forAttachmentDrawingOrCollaborator('collaborator')
 }

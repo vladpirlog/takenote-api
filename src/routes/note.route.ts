@@ -1,5 +1,4 @@
-import { Request, Router } from 'express'
-import multer from 'multer'
+import { Router } from 'express'
 import noteCrudController from '../controllers/note.crud.controller'
 import checkAuthStatus from '../middlewares/checkAuthStatus.middleware'
 import checkUserState from '../middlewares/checkUserState.middleware'
@@ -23,33 +22,10 @@ import {
 import { validateBody, validateQuery } from '../middlewares/requestValidation.middleware'
 import shareController from '../controllers/share.controller'
 import { AttachmentType } from '../enums/AttachmentType.enum'
-import constants from '../config/constants.config'
+import { multerAudioMiddleware, multerDrawingMiddleware, multerImageMiddleware } from '../middlewares/multer.middleware'
+import noteDrawingsController from '../controllers/note.drawings.controller'
 
 const router = Router()
-
-const uploadImage = multer({
-    dest: './temp/',
-    fileFilter: (req: Request, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
-        const accepted = constants.mimeTypes.image.includes(file.mimetype)
-        return callback(null, accepted)
-    },
-    limits: {
-        files: 1,
-        fileSize: 8388608 // 8 MB
-    }
-})
-
-const uploadAudio = multer({
-    dest: './temp/',
-    fileFilter: (req: Request, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
-        const accepted = constants.mimeTypes.audio.includes(file.mimetype)
-        return callback(null, accepted)
-    },
-    limits: {
-        files: 1,
-        fileSize: 12582912 // 12 MB
-    }
-})
 
 // Check authentication status, the role and the state of the user making the request.
 router.all(
@@ -160,7 +136,7 @@ router.delete(
 // ADD an image attachment to a note
 router.post(
     '/:id/attachments/image',
-    uploadImage.single('image'),
+    multerImageMiddleware.single('image'),
     deleteFileOnFinish,
     checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
     validateBody('addAttachment', 'Attachment invalid.'),
@@ -171,7 +147,7 @@ router.post(
 // ADD an audio attachment to a note
 router.post(
     '/:id/attachments/audio',
-    uploadAudio.single('audio'),
+    multerAudioMiddleware.single('audio'),
     deleteFileOnFinish,
     checkNotePermissions([Permission.NOTE_ATTACHMENT_ADD]),
     validateBody('addAttachment', 'Attachment invalid.'),
@@ -192,6 +168,34 @@ router.delete(
     '/:id/attachments/:attachmentID',
     checkNotePermissions([Permission.NOTE_ATTACHMENT_DELETE]),
     noteAttachmentsController.deleteAttachment
+)
+
+// ADD a drawing to a note
+router.post(
+    '/:id/drawings',
+    multerDrawingMiddleware.single('drawing'),
+    deleteFileOnFinish,
+    checkNotePermissions([Permission.NOTE_DRAWING_ADD]),
+    validateBody('drawing', 'Drawing invalid.'),
+    checkLimits.forDrawing,
+    noteDrawingsController.addDrawing
+)
+
+// UPDATE a drawing of a note
+router.put(
+    '/:id/drawings/:drawingID',
+    multerDrawingMiddleware.single('drawing'),
+    deleteFileOnFinish,
+    checkNotePermissions([Permission.NOTE_DRAWING_ADD]),
+    validateBody('drawing', 'Drawing invalid.'),
+    noteDrawingsController.editDrawing
+)
+
+// DELETE a drawing of a note
+router.delete(
+    '/:id/drawings/:drawingID',
+    checkNotePermissions([Permission.NOTE_DRAWING_ADD]),
+    noteDrawingsController.deleteDrawing
 )
 
 // GET all comments of a note
