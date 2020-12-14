@@ -7,6 +7,7 @@ import constants from '../src/config/constants.config'
 import Note from '../src/models/Note'
 import { INoteSchema } from '../src/types/Note'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
+import { DrawingBackgroundPattern, DrawingBrushType } from '../src/enums/Drawing.enum'
 
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
@@ -61,6 +62,34 @@ describe('testing the security features of the api', () => {
             .field('title', 'my-title')
             .field('description', 'my-description')
             .attach('image', pngTestImage)
+        expect(res2.status).toBe(400)
+    }, 50000)
+
+    test('limit for # of drawings per note', async () => {
+        const statuses: number[] = []
+        for (let i = 0; i < 10; ++i) {
+            const res = await request
+                .post(`/notes/${createdNoteID}/drawings`)
+                .field('background_color', '#000000')
+                .field('background_pattern', DrawingBackgroundPattern.NONE)
+                .field('brush_color', '#ffffff')
+                .field('brush_size', 5)
+                .field('brush_type', DrawingBrushType.NORMAL)
+                .field('variable_pen_pressure', 'true')
+                .attach('drawing', pngTestImage)
+            statuses.push(res.status)
+        }
+        expect(statuses).toEqual(new Array(statuses.length).fill(201))
+
+        const res2 = await request
+            .post(`/notes/${createdNoteID}/drawings`)
+            .field('background_color', '#000000')
+            .field('background_pattern', DrawingBackgroundPattern.NONE)
+            .field('brush_color', '#ffffff')
+            .field('brush_size', 5)
+            .field('brush_type', DrawingBrushType.NORMAL)
+            .field('variable_pen_pressure', 'true')
+            .attach('drawing', pngTestImage)
         expect(res2.status).toBe(400)
     }, 50000)
 

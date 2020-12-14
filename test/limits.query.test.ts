@@ -9,6 +9,7 @@ import { IUserSchema } from '../src/types/User'
 import path from 'path'
 import { Role } from '../src/enums/Role.enum'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
+import { DrawingBackgroundPattern, DrawingBrushType } from '../src/enums/Drawing.enum'
 
 describe('test queries for limit-checking', () => {
     const request = supertest.agent(app)
@@ -54,6 +55,25 @@ describe('test queries for limit-checking', () => {
             .post(`/notes/${createdNotesID[0]}/attachments/image`)
             .attach('image', pngTestImage)
         const n = await limitsQuery.attachment(createdNotesID[0])
+        expect(n).toBe(expectedN)
+    }, 20000)
+
+    test('get number of drawings - should be 0', async () => {
+        const n = await limitsQuery.drawing(createdNotesID[0])
+        expect(n).toBe(0)
+    })
+
+    test.each([1, 2, 3])('get number of drawings - should be %d', async (expectedN) => {
+        await request
+            .post(`/notes/${createdNotesID[0]}/drawings`)
+            .field('background_color', '#000000')
+            .field('background_pattern', DrawingBackgroundPattern.NONE)
+            .field('brush_color', '#ffffff')
+            .field('brush_size', 5)
+            .field('brush_type', DrawingBrushType.NORMAL)
+            .field('variable_pen_pressure', 'true')
+            .attach('drawing', pngTestImage)
+        const n = await limitsQuery.drawing(createdNotesID[0])
         expect(n).toBe(expectedN)
     }, 20000)
 
