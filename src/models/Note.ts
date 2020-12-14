@@ -9,6 +9,7 @@ import { Response } from 'express'
 import getAuthUser from '../utils/getAuthUser.util'
 import { Role } from '../enums/Role.enum'
 import { getPermissionsFromRoles } from '../utils/accessManagement.util'
+import { DrawingSchema } from './Drawing'
 
 export const NoteSchema = new Schema<INoteSchema>(
     {
@@ -37,6 +38,10 @@ export const NoteSchema = new Schema<INoteSchema>(
         },
         attachments: {
             type: [AttachmentSchema],
+            required: false
+        },
+        drawings: {
+            type: [DrawingSchema],
             required: false
         },
         users: {
@@ -155,6 +160,11 @@ NoteSchema.methods.getPublicInfo = function (
     const canViewAttachments = permissionsHeldByUser.includes(Permission.NOTE_ATTACHMENT_VIEW)
     if (canViewAttachments) {
         publicNote.attachments = this.attachments.map(a => a.getPublicInfo())
+    }
+
+    const canViewDrawings = permissionsHeldByUser.includes(Permission.NOTE_DRAWING_VIEW)
+    if (canViewDrawings) {
+        publicNote.drawings = this.drawings.map(d => d.getPublicInfo())
     }
 
     const canViewSharing = permissionsHeldByUser.includes(Permission.NOTE_SHARING_VIEW) && !this.notepadID

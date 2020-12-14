@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import Color from '../enums/Color.enum'
+import { DrawingBackgroundPattern, DrawingBrushType } from '../enums/Drawing.enum'
 import { Role } from '../enums/Role.enum'
 import { IUserSchema } from '../models/User'
 
@@ -34,8 +35,8 @@ export interface EmailBody {
 export interface NoteBody {
     title?: string
     content?: string
-    archived?: boolean | 'true' | 'false'
-    fixed?: boolean | 'true' | 'false'
+    archived?: 'true' | 'false'
+    fixed?: 'true' | 'false'
     color?: Color
 }
 
@@ -48,6 +49,16 @@ export interface AddAttachmentBody {
 export interface EditAttachmentBody {
     title?: string
     description?: string
+}
+
+export interface DrawingBody {
+    brush_color: string,
+    brush_size: number,
+    brush_type: DrawingBrushType,
+    background_pattern: DrawingBackgroundPattern,
+    background_color: string,
+    variable_pen_pressure: 'true' | 'false',
+    drawing: File
 }
 
 export interface CollaboratorBody {
