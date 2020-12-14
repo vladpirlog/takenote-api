@@ -7,7 +7,7 @@ import { INoteSchema } from '../types/Note'
 /**
  * Adds an attachment (title, description, url, type) to a note.
  * @param noteID id of the note
- * @param data object of mandatory url field and optional title and description fields
+ * @param data new attachment properties
  */
 const addAttachment = (
     noteID: INoteSchema['id'],
