@@ -2,11 +2,26 @@ import { RedisClient } from 'redis'
 import { promisify } from 'util'
 
 class RedisClientWithPromises extends RedisClient {
-    promiseGet: (key: string) => Promise<string | null> = promisify(this.get).bind(this)
-    promiseSetex: (key: string, seconds: number, value: string) => Promise<string> = promisify(this.setex).bind(this)
-    promiseDel: (key: string) => Promise<number> = promisify(this.del).bind(this)
-    promiseIncr: (key: string) => Promise<number> = promisify(this.incr).bind(this)
-    promiseQuit: () => Promise<'OK'> = promisify(this.quit).bind(this)
+    promiseGet (key: string) {
+        return promisify(this.get).call(this, key)
+    }
+
+    promiseSetex (key: string, seconds: number, value: string) {
+        return promisify(this.setex).call(this, key, seconds, value)
+    }
+
+    promiseDel (key: string | string[]) {
+        // @ts-ignore
+        return promisify(this.del).call(this, key)
+    }
+
+    promiseIncr (key: string) {
+        return promisify(this.incr).call(this, key)
+    }
+
+    promiseQuit () {
+        return promisify(this.quit).call(this)
+    }
 
     constructor () {
         super({})
