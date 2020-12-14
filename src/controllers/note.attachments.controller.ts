@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import uploadFile from '../utils/uploadFile.util'
+import { uploadFileToCloudStorage } from '../utils/cloudFileStorage.util'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
 import getAuthUser from '../utils/getAuthUser.util'
 import constants from '../config/constants.config'
@@ -27,7 +27,7 @@ const addAttachment = (attachmentType: AttachmentType) => {
                 res.on('finish', () => fs.unlink(pathOfFileToUpload)
                     .catch(() => console.log('Could not delete file.')))
             }
-            const url = await uploadFile(
+            const url = await uploadFileToCloudStorage(
                 pathOfFileToUpload, getAuthUser(res).id, id, attachmentType, constants.nodeEnv
             )
             const newNote = await noteAttachmentsQuery.addAttachment(
