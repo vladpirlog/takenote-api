@@ -5,7 +5,7 @@ import { DrawingBody } from '../types/RequestBodies'
 import createResponse from '../utils/createResponse.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
-import { uploadFileToCloudStorage } from '../utils/cloudFileStorage.util'
+import { deleteFileFromCloudStorage, uploadFileToCloudStorage } from '../utils/cloudFileStorage.util'
 
 const addDrawing = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -88,10 +88,16 @@ const deleteDrawing = async (req: Request, res: Response, next: NextFunction) =>
     try {
         const { id, drawingID } = req.params
 
-        const newNote = await noteDrawingsQuery.deleteDrawing(id, drawingID)
-        return newNote
-            ? createResponse(res, 200, 'Drawing deleted.')
-            : createResponse(res, 400, 'Couldn\'t delete drawing.')
+        const deletedDrawing = await noteDrawingsQuery.deleteDrawing(id, drawingID)
+        if (!deletedDrawing) return createResponse(res, 400, 'Couldn\'t delete drawing.')
+        res.on('finish', () => {
+            deleteFileFromCloudStorage(
+                `${id}/${drawingID}`,
+                'image',
+                constants.nodeEnv
+            ).catch(() => console.warn(`Could not delete file ${id}/${drawingID} from the cloud.`))
+        })
+        return createResponse(res, 200, 'Drawing deleted.')
     } catch (err) { return next(err) }
 }
 

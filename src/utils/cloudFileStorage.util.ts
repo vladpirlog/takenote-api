@@ -59,23 +59,23 @@ export const uploadFileToCloudStorage = (
     return uploadToCloudinary(filePath, userID, noteID, fileType)
 }
 
-const deleteFromGoogleCloudStorage = async (fileName: string) => {
+const deleteFileFromGoogleCloudStorage = async (filePath: string) => {
     try {
         const storage = new Storage()
         await storage
             .bucket(constants.storage.google.bucketName)
-            .file(fileName)
+            .file(filePath)
             .delete()
         return true
     } catch (err) { return false }
 }
 
-const deleteFromCloudinary = async (
-    fileName: string,
+const deleteFileFromCloudinary = async (
+    filePath: string,
     fileType: 'image' | 'audio'
 ) => {
     try {
-        const result = await cloudinary.uploader.destroy(fileName, {
+        const result = await cloudinary.uploader.destroy(filePath, {
             resource_type: fileType === 'image' ? 'image' : 'video',
             invalidate: true
         })
@@ -85,25 +85,54 @@ const deleteFromCloudinary = async (
 
 /**
  * Async function that deletes a file from one of the storage providers.
- * @param url the URL of the file to be deleted
+ * @param filePath the path of the file to be deleted
  * @param fileType the type of resource that needs to be deleted
  * @param env the current environment of the app, based on which the storage service is chosen
  * @returns a boolean representing the final status of the operation
  */
 export const deleteFileFromCloudStorage = (
-    url: string,
+    filePath: string,
     fileType: 'image' | 'audio',
     env: string
 ) => {
-    const parsedURL = new URL(url)
     if (env === 'production') {
-        const fileName = parsedURL.pathname.slice(1)
-        return deleteFromGoogleCloudStorage(fileName)
+        return deleteFileFromGoogleCloudStorage(filePath)
     }
-    const fileName = parsedURL.pathname
-        .slice(1, parsedURL.pathname.lastIndexOf('.'))
-        .split('/')
-        .slice(4)
-        .join('/')
-    return deleteFromCloudinary(fileName, fileType)
+    return deleteFileFromCloudinary(filePath, fileType)
+}
+
+const deleteFolderFromGoogleCloudStorage = async (noteID: INoteSchema['id']) => {
+    try {
+        const storage = new Storage()
+        await storage
+            .bucket(constants.storage.google.bucketName)
+            .deleteFiles({ prefix: `${noteID}/` })
+        return true
+    } catch (err) { return false }
+}
+
+const deleteFolderFromCloudinary = async (noteID: INoteSchema['id']) => {
+    try {
+        await cloudinary.api.delete_resources_by_prefix(noteID, {
+            invalidate: true
+        })
+        await cloudinary.api.delete_resources_by_prefix(noteID, {
+            invalidate: true, resource_type: 'video'
+        })
+        await cloudinary.api.delete_folder(noteID)
+        return true
+    } catch (err) { return false }
+}
+
+/**
+ * Async function that deletes a folder and its contents from one of the storage providers.
+ * @param folderPath the path of the folder to be deleted
+ * @param env the current environment of the app, based on which the storage service is chosen
+ * @returns a boolean representing the final status of the operation
+ */
+export const deleteFolderFromCloudStorage = async (folderPath: string, env: string) => {
+    if (env === 'production') {
+        return deleteFolderFromGoogleCloudStorage(folderPath)
+    }
+    return deleteFolderFromCloudinary(folderPath)
 }
