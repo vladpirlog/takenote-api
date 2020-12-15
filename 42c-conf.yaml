@@ -30,8 +30,10 @@ tags:
     description: Other users with the ability to view or edit some user's note
   - name: attachments
     description: Images or audio files attached to a note; may have a title and a description
+  - name: drawings
+    description: Hand drawings saved in the db as a PNG image alongside metadata
   - name: tags
-    description: Words used for grouping notes around a theme
+    description: Words used for grouping notes around a common theme
   - name: password
     description: Password-related operations
   - name: comments
@@ -1543,6 +1545,151 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResponseBody"
+  "/notes/{noteID}/drawings":
+    post:
+      tags:
+        - notes
+        - drawings
+      summary: Add drawing
+      operationId: addDrawing
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to add drawing to
+          required: true
+          schema:
+            type: string
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "201":
+          description: Drawing added
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 201
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  drawing:
+                    $ref: "#/components/schemas/Drawing"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateDrawing"
+  "/notes/{noteID}/drawings/{drawingID}":
+    put:
+      tags:
+        - notes
+        - drawings
+      summary: Update drawing
+      operationId: updateDrawing
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to update drawing from
+          required: true
+          schema:
+            type: string
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+        - name: drawingID
+          in: path
+          description: ID of drawing to update
+          required: true
+          schema:
+            type: string
+            pattern: /^drw[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Drawing edited
+          content:
+            application/json:
+              schema:
+                additionalProperties: false
+                type: object
+                properties:
+                  status:
+                    type: integer
+                    format: int32
+                    enum:
+                      - 200
+                    description: HTTP success status code
+                  message:
+                    type: string
+                    pattern: /^[a-zA-Z0-9_\-.,]*$/
+                    maxLength: 1000
+                  drawing:
+                    $ref: "#/components/schemas/Drawing"
+      requestBody:
+        $ref: "#/components/requestBodies/AddOrUpdateDrawing"
+    delete:
+      tags:
+        - notes
+        - drawings
+      summary: Delete drawing
+      operationId: deleteDrawing
+      security:
+        - cookieAccessToken: []
+      parameters:
+        - name: noteID
+          in: path
+          description: ID of note to delete drawing from
+          required: true
+          schema:
+            type: string
+            pattern: /^not[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+        - name: drawingID
+          in: path
+          description: ID of drawing to delete
+          required: true
+          schema:
+            type: string
+            pattern: /^drw[a-zA-Z0-9_-]{24}$/
+            maxLength: 27
+            minLength: 27
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "200":
+          description: Drawing deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResponseBody"
   "/notes/{noteID}/comments":
     get:
       tags:
@@ -2461,6 +2608,54 @@ components:
         updatedAt:
           type: string
           format: date-time
+    Drawing:
+      additionalProperties: false
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: /^drw[a-zA-Z0-9_-]{24}$/
+          maxLength: 27
+          minLength: 27
+        url:
+          type: string
+          description: A valid URL of an image
+          pattern: /^[a-zA-Z0-9_\-.:\/\\?!=+\|]$/
+          maxLength: 300
+          minLength: 5
+        brushColor:
+          type: string
+          pattern: /^#[a-zA-Z0-9]{6}$/
+          maxLength: 7
+          minLength: 7
+        brushSize:
+          type: number
+          maximum: 100
+          minimum: 0
+        brushType:
+          type: string
+          enum:
+            - normal
+            - spray
+        backgroundPattern:
+          type: string
+          enum:
+            - none
+            - line
+            - square
+        backgroundColor:
+          type: string
+          pattern: /^#[a-zA-Z0-9]{6}$/
+          maxLength: 7
+          minLength: 7
+        variablePenPressure:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
     Comment:
       additionalProperties: false
       type: object
@@ -2584,6 +2779,11 @@ components:
           maxItems: 10
           items:
             $ref: "#/components/schemas/Attachment"
+        drawings:
+          type: array
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/Drawing"
         tags:
           type: array
           maxItems: 20
@@ -3107,9 +3307,15 @@ components:
                 type: string
                 maxLength: 10000
               archived:
-                type: boolean
+                type: string
+                enum:
+                  - "true"
+                  - "false"
               fixed:
-                type: boolean
+                type: string
+                enum:
+                  - "true"
+                  - "false"
               color:
                 type: string
                 enum:
@@ -3132,9 +3338,15 @@ components:
                 type: string
                 maxLength: 10000
               archived:
-                type: boolean
+                type: string
+                enum:
+                  - "true"
+                  - "false"
               fixed:
-                type: boolean
+                type: string
+                enum:
+                  - "true"
+                  - "false"
               color:
                 type: string
                 enum:
@@ -3299,6 +3511,50 @@ components:
               description:
                 type: string
                 maxLength: 256
+    AddOrUpdateDrawing:
+      content:
+        multipart/formdata:
+          schema:
+            additionalProperties: false
+            type: object
+            properties:
+              drawing:
+                type: string
+                format: binary
+                description: PNG image file to be saved as drawing
+              brush_color:
+                type: string
+                pattern: /^#[a-zA-Z0-9]{6}$/
+                maxLength: 7
+                minLength: 7
+              brush_size:
+                type: number
+                maximum: 100
+                minimum: 0
+              brush_type:
+                type: string
+                enum:
+                  - normal
+                  - spray
+              background_pattern:
+                type: string
+                enum:
+                  - none
+                  - line
+                  - square
+              background_color:
+                type: string
+                pattern: /^#[a-zA-Z0-9]{6}$/
+                maxLength: 7
+                minLength: 7
+              variable_pen_pressure:
+                type: string
+                enum:
+                  - "true"
+                  - "false"
+          encoding:
+            drawing:
+              contentType: image/png
   securitySchemes:
     cookieAccessToken:
       type: apiKey
