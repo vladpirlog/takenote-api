@@ -7,17 +7,19 @@ import Drawing from '../models/Drawing'
  * Adds an drawing to a note.
  * @param noteID id of the note
  * @param data new drawing properties
+ * @returns the newly added drawing or undefined
  */
-const addDrawing = (
+const addDrawing = async (
     noteID: INoteSchema['id'],
     data: Pick<IDrawingSchema, 'url' | 'brushColor' | 'brushSize' | 'brushType'
-| 'variablePenPressure' | 'backgroundColor' | 'backgroundPattern'>
+| 'variablePenPressure' | 'backgroundColor' | 'backgroundPattern'> & { id?: IDrawingSchema['id'] }
 ) => {
-    return Note.findOneAndUpdate(
+    const note = await Note.findOneAndUpdate(
         { id: noteID },
         { $push: { drawings: new Drawing(data) } },
         { new: true }
     ).exec()
+    return note?.drawings[note.drawings.length - 1]
 }
 
 /**
@@ -25,14 +27,15 @@ const addDrawing = (
  * @param noteID id of the note
  * @param drawingID id of the drawing to be updated
  * @param data new drawing properties
+ * @returns the updated drawing or undefined
  */
-const editDrawing = (
+const editDrawing = async (
     noteID: INoteSchema['id'],
     drawingID: IDrawingSchema['id'],
     data: Pick<IDrawingSchema, 'url' | 'brushColor' | 'brushSize' | 'brushType'
 | 'variablePenPressure' | 'backgroundColor' | 'backgroundPattern'>
 ) => {
-    return Note.findOneAndUpdate(
+    const oldNote = await Note.findOneAndUpdate(
         { id: noteID, 'drawings.id': drawingID },
         {
             $set: {
@@ -47,22 +50,24 @@ const editDrawing = (
         },
         { new: true }
     ).exec()
+    return oldNote?.drawings.find(d => d.id === drawingID)
 }
 
 /**
  * Removes a drawing from a note.
  * @param noteID id of the note
  * @param drawingID the id of the drawing to be removed
+ * @returns the deleted drawing or undefined
  */
-const deleteDrawing = (
+const deleteDrawing = async (
     noteID: INoteSchema['id'],
     drawingID: INoteSchema['drawings'][0]['id']
 ) => {
-    return Note.findOneAndUpdate(
+    const oldNote = await Note.findOneAndUpdate(
         { id: noteID },
-        { $pull: { drawings: { id: drawingID } } },
-        { new: true }
+        { $pull: { drawings: { id: drawingID } } }
     ).exec()
+    return oldNote?.drawings.find(d => d.id === drawingID)
 }
 
 export default {

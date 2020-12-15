@@ -8,16 +8,18 @@ import { INoteSchema } from '../types/Note'
  * Adds an attachment (title, description, url, type) to a note.
  * @param noteID id of the note
  * @param data new attachment properties
+ * @returns the newly added attachment or undefined
  */
-const addAttachment = (
+const addAttachment = async (
     noteID: INoteSchema['id'],
-    data: Pick<IAttachmentSchema, 'url' | 'type'> & Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
+    data: Pick<IAttachmentSchema, 'url' | 'type'> & Partial<Pick<IAttachmentSchema, 'id' | 'title' | 'description'>>
 ) => {
-    return Note.findOneAndUpdate(
+    const note = await Note.findOneAndUpdate(
         { id: noteID },
         { $push: { attachments: new Attachment(removeUndefinedProps(data)) } },
         { new: true }
     ).exec()
+    return note?.attachments[note.attachments.length - 1]
 }
 
 /**
@@ -25,13 +27,14 @@ const addAttachment = (
  * @param noteID id of the note
  * @param attachmentID id of the attachment to be updated
  * @param data object with optional properties of title and description
+ * @returns the updated attachment or undefined
  */
-const editAttachment = (
+const editAttachment = async (
     noteID: INoteSchema['id'],
     attachmentID: IAttachmentSchema['id'],
     data: Partial<Pick<IAttachmentSchema, 'title' | 'description'>>
 ) => {
-    return Note.findOneAndUpdate(
+    const note = await Note.findOneAndUpdate(
         { id: noteID, 'attachments.id': attachmentID },
         {
             $set: removeUndefinedProps({
@@ -41,22 +44,24 @@ const editAttachment = (
         },
         { new: true }
     ).exec()
+    return note?.attachments.find(a => a.id === attachmentID)
 }
 
 /**
  * Removes an attachment from a note.
  * @param noteID id of the note
  * @param attachmentID the id of the attachment to be removed
+ * @returns the deleted attachment or undefined
  */
-const deleteAttachment = (
+const deleteAttachment = async (
     noteID: INoteSchema['id'],
     attachmentID: INoteSchema['attachments'][0]['id']
 ) => {
-    return Note.findOneAndUpdate(
+    const oldNote = await Note.findOneAndUpdate(
         { id: noteID },
-        { $pull: { attachments: { id: attachmentID } } },
-        { new: true }
+        { $pull: { attachments: { id: attachmentID } } }
     ).exec()
+    return oldNote?.attachments.find(a => a.id === attachmentID)
 }
 
 export default {
