@@ -53,6 +53,24 @@ cd redis-6.0.5
 make
 ```
 
+### or if using Ubuntu or Debian
+
+```bash
+sudo apt update
+sudo apt install redis-server
+```
+
+## Using ffmpeg
+
+The [ffmpeg](https://ffmpeg.org/) library must be installed locally in order to convert audio files to WAV.
+
+### Install ffmpeg on Ubuntu or Debian
+
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
 ### Environment variables
 
 A set of environment variables must be provided in order for the app to run.
@@ -76,10 +94,11 @@ A set of environment variables must be provided in order for the app to run.
 -   GOOGLE_CLIENT_SECRET - the OAuth client secret provided by Google
 -   RECAPTCHA_SITE_KEY - reCAPTCHA site key provided by Google
 -   RECAPTCHA_SITE_SECRET - reCAPTCHA site secret provided by Google
+-   MOESIF_API_KEY - API key for logging with Moesif; logging can be disabled by commenting out the Moesif middleware in [src/app.ts](src/app.ts)
 
 ## Documentation
 
-The full OpenAPI 3.0 documentation is available on [SwaggerHub](https://app.swaggerhub.com/apis/vladpirlog/takenote-api/1.0.0) or as a [YAML](42c-conf.yaml) file.
+The full OpenAPI 3.0 documentation is available on [SwaggerHub](https://app.swaggerhub.com/apis-docs/vladpirlog/takenote-api/1.0.0) or as a [YAML](42c-conf.yaml) file.
 
 ## Using a web server
 
