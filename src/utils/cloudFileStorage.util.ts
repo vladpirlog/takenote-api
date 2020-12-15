@@ -1,13 +1,11 @@
-import { IUserSchema } from '../types/User'
 import constants from '../config/constants.config'
 import { INoteSchema } from '../types/Note'
+import { Storage } from '@google-cloud/storage'
 const cloudinary = require('cloudinary').v2
-const { Storage } = require('@google-cloud/storage')
 
-const uploadToGoogleCloudStorage = async (
+const uploadFileToGoogleCloudStorage = async (
     filePath: string,
-    userID: IUserSchema['id'],
-    noteID: INoteSchema['id']
+    fileDestination: string
 ) => {
     const storage = new Storage()
     const options = {
@@ -15,7 +13,7 @@ const uploadToGoogleCloudStorage = async (
         metadata: {
             cacheControl: 'public, max-age=31536000'
         },
-        destination: `${userID}/${noteID}/${filePath.split('/').pop()}`
+        destination: fileDestination
     }
 
     const [result] = await storage.bucket(constants.storage.google.bucketName).upload(filePath, options)
@@ -24,14 +22,13 @@ const uploadToGoogleCloudStorage = async (
     return encodeURI(`${constants.domain.staticURL}/${metadata.name}`)
 }
 
-const uploadToCloudinary = async (
+const uploadFileToCloudinary = async (
     filePath: string,
-    userID: IUserSchema['id'],
-    noteID: INoteSchema['id'],
+    fileDestination: string,
     fileType: 'image' | 'audio'
 ) => {
     const result = await cloudinary.uploader.upload(filePath, {
-        folder: `${userID}/${noteID}`,
+        public_id: fileDestination,
         resource_type: fileType === 'image' ? 'image' : 'video'
     })
     return result.secure_url as string
@@ -40,23 +37,21 @@ const uploadToCloudinary = async (
 /**
  * Async function that uploads a file to one of the storage providers.
  * @param filePath the path to the file to be uploaded
- * @param userID id of the file's owner
- * @param noteID id of the note where the file is uploaded
+ * @param fileDestination the destination where the file will be uploaded (directories and file name, separated by slashes)
  * @param fileType the type of file to upload
  * @param env the current environment of the app, based on which the storage service is chosen
  * @returns the uploaded file's URL
  */
 export const uploadFileToCloudStorage = (
     filePath: string,
-    userID: IUserSchema['id'],
-    noteID: INoteSchema['id'],
+    fileDestination: string,
     fileType: 'image' | 'audio',
     env: string
 ) => {
     if (env === 'production') {
-        return uploadToGoogleCloudStorage(filePath, userID, noteID)
+        return uploadFileToGoogleCloudStorage(filePath, fileDestination)
     }
-    return uploadToCloudinary(filePath, userID, noteID, fileType)
+    return uploadFileToCloudinary(filePath, fileDestination, fileType)
 }
 
 const deleteFileFromGoogleCloudStorage = async (filePath: string) => {
