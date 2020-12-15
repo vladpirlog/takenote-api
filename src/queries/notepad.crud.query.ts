@@ -129,7 +129,7 @@ const deleteOneByID = async (notepadID: INotepadSchema['id']) => {
     session.startTransaction()
 
     const notepad = await Notepad.findOneAndDelete({ id: notepadID }, { session }).exec()
-    await Note.deleteMany({ notepadID }, { session })
+    await Note.deleteMany({ notepadID }, { session }).exec()
 
     await session.commitTransaction()
     session.endSession()

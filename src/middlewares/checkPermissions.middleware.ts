@@ -22,10 +22,10 @@ const checkPermissions = (type: 'note' | 'notepad', permissionList: Permission[]
             const roleArray = type === 'note'
                 ? await getRolesOfNote(getAuthUser(res).id, entityID)
                 : await getRolesOfNotepad(getAuthUser(res).id, entityID)
-            const permArray = getPermissionsFromRoles(type, roleArray)
+            const userPermissions = getPermissionsFromRoles(type, roleArray)
 
             const hasAtLeastOneRequiredPermission = permissionList
-                .map(p => permArray.includes(p))
+                .map(p => userPermissions.includes(p))
                 .includes(true)
 
             return hasAtLeastOneRequiredPermission ? next() : createResponse(res, 401)
@@ -63,8 +63,7 @@ export const checkEditNotePermissions = (paramName: string = 'id') => {
             if (!canEditCommonProperties) {
                 delete req.body.title
                 delete req.body.content
-            }
-            if (!canEditPersonalProperties) {
+            } else if (!canEditPersonalProperties) {
                 delete req.body.archived
                 delete req.body.fixed
                 delete req.body.color

@@ -19,13 +19,12 @@ const addAttachment = (attachmentType: AttachmentType) => {
             let pathOfFileToUpload = file.path
 
             const fileNeedsConversion = attachmentType === AttachmentType.AUDIO &&
-                file.mimetype !== 'audio/wav' &&
-                file.mimetype !== 'audio/wave' &&
-                file.mimetype !== 'audio/mpeg'
+                !['audio/wav', 'audio/wave', 'audio/mpeg'].includes(file.mimetype)
+
             if (fileNeedsConversion) {
                 pathOfFileToUpload = await convertAudioToWav(file.path)
                 res.on('finish', () => fs.unlink(pathOfFileToUpload)
-                    .catch(() => console.log('Could not delete file.')))
+                    .catch(() => console.warn(`Could not delete file ${pathOfFileToUpload} from the server.`)))
             }
             const attachmentID = createID('attachment')
             const url = await uploadFileToCloudStorage(
