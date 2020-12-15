@@ -49,6 +49,14 @@ const getOneByID = (noteID: INoteSchema['id']) => {
 }
 
 /**
+ * Fetches all the notes that are part of a notepad.
+ * @param notepadID the id of the notepad
+ */
+const getAllByNotepad = (notepadID: INotepadSchema['id']) => {
+    return Note.find({ notepadID }).exec()
+}
+
+/**
  * Creates a new note with the specified properties.
  * @param props object containing the note properties and the owner
  */
@@ -179,6 +187,7 @@ const moveOne = async (
 export default {
     getAll,
     getOneByID,
+    getAllByNotepad,
     createOne,
     deleteOneByID,
     updateOneByID,
