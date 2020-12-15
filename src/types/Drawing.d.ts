@@ -1,7 +1,7 @@
 import { DrawingBackgroundPattern, DrawingBrushType } from '../enums/Drawing.enum'
 import { IEntity } from './Entity'
 
-export type PublicDrawingInfo = Pick<IDrawingSchema, 'id' | 'brushColor' | 'brushSize'
+export type PublicDrawingInfo = Pick<IDrawingSchema, 'id' | 'brushColor' | 'brushSize' | 'variablePenPressure'
 | 'createdAt' | 'backgroundColor' | 'backgroundPattern' | 'updatedAt' | 'brushType' | 'url'>
 
 export interface IDrawingSchema extends IEntity {
