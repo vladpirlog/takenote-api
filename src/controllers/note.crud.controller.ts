@@ -5,6 +5,8 @@ import getAuthUser from '../utils/getAuthUser.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import userQuery from '../queries/user.query'
 import { NoteBody } from '../types/RequestBodies'
+import { deleteFolderFromCloudStorage } from '../utils/cloudFileStorage.util'
+import constants from '../config/constants.config'
 
 const getOneNote = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -98,9 +100,13 @@ const deleteNote = async (req: Request, res: Response, next: NextFunction) => {
         const { id } = req.params
 
         const note = await noteCrudQuery.deleteOneByID(id)
-        return note
-            ? createResponse(res, 200, 'Note deleted.')
-            : createResponse(res, 400, 'Couldn\'t delete note.')
+        if (!note) return createResponse(res, 400, 'Couldn\'t delete note.')
+
+        res.on('finish', () => {
+            deleteFolderFromCloudStorage(id, constants.nodeEnv)
+                .catch(() => console.warn(`Could not delete folder ${id} from the cloud.`))
+        })
+        return createResponse(res, 200, 'Note deleted.')
     } catch (err) { return next(err) }
 }
 

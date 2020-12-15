@@ -66,10 +66,16 @@ const deleteAttachment = async (req: Request, res: Response, next: NextFunction)
     try {
         const { id, attachmentID } = req.params
 
-        const newNote = await noteAttachmentsQuery.deleteAttachment(id, attachmentID)
-        return newNote
-            ? createResponse(res, 200, 'Attachment deleted.')
-            : createResponse(res, 400, 'Couldn\'t delete attachment.')
+        const deletedAttachment = await noteAttachmentsQuery.deleteAttachment(id, attachmentID)
+        if (!deletedAttachment) return createResponse(res, 400, 'Couldn\'t delete attachment.')
+        res.on('finish', () => {
+            deleteFileFromCloudStorage(
+                `${id}/${attachmentID}`,
+                deletedAttachment.type,
+                constants.nodeEnv
+            ).catch(() => console.warn(`Could not delete file ${id}/${attachmentID} from the cloud.`))
+        })
+        return createResponse(res, 200, 'Attachment deleted.')
     } catch (err) { return next(err) }
 }
 

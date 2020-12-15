@@ -1,8 +1,10 @@
 import { NextFunction, Request, Response } from 'express'
+import constants from '../config/constants.config'
 import noteCrudQuery from '../queries/note.crud.query'
 import notepadCrudQuery from '../queries/notepad.crud.query'
 import userQuery from '../queries/user.query'
 import { NoteBody } from '../types/RequestBodies'
+import { deleteFolderFromCloudStorage } from '../utils/cloudFileStorage.util'
 import createResponse from '../utils/createResponse.util'
 import getAuthUser from '../utils/getAuthUser.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
@@ -98,9 +100,17 @@ const deleteNotepad = async (req: Request, res: Response, next: NextFunction) =>
         const { id } = req.params
 
         const notepad = await notepadCrudQuery.deleteOneByID(id)
-        return notepad
-            ? createResponse(res, 200, 'Notepad deleted.')
-            : createResponse(res, 400, 'Couldn\'t delete notepad.')
+        if (!notepad) return createResponse(res, 400, 'Couldn\'t delete notepad.')
+
+        res.on('finish', () => {
+            noteCrudQuery.getAllByNotepad(id)
+                .then(notes => notes.forEach(n => {
+                    deleteFolderFromCloudStorage(n.id, constants.nodeEnv)
+                        .catch(() => console.warn(`Could not delete folder ${n.id} from the cloud.`))
+                }))
+        })
+
+        return createResponse(res, 200, 'Notepad deleted.')
     } catch (err) { return next(err) }
 }
 
