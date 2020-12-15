@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from 'express'
 import constants from '../config/constants.config'
 import noteDrawingsQuery from '../queries/note.drawings.query'
+import createID from '../utils/createID.util'
 import { DrawingBody } from '../types/RequestBodies'
 import createResponse from '../utils/createResponse.util'
-import getAuthUser from '../utils/getAuthUser.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import { deleteFileFromCloudStorage, uploadFileToCloudStorage } from '../utils/cloudFileStorage.util'
 
@@ -21,13 +21,15 @@ const addDrawing = async (req: Request, res: Response, next: NextFunction) => {
         const file = req.file
 
         if (!file) return createResponse(res, 400, 'File not sent.')
+        const drawingID = createID('drawing')
         const url = await uploadFileToCloudStorage(
-            file.path, getAuthUser(res).id, id, 'image', constants.nodeEnv
+            file.path, `${id}/${drawingID}`, 'image', constants.nodeEnv
         )
 
         const newNote = await noteDrawingsQuery.addDrawing(
             id,
             {
+                id: drawingID,
                 backgroundColor,
                 backgroundPattern,
                 brushColor,
@@ -60,7 +62,7 @@ const editDrawing = async (req: Request, res: Response, next: NextFunction) => {
 
         if (!file) return createResponse(res, 400, 'File not sent.')
         const url = await uploadFileToCloudStorage(
-            file.path, getAuthUser(res).id, id, 'image', constants.nodeEnv
+            file.path, `${id}/${drawingID}`, 'image', constants.nodeEnv
         )
 
         const newNote = await noteDrawingsQuery.editDrawing(

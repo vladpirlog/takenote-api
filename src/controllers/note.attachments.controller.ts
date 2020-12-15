@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import { uploadFileToCloudStorage } from '../utils/cloudFileStorage.util'
+import { deleteFileFromCloudStorage, uploadFileToCloudStorage } from '../utils/cloudFileStorage.util'
 import noteAttachmentsQuery from '../queries/note.attachments.query'
-import getAuthUser from '../utils/getAuthUser.util'
 import constants from '../config/constants.config'
 import { AddAttachmentBody, EditAttachmentBody } from '../types/RequestBodies'
 import { AttachmentType } from '../enums/AttachmentType.enum'
 import convertAudioToWav from '../utils/convertAudioToWav.util'
 import { promises as fs } from 'fs'
+import createID from '../utils/createID.util'
 
 const addAttachment = (attachmentType: AttachmentType) => {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -27,12 +27,13 @@ const addAttachment = (attachmentType: AttachmentType) => {
                 res.on('finish', () => fs.unlink(pathOfFileToUpload)
                     .catch(() => console.log('Could not delete file.')))
             }
+            const attachmentID = createID('attachment')
             const url = await uploadFileToCloudStorage(
-                pathOfFileToUpload, getAuthUser(res).id, id, attachmentType, constants.nodeEnv
+                pathOfFileToUpload, `${id}/${attachmentID}`, attachmentType, constants.nodeEnv
             )
             const newNote = await noteAttachmentsQuery.addAttachment(
                 id,
-                { url, title, description, type: attachmentType }
+                { id: attachmentID, url, title, description, type: attachmentType }
             )
             if (!newNote) return createResponse(res, 400, 'Couldn\'t add attachment.')
 
