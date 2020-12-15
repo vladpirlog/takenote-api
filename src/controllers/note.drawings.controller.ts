@@ -26,7 +26,7 @@ const addDrawing = async (req: Request, res: Response, next: NextFunction) => {
             file.path, `${id}/${drawingID}`, 'image', constants.nodeEnv
         )
 
-        const newNote = await noteDrawingsQuery.addDrawing(
+        const insertedDrawing = await noteDrawingsQuery.addDrawing(
             id,
             {
                 id: drawingID,
@@ -39,8 +39,7 @@ const addDrawing = async (req: Request, res: Response, next: NextFunction) => {
                 variablePenPressure: stringToBoolean(variablePenPressure) || false
             }
         )
-        if (!newNote) return createResponse(res, 400, 'Couldn\'t add drawing.')
-        const insertedDrawing = newNote.drawings[newNote.drawings.length - 1]
+        if (!insertedDrawing) return createResponse(res, 400, 'Couldn\'t add drawing.')
         return createResponse(res, 201, 'Drawing added.', {
             drawing: insertedDrawing.getPublicInfo()
         })
@@ -65,7 +64,7 @@ const editDrawing = async (req: Request, res: Response, next: NextFunction) => {
             file.path, `${id}/${drawingID}`, 'image', constants.nodeEnv
         )
 
-        const newNote = await noteDrawingsQuery.editDrawing(
+        const updatedDrawing = await noteDrawingsQuery.editDrawing(
             id,
             drawingID,
             {
@@ -78,8 +77,7 @@ const editDrawing = async (req: Request, res: Response, next: NextFunction) => {
                 variablePenPressure: stringToBoolean(variablePenPressure) || false
             }
         )
-        const updatedDrawing = newNote?.drawings.find(d => d.id === drawingID)
-        if (!newNote || !updatedDrawing) return createResponse(res, 400, 'Couldn\'t edit drawing.')
+        if (!updatedDrawing) return createResponse(res, 400, 'Couldn\'t edit drawing.')
         return createResponse(res, 200, 'Drawing edited.', {
             drawing: updatedDrawing.getPublicInfo()
         })

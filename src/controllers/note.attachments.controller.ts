@@ -31,13 +31,12 @@ const addAttachment = (attachmentType: AttachmentType) => {
             const url = await uploadFileToCloudStorage(
                 pathOfFileToUpload, `${id}/${attachmentID}`, attachmentType, constants.nodeEnv
             )
-            const newNote = await noteAttachmentsQuery.addAttachment(
+            const insertedAttachment = await noteAttachmentsQuery.addAttachment(
                 id,
                 { id: attachmentID, url, title, description, type: attachmentType }
             )
-            if (!newNote) return createResponse(res, 400, 'Couldn\'t add attachment.')
+            if (!insertedAttachment) return createResponse(res, 400, 'Couldn\'t add attachment.')
 
-            const insertedAttachment = newNote.attachments[newNote.attachments.length - 1]
             return createResponse(res, 201, 'Attachment added.', {
                 attachment: insertedAttachment.getPublicInfo()
             })
@@ -50,12 +49,11 @@ const editAttachment = async (req: Request, res: Response, next: NextFunction) =
         const { title, description } = req.body as EditAttachmentBody
         const { id, attachmentID } = req.params
 
-        const newNote = await noteAttachmentsQuery.editAttachment(
+        const updatedAttachment = await noteAttachmentsQuery.editAttachment(
             id, attachmentID, { title, description }
         )
 
-        const updatedAttachment = newNote?.attachments.find(a => a.id === attachmentID)
-        if (!newNote || !updatedAttachment) return createResponse(res, 400, 'Couldn\'t edit attachment.')
+        if (!updatedAttachment) return createResponse(res, 400, 'Couldn\'t edit attachment.')
 
         return createResponse(res, 200, 'Attachment edited.', {
             attachment: updatedAttachment.getPublicInfo()
