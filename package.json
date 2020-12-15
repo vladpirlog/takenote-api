@@ -1,7 +1,7 @@
 {
     "name": "takenote-api",
     "author": "Vlad Pirlog",
-    "description": "The REST API of serving the takenote front-end.",
+    "description": "The REST API of a note-taking application.",
     "keywords": [
         "node",
         "express",

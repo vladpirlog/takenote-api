@@ -2,8 +2,10 @@ import { Response } from 'express'
 import { AuthenticatedUserInfo } from '../types/User'
 
 /**
- * Returns null or an object containing essential info about the user that made the request.
+ * Get basic info about the user making the request.
  * @param res object of type express.Response
+ * @returns an object with id, role and state properties; if the user is not authenticated,
+ * every value in the response object is an empty string
  */
 const getAuthUser = (res: Response): AuthenticatedUserInfo => {
     return res.locals.user ? {

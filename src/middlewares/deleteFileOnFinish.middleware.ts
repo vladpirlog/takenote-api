@@ -8,7 +8,7 @@ const deleteFileOnFinish = (req: Request, res: Response, next: NextFunction) => 
     res.on('finish', () => {
         const file = req.file
         if (file) {
-            fs.unlink(file.path).catch(() => console.log('Could not delete file.'))
+            fs.unlink(file.path).catch(() => console.warn(`Could not delete file ${file.path} from the server.`))
         }
     })
     return next()
