@@ -4,10 +4,11 @@ import redisConfig from '../src/config/redis.config'
 import supertest from 'supertest'
 import app from '../src/app'
 import constants from '../src/config/constants.config'
-import Note from '../src/models/Note'
 import { INoteSchema } from '../src/types/Note'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 import { DrawingBackgroundPattern, DrawingBrushType } from '../src/enums/Drawing.enum'
+import Note from '../src/models/Note'
+import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
 
 describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
@@ -105,6 +106,7 @@ describe('testing the security features of the api', () => {
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
         await redisConfig.close()

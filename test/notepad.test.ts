@@ -8,6 +8,7 @@ import { Role } from '../src/enums/Role.enum'
 import { IUserSchema } from '../src/types/User'
 import { INoteSchema } from '../src/types/Note'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
+import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
 import Note from '../src/models/Note'
 
 describe('test notepad-related operations', () => {
@@ -248,6 +249,7 @@ describe('test notepad-related operations', () => {
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
         await redisConfig.close()
         await mongodbConfig.close()

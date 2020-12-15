@@ -8,6 +8,7 @@ import Note from '../src/models/Note'
 import { getRolesOfNote } from '../src/queries/getRoles.query'
 import { INoteSchema } from '../src/types/Note'
 import { IUserSchema } from '../src/types/User'
+import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('test note role queries', () => {
@@ -55,6 +56,7 @@ describe('test note role queries', () => {
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
         await mongodbConfig.close()
         await redisConfig.close()
