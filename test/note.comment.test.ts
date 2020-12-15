@@ -6,6 +6,7 @@ import redisConfig from '../src/config/redis.config'
 import Note from '../src/models/Note'
 import { ICommentSchema } from '../src/types/Comment'
 import { INoteSchema } from '../src/types/Note'
+import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 
 describe('test note comment-related operations', () => {
@@ -102,6 +103,7 @@ describe('test note comment-related operations', () => {
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
         await redisConfig.close()

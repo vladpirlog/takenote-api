@@ -5,8 +5,9 @@ import app from '../src/app'
 import path from 'path'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 import { AttachmentType } from '../src/enums/AttachmentType.enum'
-import Note from '../src/models/Note'
 import constants from '../src/config/constants.config'
+import Note from '../src/models/Note'
+import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
 
 describe('testing attachments of different types', () => {
     const request = supertest.agent(app)
@@ -75,6 +76,7 @@ describe('testing attachments of different types', () => {
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials.email])
         await redisConfig.close()
         await mongodbConfig.close()

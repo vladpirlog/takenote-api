@@ -6,6 +6,7 @@ import constants from '../src/config/constants.config'
 import redisConfig from '../src/config/redis.config'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 import { DrawingBackgroundPattern, DrawingBrushType } from '../src/enums/Drawing.enum'
+import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
 import Note from '../src/models/Note'
 
 describe('test drawing-related operations', () => {
@@ -145,6 +146,7 @@ describe('test drawing-related operations', () => {
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
+        await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         deleteTestUsers([acceptedCredentials.email])
         await redisConfig.close()
         await mongodbConfig.close()
