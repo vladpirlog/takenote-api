@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
   
     needs: build-and-test
-    if: github.event == 'push'
+    if: github.event_name == 'push'
 
     steps:
       - name: deploying changes to remote server
