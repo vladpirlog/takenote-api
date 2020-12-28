@@ -201,14 +201,14 @@ router.delete(
 // GET all comments of a note
 router.get(
     '/:id/comments',
-    checkNotePermissions([Permission.NOTE_COMMENT_VIEW]),
+    checkNotePermissions([Permission.NOTE_VIEW]),
     noteCommentsController.getAllComments
 )
 
 // GET one comment
 router.get(
     '/:id/comments/:commentID',
-    checkNotePermissions([Permission.NOTE_COMMENT_VIEW]),
+    checkNotePermissions([Permission.NOTE_VIEW]),
     noteCommentsController.getComment
 )
 

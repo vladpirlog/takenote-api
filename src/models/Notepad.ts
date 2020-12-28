@@ -85,11 +85,7 @@ NotepadSchema.methods.getPublicInfo = function (
 
     if (permissionsHeldByUser.includes(Permission.NOTEPAD_VIEW)) {
         publicNotepad.title = this.title
-    }
-    if (permissionsHeldByUser.includes(Permission.NOTEPAD_SHARING_VIEW)) {
         publicNotepad.share = this.share
-    }
-    if (permissionsHeldByUser.includes(Permission.NOTEPAD_COLLABORATOR_VIEW)) {
         publicNotepad.collaborators = Array.from(this.users.values())
             .filter(val => !val.roles.includes(Role.OWNER))
             .map(val => ({ subject: val.subject, roles: val.roles }))
