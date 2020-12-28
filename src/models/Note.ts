@@ -140,36 +140,18 @@ NoteSchema.methods.getPublicInfo = function (
         publicNote.color = userData.color
         publicNote.fixed = userData.fixed
         publicNote.tags = userData.tags
-    }
-
-    const canViewComments = permissionsHeldByUser.includes(Permission.NOTE_COMMENT_VIEW)
-    if (canViewComments) {
         publicNote.comments = {
             enabled: this.comments.enabled,
             items: this.comments.items.map(c => c.getPublicInfo())
         }
-    }
-
-    const canViewCollaborators = permissionsHeldByUser.includes(Permission.NOTE_COLLABORATOR_VIEW) && !this.notepadID
-    if (canViewCollaborators) {
-        publicNote.collaborators = Array.from(this.users.values())
-            .filter(val => !val.roles.includes(Role.OWNER))
-            .map(val => ({ subject: val.subject, roles: val.roles }))
-    }
-
-    const canViewAttachments = permissionsHeldByUser.includes(Permission.NOTE_ATTACHMENT_VIEW)
-    if (canViewAttachments) {
         publicNote.attachments = this.attachments.map(a => a.getPublicInfo())
-    }
-
-    const canViewDrawings = permissionsHeldByUser.includes(Permission.NOTE_DRAWING_VIEW)
-    if (canViewDrawings) {
         publicNote.drawings = this.drawings.map(d => d.getPublicInfo())
-    }
-
-    const canViewSharing = permissionsHeldByUser.includes(Permission.NOTE_SHARING_VIEW) && !this.notepadID
-    if (canViewSharing) {
-        publicNote.share = this.share
+        if (!this.notepadID) {
+            publicNote.collaborators = Array.from(this.users.values())
+                .filter(val => !val.roles.includes(Role.OWNER))
+                .map(val => ({ subject: val.subject, roles: val.roles }))
+            publicNote.share = this.share
+        }
     }
     return Object.freeze(publicNote)
 }
