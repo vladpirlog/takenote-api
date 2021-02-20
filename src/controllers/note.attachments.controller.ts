@@ -28,7 +28,10 @@ const addAttachment = (attachmentType: AttachmentType) => {
             }
             const attachmentID = createID('attachment')
             const url = await uploadFileToCloudStorage(
-                pathOfFileToUpload, `${id}/${attachmentID}`, attachmentType, constants.nodeEnv
+                pathOfFileToUpload,
+                `${id}/${attachmentID}.${file.originalname.split('.').pop()}`,
+                attachmentType,
+                constants.nodeEnv
             )
             const insertedAttachment = await noteAttachmentsQuery.addAttachment(
                 id,
