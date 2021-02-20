@@ -3,7 +3,6 @@ import oauth from '../utils/oauth.util'
 import constantsConfig from '../config/constants.config'
 import createResponse from '../utils/createResponse.util'
 import userQuery from '../queries/user.query'
-import getUsernameFromEmail from '../utils/getUsernameFromEmail.util'
 import cookie from '../utils/cookie.util'
 import OAuthProvider from '../enums/OAuthProvider.enum'
 
@@ -17,10 +16,9 @@ const google = async (req: Request, res: Response, next: NextFunction) => {
         const userData = await oauth.getUserDataWithAccessToken(
             tokenData.accessToken, endpoints.userInfo
         )
-        const user = await userQuery.getByUsernameOrEmail(userData.email)
+        const user = await userQuery.getByEmail(userData.email)
         if (!user) {
             const newUser = await userQuery.createNewOAuthUser({
-                username: getUsernameFromEmail(userData.email),
                 email: userData.email,
                 oauth: {
                     provider: OAuthProvider.GOOGLE,

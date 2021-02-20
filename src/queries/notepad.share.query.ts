@@ -9,7 +9,7 @@ import Color from '../enums/Color.enum'
 
 const addCollaborator = async (
     notepadID: INotepadSchema['id'],
-    collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
+    collaborator: Pick<IUserSchema, 'id' | 'email'>,
     roles: Role[]
 ) => {
     const session = await mongoose.startSession()

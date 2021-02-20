@@ -15,11 +15,6 @@ export const UserSchema = new Schema<IUserSchema>(
             required: true,
             default: () => createID('user')
         },
-        username: {
-            type: String,
-            required: true,
-            unique: true
-        },
         email: {
             type: String,
             required: true,
@@ -110,7 +105,6 @@ UserSchema.methods.isOAuthUser = function () {
 UserSchema.methods.getPublicInfo = function () {
     return Object.freeze({
         id: this.id,
-        username: this.username,
         email: this.email,
         state: this.state,
         isOAuthUser: this.isOAuthUser(),

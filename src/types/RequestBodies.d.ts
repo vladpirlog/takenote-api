@@ -12,7 +12,6 @@ export interface LoginBody {
 
 export interface RegisterBody {
     email: IUserSchema['email']
-    username: IUserSchema['username']
     password: string,
     confirm_password: string
     'g-recaptcha-response'?: string
@@ -29,7 +28,7 @@ export interface OldPasswordBody {
 }
 
 export interface EmailBody {
-    email: IUserSchema['email'] | IUserSchema['username']
+    email: IUserSchema['email']
 }
 
 export interface NoteBody {
@@ -62,13 +61,8 @@ export interface DrawingBody {
 }
 
 export interface CollaboratorBody {
-    user: IUserSchema['username'] | IUserSchema['email']
+    user: IUserSchema['email']
     type: Role.PRIMARY_COLLABORATOR | Role.SECONDARY_COLLABORATOR | Role.OBSERVER
-}
-
-export interface CheckCredentialsBody {
-    username?: IUserSchema['username']
-    email?: IUserSchema['email']
 }
 
 export interface CommentBody {

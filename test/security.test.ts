@@ -26,7 +26,7 @@ describe('testing the security features of the api', () => {
         const res = await request
             .post('/auth/login')
             .send({
-                email: acceptedCredentials.username,
+                email: acceptedCredentials.email,
                 password: acceptedCredentials.password
             })
         authCookie = res.header['set-cookie'][0]

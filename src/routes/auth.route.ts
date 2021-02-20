@@ -96,7 +96,7 @@ router.get(
 router.post(
     '/check_credentials',
     checkAuthStatus([AuthStatus.NOT_LOGGED_IN]),
-    validateBody('checkCredentials', 'Credentials invalid.'),
+    validateBody('email', 'Credentials invalid.'),
     checkUniqueUser(true)
 )
 

@@ -52,7 +52,6 @@ describe('test note-related operations', () => {
         expect(res.body.status).toBe(201)
         expect(res.body.note).toHaveProperty('id')
         expect(res.body.note.owner).toHaveProperty('id')
-        expect(res.body.note.owner).toHaveProperty('username')
         expect(res.body.note.owner).toHaveProperty('email')
         expect(res.body.note.archived).toBe(false)
         expect(res.body.note.color).toBe(Color.DEFAULT)
@@ -166,18 +165,17 @@ describe('test note-related operations', () => {
         expect(res.body.status).toBe(200)
     }, 20000)
 
-    test('add collaborator using its username', async () => {
+    test('add collaborator using its email', async () => {
         const res = await request
             .post(`/notes/${createdNoteID}/share/collaborators`)
             .send({
-                user: acceptedCredentials2.username,
+                user: acceptedCredentials2.email,
                 type: Role.OBSERVER
             })
         collaboratorID = res.body.collaborator.subject.id
         expect(res.body.status).toBe(200)
         expect(res.body.collaborator.roles).toEqual([Role.OBSERVER])
         expect(res.body.collaborator.subject).toHaveProperty('id')
-        expect(res.body.collaborator.subject).toHaveProperty('username')
         expect(res.body.collaborator.subject).toHaveProperty('email')
     }, 20000)
 
@@ -191,7 +189,6 @@ describe('test note-related operations', () => {
         expect(res.body.status).toBe(200)
         expect(res.body.collaborator.roles).toEqual([Role.PRIMARY_COLLABORATOR])
         expect(res.body.collaborator.subject).toHaveProperty('id')
-        expect(res.body.collaborator.subject).toHaveProperty('username')
         expect(res.body.collaborator.subject).toHaveProperty('email')
     }, 20000)
 
@@ -333,7 +330,6 @@ describe('test note-related operations', () => {
         expect(res.body.note.archived).toBe(false)
         expect(res.body.note.fixed).toBe(false)
         expect(res.body.note.owner).toHaveProperty('id')
-        expect(res.body.note.owner).toHaveProperty('username')
         expect(res.body.note.owner).toHaveProperty('email')
         expect(res.body.note.collaborators).toEqual([])
     }, 20000)

@@ -14,10 +14,6 @@ export const CommentSchema = new Schema<ICommentSchema>({
             required: true,
             ref: 'User'
         },
-        username: {
-            type: String,
-            required: true
-        },
         email: {
             type: String,
             required: true

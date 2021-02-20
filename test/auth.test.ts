@@ -39,7 +39,6 @@ describe('test registration and authentication flows', () => {
             .post('/auth/register')
             .send({
                 email: rejectedCredentials.email,
-                username: rejectedCredentials.username,
                 password: rejectedCredentials.password,
                 confirm_password: rejectedCredentials.password
             })
@@ -51,13 +50,11 @@ describe('test registration and authentication flows', () => {
             .post('/auth/register')
             .send({
                 email: acceptedCredentials.email,
-                username: acceptedCredentials.username,
                 password: acceptedCredentials.password,
                 confirm_password: acceptedCredentials.password
             })
         expect(res.status).toBe(201)
         expect(res.body).toHaveProperty('user')
-        expect(res.body.user.username).toBe(acceptedCredentials.username)
         expect(res.body.user.email).toBe(acceptedCredentials.email)
         expect(res.body.user).toHaveProperty('id')
         expect(res.body.user).toHaveProperty('state')
@@ -75,23 +72,22 @@ describe('test registration and authentication flows', () => {
         const res = await request
             .post('/auth/login')
             .send({
-                email: rejectedCredentials.username,
+                email: rejectedCredentials.email,
                 password: rejectedCredentials.password
             })
         expect(res.status).toBeGreaterThanOrEqual(400)
     }, 20000)
 
-    test('successful username-pw login', async () => {
+    test('successful email-pw login', async () => {
         const res = await request
             .post('/auth/login')
             .send({
-                email: acceptedCredentials.username,
+                email: acceptedCredentials.email,
                 password: acceptedCredentials.password
             })
         expect(res.status).toBe(200)
         expect(res.body).toHaveProperty('user')
         expect(res.body.user.email).toBe(acceptedCredentials.email)
-        expect(res.body.user.username).toBe(acceptedCredentials.username)
         expect(res.body.user).toHaveProperty('id')
         expect(res.body.user).toHaveProperty('state')
         expect(res.body.user).toHaveProperty('twoFactorAuth')
@@ -119,7 +115,6 @@ describe('test registration and authentication flows', () => {
         expect(res.status).toBe(200)
         expect(res.body).toHaveProperty('user')
         expect(res.body.user.email).toBe(acceptedCredentials.email)
-        expect(res.body.user.username).toBe(acceptedCredentials.username)
         expect(res.body.user).toHaveProperty('id')
         expect(res.body.user).toHaveProperty('state')
         expect(res.body.user).toHaveProperty('twoFactorAuth')

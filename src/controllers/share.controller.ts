@@ -88,14 +88,14 @@ const addCollaborator = (entityType: 'note' | 'notepad') => {
             const { id } = req.params
             const { user, type } = req.body as CollaboratorBody
 
-            const collaborator = await userQuery.getByUsernameOrEmail(user)
+            const collaborator = await userQuery.getByEmail(user)
             if (!collaborator || collaborator.id === getAuthUser(res).id) {
                 return createResponse(res, 400)
             }
 
             const newEntity = await shareQuery.addCollaborator(
                 id,
-                { id: collaborator.id, username: collaborator.username, email: collaborator.email },
+                { id: collaborator.id, email: collaborator.email },
                 [type]
             )
             const newCollaborator = newEntity?.users.get(collaborator.id)

@@ -101,13 +101,13 @@ const makeTokenMailContent = (
 ) => {
     if (tokenType === 'confirmation') {
         return {
-            subject: `TakeNote Account Confirmation - ${user.username}`,
+            subject: `TakeNote Account Confirmation - ${user.email}`,
             text: `Go to this URL to confirm your account: ${url}`,
             html: `<h3>Click the button below to confirm your TakeNote account</h3><button><a href=${url} target="_blank">Confirm</a></button><p>Button not working? Go to this URL: ${url}</p>`
         }
     }
     return {
-        subject: `TakeNote Account Password Reset - ${user.username}`,
+        subject: `TakeNote Account Password Reset - ${user.email}`,
         text: `Go to this URL to reset your password: ${url}`,
         html: `<h3>Click the button below to reset your TakeNote password</h3><button><a href=${url} target="_blank">Reset Password</a></button><p>Button not working? Go to this URL: ${url}</p>`
     }
@@ -121,13 +121,13 @@ const makeTokenMailContent = (
 const makeNoticeMailContent = (user: IUserSchema, forDeletion: boolean) => {
     if (forDeletion) {
         return {
-            subject: `TakeNote Account Deletion - ${user.username}`,
+            subject: `TakeNote Account Deletion - ${user.email}`,
             text: 'Your account is scheduled for deletion. You can abort this process in the next 7 days.',
             html: 'Your account is scheduled for deletion. You can abort this process in the next 7 days.'
         }
     }
     return {
-        subject: `TakeNote Account Recovery - ${user.username}`,
+        subject: `TakeNote Account Recovery - ${user.email}`,
         text: 'Your account has been recovered, alongside all the data associated with it.',
         html: 'Your account has been recovered, alongside all the data associated with it.'
     }

@@ -46,7 +46,7 @@ describe('test note role queries', () => {
             const res = await request
                 .post(`/notes/${createdNoteID}/share/collaborators`)
                 .send({
-                    user: acceptedCredentials2.username,
+                    user: acceptedCredentials2.email,
                     type: role
                 })
             const noteRoles = Array.from(await getRolesOfNote(res.body.collaborator.subject.id, createdNoteID))

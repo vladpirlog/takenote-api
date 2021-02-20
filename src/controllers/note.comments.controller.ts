@@ -46,7 +46,7 @@ const addComment = async (req: Request, res: Response, next: NextFunction) => {
         if (!user) return createResponse(res, 400)
 
         const note = await noteCommentsQuery.addComment(id, {
-            subject: { id: user?.id, username: user?.username, email: user?.email },
+            subject: { id: user?.id, email: user?.email },
             text
         })
         if (!note) return createResponse(res, 400)

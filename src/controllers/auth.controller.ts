@@ -23,7 +23,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { email, password } = req.body as LoginBody
 
-        const user = await userQuery.getByUsernameOrEmail(email)
+        const user = await userQuery.getByEmail(email)
         if (!user || user.isOAuthUser() || !await user.validPassword(password)) {
             return createResponse(res, 401)
         }
@@ -51,9 +51,8 @@ const logout = async (req: Request, res: Response, next: NextFunction) => {
 
 const register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { username, email, password } = req.body as RegisterBody
+        const { email, password } = req.body as RegisterBody
         const user = await userQuery.createNewUser({
-            username,
             email,
             password
         })

@@ -58,7 +58,7 @@ const addNote = async (req: Request, res: Response, next: NextFunction) => {
             archived: archivedParam,
             color,
             fixed: fixedParam,
-            owner: { id: authUser.id, username: authUser.username, email: authUser.email }
+            owner: { id: authUser.id, email: authUser.email }
         })
         return newNote
             ? createResponse(res, 201, 'Note created.', {
@@ -127,7 +127,7 @@ const duplicateNote = async (req: Request, res: Response, next: NextFunction) =>
                 color: notePublicInfo.color,
                 fixed: notePublicInfo.fixed,
                 owner: {
-                    id: authUser.id, username: authUser.username, email: authUser.email
+                    id: authUser.id, email: authUser.email
                 }
             }
         )
