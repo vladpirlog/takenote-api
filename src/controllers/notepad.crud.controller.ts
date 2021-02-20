@@ -68,7 +68,7 @@ const addNotepad = async (req: Request, res: Response, next: NextFunction) => {
         const notepad = await notepadCrudQuery.createOne({
             title,
             owner: {
-                id: authUser.id, username: authUser.username, email: authUser.email
+                id: authUser.id, email: authUser.email
             }
         })
 

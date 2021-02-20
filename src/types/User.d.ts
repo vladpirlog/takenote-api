@@ -5,7 +5,6 @@ import { IEntity } from './Entity'
 import { ITokenSchema } from './Token'
 
 export interface IUserSchema extends IEntity {
-    username: string
     email: string
     password: string
     state: State
@@ -64,7 +63,7 @@ export interface IUserSchema extends IEntity {
     is2faRequiredOnLogin(): boolean
 }
 
-export type PublicUserInfo = Pick<IUserSchema, 'id' | 'username' | 'email' | 'state'>
+export type PublicUserInfo = Pick<IUserSchema, 'id' | 'email' | 'state'>
     & {
         twoFactorAuth: Pick<IUserSchema['twoFactorAuth'], 'active' | 'nextCheck'>,
         isOAuthUser: boolean

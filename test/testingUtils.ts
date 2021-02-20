@@ -4,19 +4,17 @@ import State from '../src/enums/State.enum'
 import User from '../src/models/User'
 
 export const generateValidCredentials = () => {
-    const username = nanoid(12)
-    const email = `${username}@example.com`
+    const email = `${nanoid(12)}@example.com`
     const password = `${nanoid(10)}aA1!`
 
-    return { username, email, password }
+    return { email, password }
 }
 
 export const generateRejectedCredentials = () => {
-    const username = nanoid(12) + '~@~'
-    const email = `${username}@example.com`
+    const email = `${nanoid(12) + '~@~'}@example.com`
     const password = 'abc'
 
-    return { username, email, password }
+    return { email, password }
 }
 
 export const registerTestUser = async (request: supertest.SuperAgentTest) => {
@@ -25,7 +23,6 @@ export const registerTestUser = async (request: supertest.SuperAgentTest) => {
         .post('/auth/register')
         .send({
             email: credentials.email,
-            username: credentials.username,
             password: credentials.password,
             confirm_password: credentials.password
         })

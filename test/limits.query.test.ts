@@ -99,7 +99,7 @@ describe('test queries for limit-checking', () => {
         await request
             .post(`/notes/${createdNotesID[0]}/share/collaborators`)
             .send({
-                user: acceptedCredentials2.username,
+                user: acceptedCredentials2.email,
                 type: Role.OBSERVER
             })
         const n = await limitsQuery.collaborator(createdNotesID[0])

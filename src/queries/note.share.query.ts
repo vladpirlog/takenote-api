@@ -19,12 +19,12 @@ const getOneByShareCode = (code: INoteSchema['share']['code']) => {
 /**
  * Adds a collaborator to a note. Inserts a new collaborator or updates the existing one.
  * @param noteID id of the note
- * @param collaborator id, username and email of the collaborator
+ * @param collaborator id and email of the collaborator
  * @param roles the role array to be assigned to that user
  */
 const addCollaborator = async (
     noteID: INoteSchema['id'],
-    collaborator: Pick<IUserSchema, 'id' | 'username' | 'email'>,
+    collaborator: Pick<IUserSchema, 'id' | 'email'>,
     roles: Role[]
 ) => {
     const note = await Note.findOne({ id: noteID, notepadID: '' }).exec()

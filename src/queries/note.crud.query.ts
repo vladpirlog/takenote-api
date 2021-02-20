@@ -15,7 +15,7 @@ type AddOrUpdateNoteProps = Partial<Pick<INoteSchema, 'title' | 'content'> & {
 }>
 
 type CreateNoteArg = AddOrUpdateNoteProps & {
-    owner: Pick<IUserSchema, 'id' | 'username' | 'email'>
+    owner: Pick<IUserSchema, 'id' | 'email'>
 }
 
 /**

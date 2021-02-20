@@ -20,19 +20,13 @@ const getById = (
 }
 
 /**
- * Searches for and returns a user using its username, email or both.
- * If both arguments are provided, the first will be treated as the username and the second as email.
- * Otherwise, the first argument will be treated as email or username.
- * @param username username of a user
+ * Searches for and returns a user using its email.
  * @param email email of a user
  */
-const getByUsernameOrEmail = (
-    username?: IUserSchema['username'] | IUserSchema['email'],
+const getByEmail = (
     email?: IUserSchema['email']
 ) => {
-    return User.findOne({
-        $or: [{ username: username }, { email: email || username }]
-    }).exec()
+    return User.findOne({ email }).exec()
 }
 
 /**
@@ -66,7 +60,7 @@ const getByToken = (
  * Creates a new user with the properties given.
  * @param props object representing basic user info to be added to the database
  */
-const createNewUser = (props: Pick<IUserSchema, 'username' | 'email' | 'password'>) => {
+const createNewUser = (props: Pick<IUserSchema, 'email' | 'password'>) => {
     const token = new Token({
         id: createID('confirmation'),
         exp: Math.floor(getUnixTime() + constants.token.expires / 1000)
@@ -79,7 +73,7 @@ const createNewUser = (props: Pick<IUserSchema, 'username' | 'email' | 'password
  * Creates a new OAuth user with the properties given.
  * @param props object representing basic user info and OAuth data to be added to the database
  */
-const createNewOAuthUser = (props: Pick<IUserSchema, 'username' | 'email' | 'oauth'>) => {
+const createNewOAuthUser = (props: Pick<IUserSchema, 'email' | 'oauth'>) => {
     const newUser = new User({
         ...props, state: State.ACTIVE
     })
@@ -104,13 +98,12 @@ const setUserState = (
 
 /**
  * Creates and assigns a certain type of token to a given user.
- * @param identifier email, username or id of a user
+ * @param identifier email or id of a user
  * @param type the type of token to be added to that user
  */
 const setNewToken = (
     identifier:
         | IUserSchema['email']
-        | IUserSchema['username']
         | IUserSchema['id'],
     type: 'reset' | 'confirmation'
 ) => {
@@ -125,7 +118,6 @@ const setNewToken = (
     return User.findOneAndUpdate(
         {
             $or: [
-                { username: identifier },
                 { email: identifier },
                 { id: identifier }
             ]
@@ -192,7 +184,7 @@ const remove2faData = (userID: IUserSchema['id']) => {
 
 export default {
     getById,
-    getByUsernameOrEmail,
+    getByEmail,
     getByToken,
     createNewUser,
     createNewOAuthUser,

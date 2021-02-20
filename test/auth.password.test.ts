@@ -83,11 +83,11 @@ describe('test pw reset flows', () => {
         expect(res.status).toBe(200)
     }, 20000)
 
-    test('successful username-pw login', async () => {
+    test('successful email-pw login', async () => {
         const res = await request
             .post('/auth/login')
             .send({
-                email: acceptedCredentials.username,
+                email: acceptedCredentials.email,
                 password: acceptedCredentials.password
             })
 

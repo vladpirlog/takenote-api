@@ -4,7 +4,6 @@ import createResponse from '../utils/createResponse.util'
 import Joi from 'joi'
 import {
     AddAttachmentBody,
-    CheckCredentialsBody,
     CollaboratorBody,
     CommentBody,
     DrawingBody,
@@ -31,11 +30,6 @@ const getJoiStringSchema = (regex?: RegExp) => {
 }
 
 const EMAIL_SCHEMA = Joi.string().required().email()
-const EMAIL_OR_USERNAME_SCHEMA = Joi
-    .when(Joi.ref('.'), {
-        is: EMAIL_SCHEMA,
-        otherwise: getJoiStringSchema(constants.regex.username)
-    })
 const ATTACHMENT_TITLE_SCHEMA = Joi.string().max(32).allow('')
 const ATTACHMENT_DESCRIPTION_SCHEMA = Joi.string().max(256).allow('')
 const COMMENT_TEXT_SCHEMA = Joi.string().required().max(120)
@@ -61,12 +55,11 @@ const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/
 
 const bodySchemas = {
     login: Joi.object<LoginBody>({
-        email: EMAIL_OR_USERNAME_SCHEMA,
+        email: EMAIL_SCHEMA,
         password: getJoiStringSchema(constants.regex.password),
         'g-recaptcha-response': Joi.string()
     }),
     register: Joi.object<RegisterBody>({
-        username: getJoiStringSchema(constants.regex.username),
         email: EMAIL_SCHEMA,
         password: getJoiStringSchema(constants.regex.password),
         confirm_password: Joi.ref('password'),
@@ -81,7 +74,7 @@ const bodySchemas = {
         old_password: getJoiStringSchema(constants.regex.password)
     }),
     email: Joi.object<EmailBody>({
-        email: EMAIL_OR_USERNAME_SCHEMA
+        email: EMAIL_SCHEMA
     }),
     note: Joi.object<NoteBody>({
         title: NOTE_AND_NOTEPAD_TITLE_SCHEMA,
@@ -107,15 +100,11 @@ const bodySchemas = {
         variable_pen_pressure: BOOLEAN_AS_STRING_SCHEMA.required()
     }),
     collaborator: Joi.object<CollaboratorBody>({
-        user: EMAIL_OR_USERNAME_SCHEMA,
+        user: EMAIL_SCHEMA,
         type: Joi.string().required().valid(
             Role.PRIMARY_COLLABORATOR, Role.SECONDARY_COLLABORATOR, Role.OBSERVER
         )
     }),
-    checkCredentials: Joi.object<CheckCredentialsBody>({
-        username: Joi.string().regex(constants.regex.username),
-        email: Joi.string().email()
-    }).or('username', 'email'),
     comment: Joi.object<CommentBody>({
         text: COMMENT_TEXT_SCHEMA
     }),

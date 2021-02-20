@@ -19,7 +19,7 @@ export interface INoteSchema extends IEntity {
     }
     share: { code?: string, active: boolean }
     users: Map<IUserSchema['id'], {
-        subject: Pick<IUserSchema, 'id' | 'username' | 'email'>
+        subject: Pick<IUserSchema, 'id' | 'email'>
         tags: string[]
         archived: boolean
         color: Color
@@ -37,13 +37,13 @@ export interface INoteSchema extends IEntity {
 }
 
 type PublicNoteInfoMandatoryFields = Pick<INoteSchema, 'id' | 'createdAt' | 'updatedAt'>
-    & { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
+    & { owner: Pick<IUserSchema, 'id' | 'email'> }
 
 type PublicNoteInfoOptionalFields = Partial<
         Pick<INoteSchema, 'title' | 'content' | 'share'>
         & {
             collaborators: {
-                subject: Pick<IUserSchema, 'id' | 'username' | 'email'>
+                subject: Pick<IUserSchema, 'id' | 'email'>
                 roles: Role[]
             }[]
             comments: {

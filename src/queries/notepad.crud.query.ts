@@ -102,7 +102,7 @@ const getOneByID = async (
 
 type CreateNotepadArg = {
     title?: INotepadSchema['title']
-    owner: Pick<IUserSchema, 'id' | 'username' | 'email'>
+    owner: Pick<IUserSchema, 'id' | 'email'>
 }
 
 /**

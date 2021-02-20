@@ -106,7 +106,6 @@ describe('test notepad-related operations', () => {
         expect(res.body.status).toBe(200)
         expect(collaborator.roles).toEqual([Role.OBSERVER])
         expect(collaborator.subject.email).toBe(acceptedCredentials2.email)
-        expect(collaborator.subject.username).toBe(acceptedCredentials2.username)
     }, 20000)
 
     test('should not add self as a collaborator to a notepad', async () => {
@@ -123,14 +122,13 @@ describe('test notepad-related operations', () => {
         const res = await request
             .post(`/notepads/${createdNotepadID}/share/collaborators`)
             .send({
-                user: acceptedCredentials2.username,
+                user: acceptedCredentials2.email,
                 type: Role.SECONDARY_COLLABORATOR
             })
         const collaborator = res.body.collaborator
         expect(res.body.status).toBe(200)
         expect(collaborator.roles).toEqual([Role.SECONDARY_COLLABORATOR])
         expect(collaborator.subject.email).toBe(acceptedCredentials2.email)
-        expect(collaborator.subject.username).toBe(acceptedCredentials2.username)
     }, 20000)
 
     test('should add a new note to a notepad', async () => {
@@ -148,7 +146,6 @@ describe('test notepad-related operations', () => {
         expect(note).toHaveProperty('owner')
         expect(note).toHaveProperty('comments')
         expect(note.owner.email).toBe(acceptedCredentials1.email)
-        expect(note.owner.username).toBe(acceptedCredentials1.username)
         expect(note.title).toBe('my-title')
         expect(note.content).toBe('my-content')
         expect(note.archived).toBeFalsy()
@@ -186,7 +183,6 @@ describe('test notepad-related operations', () => {
         expect(notepad.owner.email).toBe(acceptedCredentials1.email)
         expect(notepad.collaborators.length).toBe(1)
         expect(notepad.collaborators[0].subject.email).toBe(acceptedCredentials2.email)
-        expect(notepad.collaborators[0].subject.username).toBe(acceptedCredentials2.username)
         expect(notepad.collaborators[0].roles).toEqual([Role.SECONDARY_COLLABORATOR])
         expect(notepad.notes.length).toBe(2)
 
@@ -202,7 +198,6 @@ describe('test notepad-related operations', () => {
             expect(note).toHaveProperty('fixed')
             expect(note).toHaveProperty('tags')
             expect(note.owner.email).toBe(acceptedCredentials1.email)
-            expect(note.owner.username).toBe(acceptedCredentials1.username)
             expect(note.comments.enabled).toBeTruthy()
             expect(note.comments.items).toEqual([])
             expect(note.attachments).toEqual([])

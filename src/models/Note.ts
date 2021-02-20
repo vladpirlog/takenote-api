@@ -53,10 +53,6 @@ export const NoteSchema = new Schema<INoteSchema>(
                         required: true,
                         ref: 'User'
                     },
-                    username: {
-                        type: String,
-                        required: true
-                    },
                     email: {
                         type: String,
                         required: true

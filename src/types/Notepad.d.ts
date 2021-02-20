@@ -7,7 +7,7 @@ import { Role } from '../enums/Role.enum'
 export interface INotepadSchema extends IEntity {
     title: string
     users: Map<IUserSchema['id'], {
-        subject: Pick<IUserSchema, 'id' | 'username' | 'email'>
+        subject: Pick<IUserSchema, 'id' | 'email'>
         roles: Role[]
     }>
     share: { code?: string, active: boolean }
@@ -21,13 +21,13 @@ export interface INotepadSchema extends IEntity {
 }
 
 type PublicNotepadInfoMandatoryFields = Pick<INotepadSchema, 'id' | 'createdAt' | 'updatedAt'>
-    & { owner: Pick<IUserSchema, 'id' | 'username' | 'email'> }
+    & { owner: Pick<IUserSchema, 'id' | 'email'> }
 
 type PublicNotepadInfoOptionalFields = Partial<
     Pick<INotepadSchema, 'title' | 'share'> & {
         notes: PublicNoteInfo[]
         collaborators: {
-            subject: Pick<IUserSchema, 'id' | 'username' | 'email'>
+            subject: Pick<IUserSchema, 'id' | 'email'>
             roles: Role[]
         }[]
     }
