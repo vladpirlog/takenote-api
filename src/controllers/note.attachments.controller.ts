@@ -12,7 +12,7 @@ import createID from '../utils/createID.util'
 const addAttachment = (attachmentType: AttachmentType) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const { title, description } = req.body as AddAttachmentBody
+            const { title } = req.body as AddAttachmentBody
             const { id } = req.params
             const file = req.file
             if (!file) return createResponse(res, 400, 'File not sent.')
@@ -35,7 +35,7 @@ const addAttachment = (attachmentType: AttachmentType) => {
             )
             const insertedAttachment = await noteAttachmentsQuery.addAttachment(
                 id,
-                { id: attachmentID, url, title, description, type: attachmentType }
+                { id: attachmentID, url, title, type: attachmentType }
             )
             if (!insertedAttachment) return createResponse(res, 400, 'Couldn\'t add attachment.')
 
@@ -48,12 +48,10 @@ const addAttachment = (attachmentType: AttachmentType) => {
 
 const editAttachment = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { title, description } = req.body as EditAttachmentBody
+        const { title } = req.body as EditAttachmentBody
         const { id, attachmentID } = req.params
 
-        const updatedAttachment = await noteAttachmentsQuery.editAttachment(
-            id, attachmentID, { title, description }
-        )
+        const updatedAttachment = await noteAttachmentsQuery.editAttachment(id, attachmentID, title)
 
         if (!updatedAttachment) return createResponse(res, 400, 'Couldn\'t edit attachment.')
 

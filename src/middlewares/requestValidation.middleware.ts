@@ -31,7 +31,6 @@ const getJoiStringSchema = (regex?: RegExp) => {
 
 const EMAIL_SCHEMA = Joi.string().required().email()
 const ATTACHMENT_TITLE_SCHEMA = Joi.string().max(32).allow('')
-const ATTACHMENT_DESCRIPTION_SCHEMA = Joi.string().max(256).allow('')
 const COMMENT_TEXT_SCHEMA = Joi.string().required().max(120)
 const NOTE_AND_NOTEPAD_TITLE_SCHEMA = Joi.string().max(100).allow('')
 const NOTE_CONTENT_SCHEMA = Joi.string().max(10000).allow('')
@@ -84,13 +83,11 @@ const bodySchemas = {
         color: Joi.valid(...Object.values(Color))
     }),
     addAttachment: Joi.object<AddAttachmentBody>({
-        title: ATTACHMENT_TITLE_SCHEMA,
-        description: ATTACHMENT_DESCRIPTION_SCHEMA
+        title: ATTACHMENT_TITLE_SCHEMA
     }),
     editAttachment: Joi.object<EditAttachmentBody>({
-        title: ATTACHMENT_TITLE_SCHEMA,
-        description: ATTACHMENT_DESCRIPTION_SCHEMA
-    }).or('title', 'description'),
+        title: ATTACHMENT_TITLE_SCHEMA.required()
+    }),
     drawing: Joi.object<DrawingBody>({
         brush_color: getJoiStringSchema(HEX_COLOR_REGEX),
         brush_size: Joi.number().positive().required(),

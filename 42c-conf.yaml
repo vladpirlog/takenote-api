@@ -29,7 +29,7 @@ tags:
   - name: collaborators
     description: Other users with the ability to view or edit some user's note
   - name: attachments
-    description: Images or audio files attached to a note; may have a title and a description
+    description: Images or audio files attached to a note; may have a title
   - name: drawings
     description: Hand drawings saved in the db as a PNG image alongside metadata
   - name: tags
@@ -2589,9 +2589,11 @@ components:
         title:
           type: string
           maxLength: 32
-        description:
+        type:
           type: string
-          maxLength: 256
+          enum:
+            - image
+            - audio
         createdAt:
           type: string
           format: date-time
@@ -3390,9 +3392,6 @@ components:
               title:
                 type: string
                 maxLength: 32
-              description:
-                type: string
-                maxLength: 256
           encoding:
             image:
               contentType: image/jpeg, image/png
@@ -3412,9 +3411,6 @@ components:
               title:
                 type: string
                 maxLength: 32
-              description:
-                type: string
-                maxLength: 256
           encoding:
             audio:
               contentType: audio/aac, audio/mpeg, audio/wav, audio/wave, audio/ogg, audio/webm, video/webm
@@ -3428,9 +3424,6 @@ components:
               title:
                 type: string
                 maxLength: 32
-              description:
-                type: string
-                maxLength: 256
         application/json:
           schema:
             additionalProperties: false
@@ -3439,9 +3432,6 @@ components:
               title:
                 type: string
                 maxLength: 32
-              description:
-                type: string
-                maxLength: 256
     AddOrUpdateDrawing:
       content:
         multipart/formdata:

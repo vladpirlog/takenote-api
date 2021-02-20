@@ -236,12 +236,10 @@ describe('test note-related operations', () => {
         const res = await request
             .post(`/notes/${createdNoteID}/attachments/image`)
             .field('title', 'my-title')
-            .field('description', 'my-description')
             .attach('image', pngTestImage)
         attachmentID = res.body.attachment.id
         expect(res.body.status).toBe(201)
         expect(res.body.attachment.title).toBe('my-title')
-        expect(res.body.attachment.description).toBe('my-description')
         expect(res.body.attachment).toHaveProperty('id')
         expect(res.body.attachment).toHaveProperty('url')
         expect(res.body.attachment.type).toBe(AttachmentType.IMAGE)
@@ -251,12 +249,10 @@ describe('test note-related operations', () => {
         const res = await request
             .put(`/notes/${createdNoteID}/attachments/${attachmentID}`)
             .send({
-                title: 'my-new-title',
-                description: 'my-new-description'
+                title: 'my-new-title'
             })
         expect(res.body.status).toBe(200)
         expect(res.body.attachment.title).toBe('my-new-title')
-        expect(res.body.attachment.description).toBe('my-new-description')
         expect(res.body.attachment).toHaveProperty('id')
         expect(res.body.attachment).toHaveProperty('url')
         expect(res.body.attachment.type).toBe(AttachmentType.IMAGE)
