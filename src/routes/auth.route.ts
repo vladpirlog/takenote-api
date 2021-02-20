@@ -88,7 +88,7 @@ router.post(
 // Token validation handler
 router.get(
     '/check_token',
-    validateQuery('resetToken', 'Token invalid.'),
+    validateQuery('resetOrConfirmationToken', 'Token invalid.'),
     checkTokenExpiration
 )
 
