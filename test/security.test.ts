@@ -52,7 +52,6 @@ describe('testing the security features of the api', () => {
             const res = await request
                 .post(`/notes/${createdNoteID}/attachments/image`)
                 .field('title', 'my-title')
-                .field('description', 'my-description')
                 .attach('image', pngTestImage)
             statuses.push(res.status)
         }
@@ -61,7 +60,6 @@ describe('testing the security features of the api', () => {
         const res2 = await request
             .post(`/notes/${createdNoteID}/attachments/image`)
             .field('title', 'my-title')
-            .field('description', 'my-description')
             .attach('image', pngTestImage)
         expect(res2.status).toBe(400)
     }, 50000)

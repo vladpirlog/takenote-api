@@ -17,10 +17,6 @@ export const AttachmentSchema = new Schema<IAttachmentSchema>({
         type: String,
         required: false
     },
-    description: {
-        type: String,
-        required: false
-    },
     type: {
         type: AttachmentType,
         required: true
@@ -31,7 +27,6 @@ AttachmentSchema.methods.getPublicInfo = function () {
     return Object.freeze({
         id: this.id,
         title: this.title,
-        description: this.description,
         createdAt: this.createdAt,
         updatedAt: this.updatedAt,
         url: this.url,

@@ -41,13 +41,11 @@ export interface NoteBody {
 
 export interface AddAttachmentBody {
     title?: string
-    description?: string
     image: File
 }
 
 export interface EditAttachmentBody {
-    title?: string
-    description?: string
+    title: string
 }
 
 export interface DrawingBody {
