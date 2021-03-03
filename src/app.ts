@@ -16,11 +16,8 @@ import errorHandler from './middlewares/errorHandler.middleware'
 import hpp from 'hpp'
 import moesifLoggingMiddleware from './config/moesif.config'
 import session from 'express-session'
+import { RedisClient } from './config/RedisClient'
 const cloudinary = require('cloudinary').v2
-
-/**
- * A Redis server must be running locally on the default port (127.0.0.1:6379)
- */
 
 const app: Application = express()
 app.set('env', constants.nodeEnv)
@@ -51,6 +48,7 @@ app.use(cors({
 }))
 
 app.use(session({
+    store: RedisClient.getStore(),
     secret: constants.authentication.cookieSecret,
     resave: false,
     saveUninitialized: false,

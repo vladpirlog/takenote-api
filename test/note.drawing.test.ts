@@ -3,7 +3,7 @@ import app from '../src/app'
 import path from 'path'
 import mongodbConfig from '../src/config/mongodb.config'
 import constants from '../src/config/constants.config'
-import redisConfig from '../src/config/redis.config'
+import { RedisClient } from '../src/config/RedisClient'
 import { deleteTestUsers, registerTestUser } from './testingUtils'
 import { DrawingBackgroundPattern, DrawingBrushType } from '../src/enums/Drawing.enum'
 import { deleteFolderFromCloudStorage } from '../src/utils/cloudFileStorage.util'
@@ -26,7 +26,7 @@ describe('test drawing-related operations', () => {
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
 
         acceptedCredentials = await registerTestUser(request)
         await request
@@ -148,7 +148,7 @@ describe('test drawing-related operations', () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
         await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         deleteTestUsers([acceptedCredentials.email])
-        await redisConfig.close()
+        await RedisClient.quit()
         await mongodbConfig.close()
     }, 20000)
 })

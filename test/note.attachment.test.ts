@@ -1,4 +1,4 @@
-import redisConfig from '../src/config/redis.config'
+import { RedisClient } from '../src/config/RedisClient'
 import mongodbConfig from '../src/config/mongodb.config'
 import supertest from 'supertest'
 import app from '../src/app'
@@ -37,7 +37,7 @@ describe('testing attachments of different types', () => {
     }
 
     beforeAll(async () => {
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
         await mongodbConfig.connect(constants.test.mongodbURI)
 
         acceptedCredentials = await registerTestUser(request)
@@ -78,7 +78,7 @@ describe('testing attachments of different types', () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
         await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials.email])
-        await redisConfig.close()
+        await RedisClient.quit()
         await mongodbConfig.close()
     }, 20000)
 })

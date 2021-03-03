@@ -4,30 +4,41 @@
  * Module dependencies.
  */
 import app from '../app'
-import http, { Server } from 'http'
+import http from 'http'
 import constants from '../config/constants.config'
 import mongodbConfig from '../config/mongodb.config'
-import redisConfig from '../config/redis.config'
+import { RedisClient } from '../config/RedisClient'
 const debug = require('debug')('takenote')
 
 /**
  * Get port from environment and store in Express.
  */
 const port: number = normalizePort(constants.port)
+
 app.set('port', port)
 
 /**
  * Create HTTP server.
  */
-const server: Server = http.createServer(app)
+const server = http.createServer(app)
 
-/**
- * Listen on provided port, on all network interfaces.
- */
-server.listen(port)
-server.on('error', onError)
-server.on('listening', onListening)
-server.on('close', onClosing)
+Promise.all([
+    mongodbConfig.connect(),
+    RedisClient.connect({ host: constants.redis.host, port: constants.redis.port })
+]).then(() => {
+    console.log('MongoDB and Redis connected...')
+
+    /**
+     * Listen on provided port, on all network interfaces.
+     */
+    server.listen(port)
+    server.on('error', onError)
+    server.on('listening', onListening)
+    server.on('close', onClosing)
+}).catch(err => {
+    console.error(err)
+    process.exit(-1)
+})
 
 /**
  * Normalize a port into a number, string, or false.
@@ -80,14 +91,6 @@ function onListening () {
         typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
     debug('Listening on ' + bind)
     console.log('Listening on ' + bind + '...')
-
-    Promise
-        .all([mongodbConfig.connect(), redisConfig.connect()])
-        .then(() => console.log('MongoDB and Redis connected...'))
-        .catch(err => {
-            console.error(err)
-            process.exit(-1)
-        })
 }
 
 /**
@@ -95,6 +98,6 @@ function onListening () {
  */
 function onClosing () {
     Promise
-        .all([mongodbConfig.close(), redisConfig.close()])
-        .catch(err => console.error(err))
+        .all([mongodbConfig.close(), RedisClient.quit()])
+        .catch(console.error)
 }

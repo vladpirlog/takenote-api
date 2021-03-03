@@ -1,7 +1,7 @@
 import supertest from 'supertest'
 import app from '../src/app'
 import mongodbConfig from '../src/config/mongodb.config'
-import redisConfig from '../src/config/redis.config'
+import { RedisClient } from '../src/config/RedisClient'
 import constants from '../src/config/constants.config'
 import path from 'path'
 import { INoteSchema } from '../src/types/Note'
@@ -28,7 +28,7 @@ describe('test note-related operations', () => {
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
 
         acceptedCredentials1 = await registerTestUser(request)
         acceptedCredentials2 = await registerTestUser(request)
@@ -343,6 +343,6 @@ describe('test note-related operations', () => {
     afterAll(async () => {
         await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
         await mongodbConfig.close()
-        await redisConfig.close()
+        await RedisClient.quit()
     }, 30000)
 })
