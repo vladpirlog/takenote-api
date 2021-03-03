@@ -73,28 +73,7 @@ sudo apt install ffmpeg
 
 ### Environment variables
 
-A set of environment variables must be provided in order for the app to run.
-
--   PORT - port to run the application on; defaults to `8000`
--   NODE_ENV - NodeJS environment; defaults to `development`
--   MONGODB_URI - MongoDB connection string for a local or cloud-hosted database
--   MONGODB_TESTING_URI - MongoDB connection string for testing purposes
--   AUTH_JWT_SECRET - key for symmetrically encrypting the JWTs; defaults to `jwt_secret`
--   CLOUDINARY_API_KEY - API key provided by the Cloudinary platform
--   CLOUDINARY_API_SECRET - API secret provided by the Cloudinary platform
--   CLOUDINARY_CLOUD_NAME - cloud name provided by the Cloudinary platform
--   GOOGLE_APPLICATION_CREDENTIALS - path to key for GCP service account with Storage Object Creator role
--   GOOGLE_BUCKET_NAME - name of the Google Cloud Storage bucket
--   EMAIL_USER - email address to send emails from
--   EMAIL_PASS - email password associated to that address
--   EMAIL_HOST - hostname of the mail server
--   EMAIL_PORT - port to be used for sending mail
--   EMAIL_SECURE - if true, the connection will use TLS; defaults to `false`
--   GOOGLE_CLIENT_ID - the OAuth client ID provided by Google
--   GOOGLE_CLIENT_SECRET - the OAuth client secret provided by Google
--   RECAPTCHA_SITE_KEY - reCAPTCHA site key provided by Google
--   RECAPTCHA_SITE_SECRET - reCAPTCHA site secret provided by Google
--   MOESIF_API_KEY - API key for logging with Moesif; logging can be disabled by commenting out the Moesif middleware in [src/app.ts](src/app.ts)
+A set of environment variables must be provided in order for the app to run. Check [.env.example](.env.example) for details.
 
 ## Documentation
 
