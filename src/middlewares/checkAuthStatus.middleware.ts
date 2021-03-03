@@ -10,19 +10,17 @@ const checkAuthStatus = (status: AuthStatus[]) => {
     return (req: Request, res: Response, next: NextFunction) => {
         if (
             status.includes(AuthStatus.LOGGED_IN) &&
-            res.locals.user &&
-            res.locals.isFullAuth
+            req.session.authenticationStatus === AuthStatus.LOGGED_IN
         ) return next()
 
         if (
             status.includes(AuthStatus.TFA_LOGGED_IN) &&
-            res.locals.user &&
-            !res.locals.isFullAuth
+            req.session.authenticationStatus === AuthStatus.TFA_LOGGED_IN
         ) return next()
 
         if (
             status.includes(AuthStatus.NOT_LOGGED_IN) &&
-            !res.locals.user
+            !req.session.userID
         ) return next()
         return createResponse(res, 401)
     }

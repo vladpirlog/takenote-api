@@ -1,4 +1,3 @@
-import { Response } from 'express'
 import Color from '../enums/Color.enum'
 import { Role } from '../enums/Role.enum'
 import { IAttachmentSchema, PublicAttachmentInfo } from './Attachment'
@@ -30,10 +29,9 @@ export interface INoteSchema extends IEntity {
 
     /**
      * Returns public note data that can be viewed by the user.
-     * @param res object of type express.Response used for accessing the authenticated user
-     * @param isShared true if the note is viewed through the sharing URL
+     * @param userID the id of the authenticated user
      */
-    getPublicInfo(res: Response, isShared: boolean = false): Readonly<PublicNoteInfo>
+    getPublicInfo(userID?: IUserSchema['id']): Readonly<PublicNoteInfo>
 }
 
 type PublicNoteInfoMandatoryFields = Pick<INoteSchema, 'id' | 'createdAt' | 'updatedAt'>

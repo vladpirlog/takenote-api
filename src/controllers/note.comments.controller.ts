@@ -1,9 +1,7 @@
 import { NextFunction, Request, Response } from 'express'
 import noteCommentsQuery from '../queries/note.comments.query'
 import noteCrudQuery from '../queries/note.crud.query'
-import userQuery from '../queries/user.query'
 import createResponse from '../utils/createResponse.util'
-import getAuthUser from '../utils/getAuthUser.util'
 import stringToBoolean from '../utils/stringToBoolean.util'
 
 const getAllComments = async (req: Request, res: Response, next: NextFunction) => {
@@ -39,14 +37,12 @@ const getComment = async (req: Request, res: Response, next: NextFunction) => {
 
 const addComment = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID || !req.session.userEmail) throw new Error('User not logged in.')
         const { id } = req.params
         const { text } = req.body
 
-        const user = await userQuery.getById(getAuthUser(res).id)
-        if (!user) return createResponse(res, 400)
-
         const note = await noteCommentsQuery.addComment(id, {
-            subject: { id: user?.id, email: user?.email },
+            subject: { id: req.session.userID, email: req.session.userEmail },
             text
         })
         if (!note) return createResponse(res, 400)

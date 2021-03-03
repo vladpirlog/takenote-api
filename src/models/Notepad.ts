@@ -1,11 +1,10 @@
-import { Response } from 'express'
 import mongoose, { Schema } from 'mongoose'
 import { Permission } from '../enums/Permission.enum'
 import { Role } from '../enums/Role.enum'
 import { INotepadSchema, PublicNotepadInfo } from '../types/Notepad'
+import { IUserSchema } from '../types/User'
 import { getPermissionsFromRoles } from '../utils/accessManagement.util'
 import createID from '../utils/createID.util'
-import getAuthUser from '../utils/getAuthUser.util'
 
 const NotepadSchema = new Schema<INotepadSchema>(
     {
@@ -54,8 +53,7 @@ const NotepadSchema = new Schema<INotepadSchema>(
 )
 
 NotepadSchema.methods.getPublicInfo = function (
-    res: Response,
-    isShared: boolean = false
+    userID?: IUserSchema['id']
 ) {
     const ownerData = Array
         .from(this.users.values())
@@ -69,12 +67,12 @@ NotepadSchema.methods.getPublicInfo = function (
         owner: ownerData.subject
     }
 
-    if (isShared) {
+    if (!userID) {
         publicNotepad.title = this.title
         return publicNotepad
     }
 
-    const userData = this.users.get(getAuthUser(res).id)
+    const userData = this.users.get(userID)
     if (!userData) throw new Error()
 
     const permissionsHeldByUser = getPermissionsFromRoles('notepad', userData.roles)

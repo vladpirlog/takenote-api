@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import getAuthUser from '../utils/getAuthUser.util'
 import noteCrudQuery from '../queries/note.crud.query'
 import { INoteSchema } from '../types/Note'
 import { IUserSchema } from '../types/User'
@@ -18,10 +17,11 @@ import { getPermissionsFromRoles } from '../utils/accessManagement.util'
 const checkPermissions = (type: 'note' | 'notepad', permissionList: Permission[], paramName: string = 'id') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            if (!req.session.userID) throw new Error('User not logged in.')
             const entityID = req.params[paramName]
             const roleArray = type === 'note'
-                ? await getRolesOfNote(getAuthUser(res).id, entityID)
-                : await getRolesOfNotepad(getAuthUser(res).id, entityID)
+                ? await getRolesOfNote(req.session.userID, entityID)
+                : await getRolesOfNotepad(req.session.userID, entityID)
             const userPermissions = getPermissionsFromRoles(type, roleArray)
 
             const hasAtLeastOneRequiredPermission = permissionList
@@ -51,8 +51,9 @@ export const checkNotepadPermissions = (
 export const checkEditNotePermissions = (paramName: string = 'id') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            if (!req.session.userID) throw new Error('User not logged in.')
             const noteID = req.params[paramName]
-            const roleArray = await getRolesOfNote(getAuthUser(res).id, noteID)
+            const roleArray = await getRolesOfNote(req.session.userID, noteID)
             const permArray = getPermissionsFromRoles('note', roleArray)
 
             const canEditCommonProperties = permArray.includes(Permission.NOTE_EDIT_COMMON_PROPERTIES)
@@ -92,11 +93,12 @@ export const checkEditCommentPermissions = (
 ) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            if (!req.session.userID) throw new Error('User not logged in.')
             const noteID = req.params[noteIDParamName]
             const commentID = req.params[commentIDParamName]
 
             const note = await noteCrudQuery.getOneByID(noteID)
-            if (note && commentBelongsToUser(note, getAuthUser(res).id, commentID)) {
+            if (note && commentBelongsToUser(note, req.session.userID, commentID)) {
                 return next()
             }
             return createResponse(res, 401)
@@ -116,17 +118,17 @@ export const checkDeleteCommentPermissions = (
 ) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            if (!req.session.userID) throw new Error('User not logged in.')
             const noteID = req.params[noteIDParamName]
             const commentID = req.params[commentIDParamName]
-            const userID = getAuthUser(res).id
 
             const note = await noteCrudQuery.getOneByID(noteID)
             if (!note) return createResponse(res, 401)
 
-            const roleArray = note.users.get(userID)?.roles || []
+            const roleArray = note.users.get(req.session.userID)?.roles || []
             const permArray = getPermissionsFromRoles('note', roleArray)
 
-            const canDeleteComment = commentBelongsToUser(note, userID, commentID) ||
+            const canDeleteComment = commentBelongsToUser(note, req.session.userID, commentID) ||
                 permArray.includes(Permission.NOTE_COMMENT_DELETE)
 
             if (canDeleteComment) return next()
@@ -137,18 +139,18 @@ export const checkDeleteCommentPermissions = (
 
 export const checkNoteMovingPermissions = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID) throw new Error('User not logged in.')
         const noteID = req.params.id
         const notepadID = req.query.to as string
-        const userID = getAuthUser(res).id
 
-        const notePermArray = getPermissionsFromRoles('note', await getRolesOfNote(userID, noteID))
+        const notePermArray = getPermissionsFromRoles('note', await getRolesOfNote(req.session.userID, noteID))
 
         if (notepadID === 'default') {
             const canMoveNote = notePermArray.includes(Permission.NOTE_MOVE)
             return canMoveNote ? next() : createResponse(res, 401)
         }
 
-        const notepadPermArray = getPermissionsFromRoles('notepad', await getRolesOfNotepad(userID, notepadID))
+        const notepadPermArray = getPermissionsFromRoles('notepad', await getRolesOfNotepad(req.session.userID, notepadID))
 
         const canMoveNote = notePermArray.includes(Permission.NOTE_MOVE) &&
             notepadPermArray.includes(Permission.NOTEPAD_ADD_NOTES)

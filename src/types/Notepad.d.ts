@@ -1,7 +1,6 @@
 import { IEntity } from './Entity'
 import { IUserSchema } from './User'
 import { INoteSchema, PublicNoteInfo } from './Note'
-import { Response } from 'express'
 import { Role } from '../enums/Role.enum'
 
 export interface INotepadSchema extends IEntity {
@@ -14,10 +13,9 @@ export interface INotepadSchema extends IEntity {
 
     /**
      * Returns public notepad data that can be viewed by the user.
-     * @param res object of type express.Response used for accessing the authenticated user
-     * @param isShared true if the notepad is viewed through the sharing URL
+     * @param userID the id of the authenticated user
      */
-    getPublicInfo(res: Response, isShared: boolean = false): Readonly<PublicNotepadInfo>
+    getPublicInfo(userID?: IUserSchema['id']): Readonly<PublicNotepadInfo>
 }
 
 type PublicNotepadInfoMandatoryFields = Pick<INotepadSchema, 'id' | 'createdAt' | 'updatedAt'>

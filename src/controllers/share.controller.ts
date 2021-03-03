@@ -4,7 +4,6 @@ import noteShareQuery from '../queries/note.share.query'
 import noteCrudQuery from '../queries/note.crud.query'
 import stringToBoolean from '../utils/stringToBoolean.util'
 import createID from '../utils/createID.util'
-import getAuthUser from '../utils/getAuthUser.util'
 import userQuery from '../queries/user.query'
 import { CollaboratorBody } from '../types/RequestBodies'
 import notepadShareQuery from '../queries/notepad.share.query'
@@ -16,7 +15,7 @@ const getNote = async (req: Request, res: Response, next: NextFunction) => {
         const note = await noteShareQuery.getOneByShareCode(code)
 
         return note && note.share.active
-            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo(res, true) })
+            ? createResponse(res, 200, 'Note fetched.', { note: note.getPublicInfo() })
             : next()
     } catch (err) { return next(err) }
 }
@@ -28,8 +27,8 @@ const getNotepad = async (req: Request, res: Response, next: NextFunction) => {
         if (!notepadAndNotes) return next()
         const { notepad, notes } = notepadAndNotes
 
-        const publicNotepad = notepad.getPublicInfo(res, true)
-        const publicNotes = notes.map(n => n.getPublicInfo(res, true))
+        const publicNotepad = notepad.getPublicInfo()
+        const publicNotes = notes.map(n => n.getPublicInfo())
 
         return notepad && notepad.share.active
             ? createResponse(res, 200, 'Notepad fetched.', {
@@ -89,7 +88,7 @@ const addCollaborator = (entityType: 'note' | 'notepad') => {
             const { user, type } = req.body as CollaboratorBody
 
             const collaborator = await userQuery.getByEmail(user)
-            if (!collaborator || collaborator.id === getAuthUser(res).id) {
+            if (!collaborator || collaborator.id === req.session.userID) {
                 return createResponse(res, 400)
             }
 
@@ -113,11 +112,12 @@ const deleteCollaborator = (entityType: 'note' | 'notepad', self: boolean = fals
 
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
+            if (!req.session.userID) throw new Error('User not logged in.')
             const { id, collaboratorID } = req.params
 
             const newEntity = await shareQuery.deleteCollaborator(
                 id,
-                self ? getAuthUser(res).id : collaboratorID
+                self ? req.session.userID : collaboratorID
             )
             return newEntity
                 ? createResponse(res, 200, 'Collaborator deleted.')

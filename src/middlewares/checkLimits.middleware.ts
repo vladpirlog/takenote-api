@@ -1,7 +1,6 @@
 import constants from '../config/constants.config'
 import limitsQuery from '../queries/limits.query'
 import { NextFunction, Request, Response } from 'express'
-import getAuthUser from '../utils/getAuthUser.util'
 import createResponse from '../utils/createResponse.util'
 import splitTagsString from '../utils/splitTagsString.util'
 
@@ -12,7 +11,8 @@ import splitTagsString from '../utils/splitTagsString.util'
 const forNoteOrNotepad = (type: 'note' | 'notepad') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const length = await limitsQuery[type](getAuthUser(res).id)
+            if (!req.session.userID) throw new Error('User not logged in.')
+            const length = await limitsQuery[type](req.session.userID)
             const limit = type === 'note'
                 ? constants.limits.perUser.notes
                 : constants.limits.perUser.notepads
@@ -27,12 +27,13 @@ const forNoteOrNotepad = (type: 'note' | 'notepad') => {
  */
 const forTag = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID) throw new Error('User not logged in.')
         const { id } = req.params
         const { tag } = req.query
 
         const tagsArray = splitTagsString(tag as string)
         if (!tagsArray) return createResponse(res, 400)
-        const length = await limitsQuery.tag(id, getAuthUser(res).id)
+        const length = await limitsQuery.tag(id, req.session.userID)
         if (length === undefined || length + tagsArray.length > constants.limits.perNote.tags) {
             return createResponse(res, 400, 'Tags limit exceeded.')
         }

@@ -35,12 +35,9 @@ export default {
         apiKey: process.env.MOESIF_API_KEY || ''
     },
     authentication: {
-        authJWTSecret: process.env.AUTH_JWT_SECRET || 'jwt_secret',
+        cookieSecret: process.env.AUTH_COOKIE_SECRET || 'secret',
         authCookieAge: 2 * 60 * 60 * 1000, // time in ms
-        tfaTempCookieAge: 15 * 60 * 1000, // time in ms
         tfaRememberDuration: 30 * 24 * 60 * 60, // time in s
-        authCookieName: 'access_token',
-        tfaTempCookieName: 'temp_token',
         numberOfBackupCodes: 8,
         backupCodeLength: 10,
         oauth: {

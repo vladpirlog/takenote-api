@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import getAuthUser from '../utils/getAuthUser.util'
 import State from '../enums/State.enum'
 
 /**
@@ -10,7 +9,8 @@ import State from '../enums/State.enum'
 const checkUserState = (states: State[]) => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
-            if (states.includes(getAuthUser(res).state)) {
+            if (!req.session.userState) throw new Error('User not logged in.')
+            if (states.includes(req.session.userState)) {
                 return next()
             }
             return createResponse(res, 403)
