@@ -2,14 +2,9 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import { IUserSchema } from '../types/User'
-import cookie from '../utils/cookie.util'
-import getAuthUser from '../utils/getAuthUser.util'
-import authJWT from '../utils/authJWT.util'
-import jwtBlacklist from '../utils/jwtBlacklist.util'
-import constants from '../config/constants.config'
 import { ITokenSchema } from '../types/Token'
 import State from '../enums/State.enum'
+import AuthStatus from '../enums/AuthStatus.enum'
 
 const confirm = async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -20,22 +15,31 @@ const confirm = async (req: Request, res: Response, next: NextFunction) => {
         )
         if (!user) return createResponse(res, 400)
         if (user.isTokenExpired('confirmation')) {
-            return await handleSendNewToken(res, user.id)
+            const newUser = await userQuery.setNewToken(user.id, 'confirmation')
+            if (!newUser) return createResponse(res, 400)
+
+            await sendEmailUtil.sendToken(newUser, 'confirmation')
+            return createResponse(
+                res,
+                202,
+                'Confirmation token has expired. A new confirmation token was sent to the user\'s email address.'
+            )
         }
-        return await handleConfirmation(
-            res,
-            user.id,
-            req.cookies[constants.authentication.authCookieName]
-        )
+
+        const newUser = await userQuery.setUserState(user.id, State.ACTIVE)
+        if (!newUser) return createResponse(res, 400)
+        if (req.session.authenticationStatus === AuthStatus.LOGGED_IN) {
+            // only refresh the cookie if the user is authenticated while confirming the email address
+            req.session.userState = State.ACTIVE
+        }
+        return createResponse(res, 200, 'Email address confirmed.')
     } catch (err) { return next(err) }
 }
 
 const requestConfirmationToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const newUser = await userQuery.setNewToken(
-            getAuthUser(res).id,
-            'confirmation'
-        )
+        if (!req.session.userID) throw new Error('User not logged in.')
+        const newUser = await userQuery.setNewToken(req.session.userID, 'confirmation')
         if (!newUser) return createResponse(res, 400)
 
         await sendEmailUtil.sendToken(newUser, 'confirmation')
@@ -46,31 +50,6 @@ const requestConfirmationToken = async (req: Request, res: Response, next: NextF
             'Confirmation token sent to the user\'s email address.'
         )
     } catch (err) { return next(err) }
-}
-
-const handleConfirmation = async (res: Response, userID: IUserSchema['id'], authCookie: string) => {
-    const newUser = await userQuery.setUserState(userID, State.ACTIVE)
-    if (!newUser) return createResponse(res, 400)
-    if (getAuthUser(res).id) {
-        // only refresh the cookie if the user is authenticated while confirming the email address
-        const { id, exp } = authJWT.getIDAndExp(authCookie)
-        await jwtBlacklist.add(id, exp)
-        cookie.clearAuthCookie(res)
-        cookie.setAuthCookie(res, newUser)
-    }
-    return createResponse(res, 200, 'Email address confirmed.')
-}
-
-const handleSendNewToken = async (res: Response, userID: IUserSchema['id']) => {
-    const newUser = await userQuery.setNewToken(userID, 'confirmation')
-    if (!newUser) return createResponse(res, 400)
-
-    await sendEmailUtil.sendToken(newUser, 'confirmation')
-    return createResponse(
-        res,
-        202,
-        'Confirmation token has expired. A new confirmation token was sent to the user\'s email address.'
-    )
 }
 
 export default {

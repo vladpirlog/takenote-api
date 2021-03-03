@@ -7,7 +7,6 @@ import authConfirmationController from '../controllers/auth.confirmation.control
 import checkUserState from '../middlewares/checkUserState.middleware'
 import rateLimiting from '../middlewares/rateLimiting.middleware'
 import auth2faController from '../controllers/auth.2fa.controller'
-import extractUser from '../middlewares/extractUser.middleware'
 import authOauthController from '../controllers/auth.oauth.controller'
 import recaptcha from '../middlewares/recaptcha.middleware'
 import State from '../enums/State.enum'
@@ -126,7 +125,6 @@ router.post(
 
 router.post(
     '/2fa/verify',
-    extractUser.fromTfaTempCookie,
     checkAuthStatus([AuthStatus.LOGGED_IN, AuthStatus.TFA_LOGGED_IN]),
     validateQuery('tfa', 'Code invalid.'),
     auth2faController.verify2faCode

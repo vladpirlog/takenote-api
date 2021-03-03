@@ -1,10 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import userQuery from '../queries/user.query'
-import getAuthUser from '../utils/getAuthUser.util'
 import twoFactorAuth from '../utils/twoFactorAuth.util'
-import cookie from '../utils/cookie.util'
 import { IUserSchema } from '../types/User'
+import AuthStatus from '../enums/AuthStatus.enum'
 
 /**
  * Controller for generating a qrcode image with the totp secret.
@@ -12,11 +11,12 @@ import { IUserSchema } from '../types/User'
  */
 const generate2faSecret = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userQuery.getById(getAuthUser(res).id)
+        if (!req.session.userID) throw new Error('User not logged in.')
+        const user = await userQuery.getById(req.session.userID)
         if (!user || user.twoFactorAuth.active) return createResponse(res, 400)
 
         const { secret, image } = await twoFactorAuth.generateSecretAndImage(user.email)
-        await userQuery.set2faData(getAuthUser(res).id, { secret })
+        await userQuery.set2faData(req.session.userID, { secret })
 
         return createResponse(res, 200, 'Image data fetched.', { image })
     } catch (err) { return next(err) }
@@ -27,9 +27,10 @@ const generate2faSecret = async (req: Request, res: Response, next: NextFunction
  */
 const verify2faCode = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID) throw new Error('User not logged in.')
         const { code, remember } = req.query
-        const user = await userQuery.getById(getAuthUser(res).id)
-        if (!user || !user.twoFactorAuth.secret || block2faVerfication(res.locals.isFullAuth, user)) {
+        const user = await userQuery.getById(req.session.userID)
+        if (!user || !user.twoFactorAuth.secret || block2faVerfication(user, req.session.authenticationStatus)) { // todo
             return createResponse(res, 401)
         }
 
@@ -55,7 +56,11 @@ const verify2faCode = async (req: Request, res: Response, next: NextFunction) =>
         }
 
         // executed only on the initial 2fa setup
-        return await handleInitial2faSetup(res, newNextCheckTime)
+        const backupCodes = twoFactorAuth.generateBackupCodes()
+        await userQuery.set2faData(req.session.userID, {
+            active: true, nextCheck: newNextCheckTime, backupCodes
+        })
+        return createResponse(res, 201, 'Two-factor authentication enabled.', { backupCodes })
     } catch (err) { return next(err) }
 }
 
@@ -73,32 +78,20 @@ const handle2faOnLogin = async (
     res: Response,
     user: IUserSchema
 ) => {
-    await cookie.clearTfaTempCookie(req, res)
-    cookie.setAuthCookie(res, user)
+    req.session.authenticationStatus = AuthStatus.LOGGED_IN
     return createResponse(res, 200, 'Authentication successful.', {
         user: user.getPublicInfo()
     })
 }
 
-const handleInitial2faSetup = async (
-    res: Response,
-    newNextCheckTime: IUserSchema['twoFactorAuth']['nextCheck']
-) => {
-    const backupCodes = twoFactorAuth.generateBackupCodes()
-    await userQuery.set2faData(getAuthUser(res).id, {
-        active: true, nextCheck: newNextCheckTime, backupCodes
-    })
-    return createResponse(res, 201, 'Two-factor authentication enabled.', { backupCodes })
-}
-
 /**
  * Condition for blocking the otp verification request.
  * Prevents users from trying codes when not needed.
- * @param isFullAuth true if the user has AuthStatus.LOGGED_IN
+ * @param authStatus the current authentication level of the user
  * @param user object of type IUserSchema
  */
-const block2faVerfication = (isFullAuth: boolean, user: IUserSchema) => {
-    if (isFullAuth) return !user.is2faInitialSetup()
+const block2faVerfication = (user: IUserSchema, authStatus: AuthStatus = AuthStatus.NOT_LOGGED_IN) => {
+    if (authStatus === AuthStatus.LOGGED_IN) return !user.is2faInitialSetup()
     return !user.is2faRequiredOnLogin()
 }
 
@@ -107,9 +100,10 @@ const block2faVerfication = (isFullAuth: boolean, user: IUserSchema) => {
  */
 const disable2fa = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID) throw new Error('User not logged in.')
         const { code } = req.query
 
-        const user = await userQuery.getById(getAuthUser(res).id)
+        const user = await userQuery.getById(req.session.userID)
         if (!user || !user.twoFactorAuth.secret || !user.twoFactorAuth.active) {
             return createResponse(res, 401)
         }
@@ -118,7 +112,7 @@ const disable2fa = async (req: Request, res: Response, next: NextFunction) => {
 
         if (!ok) return createResponse(res, 403)
 
-        await userQuery.remove2faData(getAuthUser(res).id)
+        await userQuery.remove2faData(req.session.userID)
         return createResponse(res, 200)
     } catch (err) { return next(err) }
 }

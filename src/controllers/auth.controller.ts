@@ -1,21 +1,18 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
-import authJWT from '../utils/authJWT.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import jwtBlacklist from '../utils/jwtBlacklist.util'
-import cookie from '../utils/cookie.util'
-import getAuthUser from '../utils/getAuthUser.util'
-import constants from '../config/constants.config'
 import { LoginBody, OldPasswordBody, RegisterBody } from '../types/RequestBodies'
 import State from '../enums/State.enum'
+import AuthStatus from '../enums/AuthStatus.enum'
 
 const getMe = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const user = await userQuery.getById(getAuthUser(res).id)
-        return user ? createResponse(res, 200, 'User found.', {
-            user: user.getPublicInfo()
-        }) : createResponse(res, 404, 'User not found.')
+        if (!req.session.userID) throw new Error('User not logged in.')
+        const user = await userQuery.getById(req.session.userID)
+        return user
+            ? createResponse(res, 200, 'User found.', { user: user.getPublicInfo() })
+            : createResponse(res, 404, 'User not found.')
     } catch (err) { return next(err) }
 }
 
@@ -29,11 +26,21 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
         }
 
         if (user.is2faRequiredOnLogin()) {
-            await cookie.set2faTempCookie(res, user)
+            req.session.authenticationStatus = AuthStatus.TFA_LOGGED_IN
+            req.session.userID = user.id
+            req.session.isOAuthUser = user.isOAuthUser()
+            req.session.userState = user.state
+            req.session.userRole = user.role
+            req.session.userEmail = user.email
             return createResponse(res, 202, 'First authentication step successful.')
         }
 
-        cookie.setAuthCookie(res, user)
+        req.session.authenticationStatus = AuthStatus.LOGGED_IN
+        req.session.userID = user.id
+        req.session.isOAuthUser = user.isOAuthUser()
+        req.session.userState = user.state
+        req.session.userRole = user.role
+        req.session.userEmail = user.email
         return createResponse(res, 200, 'Authentication successful.', {
             user: user.getPublicInfo()
         })
@@ -42,9 +49,7 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
 const logout = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id, exp } = authJWT.getIDAndExp(req.cookies[constants.authentication.authCookieName])
-        await jwtBlacklist.add(id, exp)
-        cookie.clearAuthCookie(res)
+        req.session.destroy(console.error)
         return createResponse(res, 200, 'User logged out.')
     } catch (err) { return next(err) }
 }
@@ -69,40 +74,33 @@ const register = async (req: Request, res: Response, next: NextFunction) => {
 // TODO: delete users from db after some time
 const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID) throw new Error('User not logged in.')
         const { old_password: oldPassword } = req.body as OldPasswordBody
-        const user = await userQuery.getById(getAuthUser(res).id)
+        const user = await userQuery.getById(req.session.userID)
         if (!user) return createResponse(res, 400)
-        if (await user.validPassword(oldPassword)) {
-            return await handleDeleteOrRecover(res, req.cookies[constants.authentication.authCookieName], 'delete')
-        }
-        return createResponse(res, 401)
+
+        const isValidPassword = await user.validPassword(oldPassword)
+        if (!isValidPassword) return createResponse(res, 401)
+
+        const newUser = await userQuery.setUserState(req.session.userID, State.DELETING)
+        if (!newUser) return createResponse(res, 400)
+        await sendEmailUtil.sendNotice(newUser, 'delete')
+
+        req.session.userState = State.DELETING
+        return createResponse(res, 200, 'Account is being deleted.')
     } catch (err) { return next(err) }
 }
 
 const recoverUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        return await handleDeleteOrRecover(res, req.cookies[constants.authentication.authCookieName], 'recover')
+        if (!req.session.userID) throw new Error('User not logged in.')
+        const newUser = await userQuery.setUserState(req.session.userID, State.ACTIVE)
+        if (!newUser) return createResponse(res, 400)
+        await sendEmailUtil.sendNotice(newUser, 'recover')
+
+        req.session.userState = State.ACTIVE
+        return createResponse(res, 200, 'Account is now active.')
     } catch (err) { return next(err) }
-}
-
-const handleDeleteOrRecover = async (res: Response, authCookie: string, type: 'delete' | 'recover') => {
-    const dynamicData = type === 'delete'
-        ? { state: State.DELETING, message: 'Account is being deleted.' }
-        : { state: State.ACTIVE, message: 'Account is now active.' }
-
-    const newUser = await userQuery.setUserState(
-        getAuthUser(res).id,
-        dynamicData.state
-    )
-    if (!newUser) return createResponse(res, 400)
-    await sendEmailUtil.sendNotice(newUser, type)
-
-    const { id, exp } = authJWT.getIDAndExp(authCookie)
-    await jwtBlacklist.add(id, exp)
-
-    cookie.clearAuthCookie(res)
-    cookie.setAuthCookie(res, newUser)
-    return createResponse(res, 200, dynamicData.message)
 }
 
 export default { getMe, login, logout, register, deleteUser, recoverUser }

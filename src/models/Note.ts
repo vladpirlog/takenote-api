@@ -5,11 +5,10 @@ import { INoteSchema, PublicNoteInfo } from '../types/Note'
 import Color from '../enums/Color.enum'
 import { CommentSchema } from './Comment'
 import { Permission } from '../enums/Permission.enum'
-import { Response } from 'express'
-import getAuthUser from '../utils/getAuthUser.util'
 import { Role } from '../enums/Role.enum'
 import { getPermissionsFromRoles } from '../utils/accessManagement.util'
 import { DrawingSchema } from './Drawing'
+import { IUserSchema } from '../types/User'
 
 export const NoteSchema = new Schema<INoteSchema>(
     {
@@ -102,8 +101,7 @@ export const NoteSchema = new Schema<INoteSchema>(
 )
 
 NoteSchema.methods.getPublicInfo = function (
-    res: Response,
-    isShared: boolean = false
+    userID?: IUserSchema['id']
 ) {
     const ownerData = Array
         .from(this.users.values())
@@ -117,13 +115,13 @@ NoteSchema.methods.getPublicInfo = function (
         owner: ownerData.subject
     }
 
-    if (isShared) {
+    if (!userID) {
         publicNote.title = this.title
         publicNote.content = this.content
         return publicNote
     }
 
-    const userData = this.users.get(getAuthUser(res).id)
+    const userData = this.users.get(userID)
 
     if (!userData) throw new Error()
     const permissionsHeldByUser = getPermissionsFromRoles('note', userData.roles)

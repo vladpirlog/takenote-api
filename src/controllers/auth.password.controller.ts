@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import sendEmailUtil from '../utils/sendEmail.util'
 import userQuery from '../queries/user.query'
-import getAuthUser from '../utils/getAuthUser.util'
 import { ITokenSchema } from '../types/Token'
 import { EmailBody, NewPasswordBody, OldPasswordBody } from '../types/RequestBodies'
 
@@ -19,8 +18,9 @@ const requestResetTokenWithEmail = async (req: Request, res: Response, next: Nex
 
 const requestResetTokenWithPassword = async (req: Request, res: Response, next: NextFunction) => {
     try {
+        if (!req.session.userID) throw new Error('User not logged in.')
         const { old_password: oldPassword } = req.body as OldPasswordBody
-        const user = await userQuery.getById(getAuthUser(res).id)
+        const user = await userQuery.getById(req.session.userID)
         if (!user) return createResponse(res, 400)
 
         if (await user.validPassword(oldPassword)) {

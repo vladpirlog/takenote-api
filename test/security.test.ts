@@ -14,7 +14,6 @@ describe('testing the security features of the api', () => {
     const request = supertest.agent(app)
     const pngTestImage = path.join(process.cwd(), 'test', 'media', 'test-image.png')
     let createdNoteID: INoteSchema['id']
-    let authCookie: string
     let acceptedCredentials
 
     beforeAll(async () => {
@@ -23,13 +22,12 @@ describe('testing the security features of the api', () => {
 
         acceptedCredentials = await registerTestUser(request)
 
-        const res = await request
+        await request
             .post('/auth/login')
             .send({
                 email: acceptedCredentials.email,
                 password: acceptedCredentials.password
             })
-        authCookie = res.header['set-cookie'][0]
 
         const res2 = await request.post('/notes')
         createdNoteID = res2.body.note.id
@@ -91,16 +89,6 @@ describe('testing the security features of the api', () => {
             .attach('drawing', pngTestImage)
         expect(res2.status).toBe(400)
     }, 50000)
-
-    test('jwt blacklisting', async () => {
-        await request
-            .post('/auth/logout')
-
-        const res = await request
-            .post('/auth/me')
-            .set('Cookie', [authCookie])
-        expect(res.status).toBe(500)
-    }, 20000)
 
     afterAll(async () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()

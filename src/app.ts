@@ -4,7 +4,6 @@ import morgan from 'morgan'
 import cors from 'cors'
 import compression from 'compression'
 import constants from './config/constants.config'
-import extractUser from './middlewares/extractUser.middleware'
 import rateLimiting from './middlewares/rateLimiting.middleware'
 import send404 from './middlewares/send404.middleware'
 import authRoute from './routes/auth.route'
@@ -16,6 +15,7 @@ import helmet from 'helmet'
 import errorHandler from './middlewares/errorHandler.middleware'
 import hpp from 'hpp'
 import moesifLoggingMiddleware from './config/moesif.config'
+import session from 'express-session'
 const cloudinary = require('cloudinary').v2
 
 /**
@@ -50,7 +50,19 @@ app.use(cors({
     methods: ['GET', 'PUT', 'POST', 'DELETE']
 }))
 
-app.use(extractUser.fromAuthCookie)
+app.use(session({
+    secret: constants.authentication.cookieSecret,
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        maxAge: constants.authentication.authCookieAge,
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: constants.protocol === 'https',
+        domain: constants.nodeEnv === 'production' ? constants.domain.baseDomain : undefined
+    }
+}))
+
 if (app.get('env') === 'production') {
     app.use(moesifLoggingMiddleware)
     app.use(rateLimiting.forRequests)
