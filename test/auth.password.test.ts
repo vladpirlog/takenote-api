@@ -1,10 +1,10 @@
 import supertest from 'supertest'
 import app from '../src/app'
 import mongodbConfig from '../src/config/mongodb.config'
-import redisConfig from '../src/config/redis.config'
 import constants from '../src/config/constants.config'
 import User from '../src/models/User'
 import { deleteTestUsers, generateRejectedCredentials, registerTestUser } from './testingUtils'
+import { RedisClient } from '../src/config/RedisClient'
 
 describe('test pw reset flows', () => {
     const request = supertest.agent(app)
@@ -13,7 +13,7 @@ describe('test pw reset flows', () => {
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
         acceptedCredentials = await registerTestUser(request)
     }, 30000)
 
@@ -142,6 +142,6 @@ describe('test pw reset flows', () => {
     afterAll(async () => {
         await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
-        await redisConfig.close()
+        await RedisClient.quit()
     }, 30000)
 })

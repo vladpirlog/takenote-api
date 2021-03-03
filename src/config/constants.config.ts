@@ -31,6 +31,10 @@ export default {
             bucketName: process.env.GOOGLE_BUCKET_NAME || ''
         }
     },
+    redis: {
+        host: process.env.REDIS_HOST || '127.0.0.1',
+        port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379
+    },
     moesif: {
         apiKey: process.env.MOESIF_API_KEY || ''
     },
@@ -99,6 +103,10 @@ export default {
         expires: 30 * 60 * 1000 // time in ms
     },
     test: {
-        mongodbURI: process.env.MONGODB_TESTING_URI || ''
+        mongodbURI: process.env.MONGODB_TESTING_URI || '',
+        redis: {
+            host: process.env.REDIS_TESTING_HOST || '127.0.0.1',
+            port: process.env.REDIS_TESTING_PORT ? parseInt(process.env.REDIS_TESTING_PORT) : 6379
+        }
     }
 }

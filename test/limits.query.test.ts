@@ -2,7 +2,7 @@ import supertest from 'supertest'
 import app from '../src/app'
 import constants from '../src/config/constants.config'
 import mongodbConfig from '../src/config/mongodb.config'
-import redisConfig from '../src/config/redis.config'
+import { RedisClient } from '../src/config/RedisClient'
 import limitsQuery from '../src/queries/limits.query'
 import { INoteSchema } from '../src/types/Note'
 import { IUserSchema } from '../src/types/User'
@@ -21,7 +21,7 @@ describe('test queries for limit-checking', () => {
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
 
         acceptedCredentials1 = await registerTestUser(request)
         acceptedCredentials2 = await registerTestUser(request)
@@ -110,6 +110,6 @@ describe('test queries for limit-checking', () => {
         await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
         await Promise.all(createdNotesID.map(id => request.delete(`/notes/${id}`)))
         await mongodbConfig.close()
-        await redisConfig.close()
+        await RedisClient.quit()
     }, 30000)
 })

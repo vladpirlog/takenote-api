@@ -1,6 +1,6 @@
 import supertest from 'supertest'
 import app from '../src/app'
-import redisConfig from '../src/config/redis.config'
+import { RedisClient } from '../src/config/RedisClient'
 import mongodbConfig from '../src/config/mongodb.config'
 import constants from '../src/config/constants.config'
 import { INotepadSchema } from '../src/types/Notepad'
@@ -22,7 +22,7 @@ describe('test notepad-related operations', () => {
     let acceptedCredentials2
 
     beforeAll(async () => {
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
         await mongodbConfig.connect(constants.test.mongodbURI)
 
         acceptedCredentials1 = await registerTestUser(request)
@@ -246,7 +246,7 @@ describe('test notepad-related operations', () => {
         await Note.findOneAndDelete({ id: createdNoteID }).exec()
         await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials1.email, acceptedCredentials2.email])
-        await redisConfig.close()
+        await RedisClient.quit()
         await mongodbConfig.close()
     }, 30000)
 })

@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import createResponse from '../utils/createResponse.util'
 import constants from '../config/constants.config'
-import redisConfig from '../config/redis.config'
 import { IUserSchema } from '../types/User'
+import { RedisClient } from '../config/RedisClient'
 
 /**
  * Creates a redis key using the given arguments.
@@ -29,14 +29,14 @@ const setHeaders = (res: Response, counter: number) => {
  * Creates a new entry with the value 1 in the Redis database .
  */
 const createNewEntry = async (key: string) => {
-    await redisConfig.getClient().promiseSetex(key, 60, '1')
+    await RedisClient.setex(key, 60, '1')
     return 1
 }
 
 /**
  * Increments an existing entry in the Redis database.
  */
-const incrementExistingEntry = (key: string) => redisConfig.getClient().promiseIncr(key)
+const incrementExistingEntry = (key: string) => RedisClient.incr(key)
 
 /**
  * Limits the number of requests or email that have to be sent to a given ip and user.
@@ -46,7 +46,7 @@ const rateLimiting = (type: 'request' | 'email') => {
     return async (req: Request, res: Response, next: NextFunction) => {
         try {
             const key = getKey(req.ip, type, res.locals?.user?.id)
-            const counter = await redisConfig.getClient().promiseGet(key)
+            const counter = await RedisClient.get(key)
 
             const newCounter = counter
                 ? await incrementExistingEntry(key)

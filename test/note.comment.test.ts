@@ -2,7 +2,7 @@ import supertest from 'supertest'
 import app from '../src/app'
 import constants from '../src/config/constants.config'
 import mongodbConfig from '../src/config/mongodb.config'
-import redisConfig from '../src/config/redis.config'
+import { RedisClient } from '../src/config/RedisClient'
 import Note from '../src/models/Note'
 import { ICommentSchema } from '../src/types/Comment'
 import { INoteSchema } from '../src/types/Note'
@@ -17,7 +17,7 @@ describe('test note comment-related operations', () => {
 
     beforeAll(async () => {
         await mongodbConfig.connect(constants.test.mongodbURI)
-        redisConfig.connect()
+        RedisClient.connect({ host: constants.test.redis.host, port: constants.test.redis.port })
         acceptedCredentials = await registerTestUser(request)
 
         await request
@@ -103,6 +103,6 @@ describe('test note comment-related operations', () => {
         await deleteFolderFromCloudStorage(createdNoteID, constants.nodeEnv)
         await deleteTestUsers([acceptedCredentials.email])
         await mongodbConfig.close()
-        await redisConfig.close()
+        await RedisClient.quit()
     }, 30000)
 })
