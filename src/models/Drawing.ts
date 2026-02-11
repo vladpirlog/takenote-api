@@ -24,12 +24,14 @@ export const DrawingSchema = new Schema<IDrawingSchema>({
         required: true
     },
     brushType: {
-        type: DrawingBrushType,
+        type: String,
+        enum: Object.values(DrawingBrushType),
         default: DrawingBrushType.NORMAL,
         required: true
     },
     backgroundPattern: {
-        type: DrawingBackgroundPattern,
+        type: String,
+        enum: Object.values(DrawingBackgroundPattern),
         default: DrawingBackgroundPattern.NONE,
         required: true
     },

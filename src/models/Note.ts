@@ -105,7 +105,7 @@ NoteSchema.methods.getPublicInfo = function (
 ) {
     const ownerData = Array
         .from(this.users.values())
-        .find(val => val.roles.includes(Role.OWNER))
+        .find((val: any) => val.roles.includes(Role.OWNER)) as any
     if (!ownerData) throw new Error('Note has no owner.')
 
     const publicNote: PublicNoteInfo = {
@@ -136,14 +136,14 @@ NoteSchema.methods.getPublicInfo = function (
         publicNote.tags = userData.tags
         publicNote.comments = {
             enabled: this.comments.enabled,
-            items: this.comments.items.map(c => c.getPublicInfo())
+            items: this.comments.items.map((c: any) => c.getPublicInfo())
         }
-        publicNote.attachments = this.attachments.map(a => a.getPublicInfo())
-        publicNote.drawings = this.drawings.map(d => d.getPublicInfo())
+        publicNote.attachments = this.attachments.map((a: any) => a.getPublicInfo())
+        publicNote.drawings = this.drawings.map((d: any) => d.getPublicInfo())
         if (!this.notepadID) {
             publicNote.collaborators = Array.from(this.users.values())
-                .filter(val => !val.roles.includes(Role.OWNER))
-                .map(val => ({ subject: val.subject, roles: val.roles }))
+                .filter((val: any) => !val.roles.includes(Role.OWNER))
+                .map((val: any) => ({ subject: val.subject, roles: val.roles }))
             publicNote.share = this.share
         }
     }

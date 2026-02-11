@@ -24,7 +24,7 @@ const server = http.createServer(app)
 
 Promise.all([
     mongodbConfig.connect(),
-    RedisClient.connect({ host: constants.redis.host, port: constants.redis.port })
+    RedisClient.connect({ url: constants.redis.url })
 ]).then(() => {
     console.log('MongoDB and Redis connected...')
 

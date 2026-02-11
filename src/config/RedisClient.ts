@@ -1,10 +1,9 @@
 import redis from 'redis'
 import session from 'express-session'
 import connectRedis from 'connect-redis'
-import { promisify } from 'util'
 
 export class RedisClient {
-    private static _client: redis.RedisClient
+    private static _client: redis.RedisClientType<redis.RedisModules, redis.RedisFunctions, redis.RedisScripts, redis.RespVersions, redis.TypeMapping>
     private static _store: connectRedis.RedisStore
 
     static getClient () {
@@ -15,30 +14,29 @@ export class RedisClient {
         return this._store
     }
 
-    static connect (options: redis.ClientOpts = {}) {
-        this._client = new redis.RedisClient(options)
+    static connect (options: redis.RedisClientOptions = {}) {
+        this._client = redis.createClient(options)
         const RedisStore = connectRedis(session)
         this._store = new RedisStore({ client: this._client })
     }
 
     static get (key: string) {
-        return promisify(this._client.get).call(this._client, key)
+        return this._client.get(key)
     }
 
     static setex (key: string, seconds: number, value: string) {
-        return promisify(this._client.setex).call(this._client, key, seconds, value)
+        return this._client.setEx(key, seconds, value)
     }
 
     static del (key: string | string[]) {
-        // @ts-ignore
-        return promisify(this._client.del).call(this._client, key)
+        return this._client.del(key)
     }
 
     static incr (key: string) {
-        return promisify(this._client.incr).call(this._client, key)
+        return this._client.incr(key)
     }
 
     static quit () {
-        return promisify(this._client.quit).call(this._client)
+        return this._client.quit()
     }
 }

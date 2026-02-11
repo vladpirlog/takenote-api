@@ -57,7 +57,7 @@ NotepadSchema.methods.getPublicInfo = function (
 ) {
     const ownerData = Array
         .from(this.users.values())
-        .find(val => val.roles.includes(Role.OWNER))
+        .find((val: any) => val.roles.includes(Role.OWNER)) as any
     if (!ownerData) throw new Error('Notepad has no owner.')
 
     const publicNotepad: PublicNotepadInfo = {
@@ -81,8 +81,8 @@ NotepadSchema.methods.getPublicInfo = function (
         publicNotepad.title = this.title
         publicNotepad.share = this.share
         publicNotepad.collaborators = Array.from(this.users.values())
-            .filter(val => !val.roles.includes(Role.OWNER))
-            .map(val => ({ subject: val.subject, roles: val.roles }))
+            .filter((val: any) => !val.roles.includes(Role.OWNER))
+            .map((val: any) => ({ subject: val.subject, roles: val.roles }))
     }
     return Object.freeze(publicNotepad)
 }

@@ -18,7 +18,8 @@ export const AttachmentSchema = new Schema<IAttachmentSchema>({
         required: false
     },
     type: {
-        type: AttachmentType,
+        type: String,
+        enum: Object.values(AttachmentType),
         required: true
     }
 }, { timestamps: true, id: false })

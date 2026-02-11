@@ -10,7 +10,7 @@ import { RedisClient } from '../config/RedisClient'
  * @param type the type of rate limiting to be done
  * @param userID id of the user making the request; defaults to 'guest'
  */
-const getKey = (ip: string, type: 'request' | 'email', userID: IUserSchema['id'] = 'guest') => {
+const getKey = (ip: string | undefined, type: 'request' | 'email', userID: IUserSchema['id'] = 'guest') => {
     return `${userID}--${ip}--${type}`
 }
 

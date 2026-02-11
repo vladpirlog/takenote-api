@@ -11,7 +11,7 @@ const getEndpoints = async (): Promise<OAuth.EndpointData> => {
             token: res.data.token_endpoint,
             userInfo: res.data.userinfo_endpoint
         }
-    } catch (err) { return err.data.error }
+    } catch (err: any) { return err.data.error }
 }
 
 const getTokensWithAuthorizationCode = async (
@@ -33,7 +33,7 @@ const getTokensWithAuthorizationCode = async (
             accessToken: res.data.access_token,
             refreshToken: res.data.refresh_token
         }
-    } catch (err) { return err.data.error }
+    } catch (err: any) { return err.data.error }
 }
 
 const getUserDataWithAccessToken = async (
@@ -49,7 +49,7 @@ const getUserDataWithAccessToken = async (
         return {
             email: res.data.email
         }
-    } catch (err) { return err.data.error }
+    } catch (err: any) { return err.data.error }
 }
 
 export default { getEndpoints, getTokensWithAuthorizationCode, getUserDataWithAccessToken }

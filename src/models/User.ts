@@ -25,7 +25,8 @@ export const UserSchema = new Schema<IUserSchema>(
             required: false
         },
         state: {
-            type: State,
+            type: String,
+            enum: Object.values(State),
             default: State.UNCONFIRMED,
             required: true
         },
@@ -34,7 +35,8 @@ export const UserSchema = new Schema<IUserSchema>(
             required: false
         },
         role: {
-            type: UserRole,
+            type: Number,
+            enum: Object.values(UserRole),
             default: UserRole.USER,
             required: true
         },
@@ -86,13 +88,12 @@ export const UserSchema = new Schema<IUserSchema>(
     { timestamps: true, writeConcern: { w: 'majority', wtimeout: 1000 }, id: false }
 )
 
-UserSchema.pre<IUserSchema>('save', function (next) {
+UserSchema.pre<IUserSchema>('save', function () {
     if (!this.isOAuthUser()) {
         bcrypt.hash(this.password, 12).then(hash => {
             this.password = hash
-            return next()
         })
-    } else { return next() }
+    }
 })
 
 UserSchema.methods.isOAuthUser = function () {

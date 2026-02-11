@@ -38,7 +38,7 @@ npm run build
 npm start
 ```
 
-An instance of the app will run be running at `http://localhost:8000/` using the [PM2](https://pm2.keymetrics.io/) process manager.
+An instance of the app will be running at `http://localhost:8000/` when started with `npm start`.
 
 ## Using Redis
 
