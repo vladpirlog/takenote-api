@@ -54,12 +54,14 @@
         "@babel/core": "^7.12.3",
         "@babel/preset-env": "^7.12.1",
         "@babel/preset-typescript": "^7.12.1",
+        "@eslint/js": "^10.0.1",
         "@shelf/jest-mongodb": "^1.2.3",
         "@types/bcrypt": "^3.0.0",
         "@types/compression": "^1.7.0",
         "@types/connect-redis": "^0.0.16",
         "@types/cookie-parser": "^1.4.2",
         "@types/cors": "^2.8.8",
+        "@types/debug": "^4.1.12",
         "@types/dotenv": "^8.2.0",
         "@types/express": "^4.17.9",
         "@types/express-session": "^1.17.3",
@@ -80,22 +82,17 @@
         "@types/redis": "^2.8.28",
         "@types/speakeasy": "^2.0.5",
         "@types/supertest": "^2.0.10",
-        "@typescript-eslint/eslint-plugin": "^3.10.1",
-        "@typescript-eslint/parser": "^3.10.1",
         "babel-jest": "^30.2.0",
-        "eslint": "^7.13.0",
-        "eslint-config-standard": "^14.1.1",
-        "eslint-plugin-import": "^2.22.1",
-        "eslint-plugin-node": "^11.1.0",
-        "eslint-plugin-promise": "^4.2.1",
-        "eslint-plugin-standard": "^4.1.0",
+        "eslint": "^10.0.0",
+        "globals": "^17.3.0",
         "jest": "^30.2.0",
         "nodemon": "^3.1.11",
         "supertest": "^4.0.2",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.56.0"
     },
     "engines": {
-        "node": ">= 10.0.0",
-        "npm": ">= 6.0.0"
+        "node": ">= 18.0.0",
+        "npm": ">= 8.0.0"
     }
 }

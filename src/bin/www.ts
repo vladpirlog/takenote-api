@@ -8,7 +8,8 @@ import http from 'http'
 import constants from '../config/constants.config'
 import mongodbConfig from '../config/mongodb.config'
 import { RedisClient } from '../config/RedisClient'
-const debug = require('debug')('takenote')
+import createDebug from 'debug'
+const debug = createDebug('takenote')
 
 /**
  * Get port from environment and store in Express.
@@ -26,7 +27,7 @@ Promise.all([
     mongodbConfig.connect(),
     RedisClient.connect({ url: constants.redis.url })
 ]).then(() => {
-    console.log('MongoDB and Redis connected...')
+    console.info('MongoDB and Redis connected...')
 
     /**
      * Listen on provided port, on all network interfaces.
@@ -74,11 +75,14 @@ function onError (error: NodeJS.ErrnoException) {
     case 'EACCES':
         console.error(bind + ' requires elevated privileges')
         process.exit(1)
+        break
     case 'EADDRINUSE':
         console.error(bind + ' is already in use')
         process.exit(1)
+        break
     default:
         throw error
+        break
     }
 }
 
@@ -90,7 +94,7 @@ function onListening () {
     const bind =
         typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
     debug('Listening on ' + bind)
-    console.log('Listening on ' + bind + '...')
+    console.info('Listening on ' + bind + '...')
 }
 
 /**

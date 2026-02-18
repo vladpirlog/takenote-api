@@ -4,7 +4,7 @@
  */
 const removeUndefinedProps = <T extends object>(obj: T): Partial<T> => {
     Object.keys(obj).forEach(key => {
-        if ((obj as any)[key] === undefined) { delete (obj as any)[key] }
+        if ((obj as { [x: string]: unknown })[key] === undefined) { delete (obj as { [x: string]: unknown })[key] }
     })
     return obj
 }

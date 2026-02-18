@@ -33,7 +33,7 @@ const getAll = (
     collaborations: boolean = true,
     archived?: boolean
 ) => {
-    const query: any = { [`users.${userID}.subject.id`]: userID }
+    const query: { [x: string]: string | boolean } = { [`users.${userID}.subject.id`]: userID }
     if (!collaborations) query[`users.${userID}.roles`] = Role.OWNER
     if (archived !== undefined) query[`users.${userID}.archived`] = archived
 

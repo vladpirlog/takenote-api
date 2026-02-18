@@ -103,48 +103,50 @@ export const NoteSchema = new Schema<INoteSchema>(
 NoteSchema.methods.getPublicInfo = function (
     userID?: IUserSchema['id']
 ) {
+    const thisObj = this as INoteSchema
+
     const ownerData = Array
-        .from(this.users.values())
-        .find((val: any) => val.roles.includes(Role.OWNER)) as any
+        .from(thisObj.users.values())
+        .find(val => val.roles.includes(Role.OWNER))
     if (!ownerData) throw new Error('Note has no owner.')
 
     const publicNote: PublicNoteInfo = {
-        id: this.id,
-        createdAt: this.createdAt,
-        updatedAt: this.updatedAt,
+        id: thisObj.id,
+        createdAt: thisObj.createdAt,
+        updatedAt: thisObj.updatedAt,
         owner: ownerData.subject
     }
 
     if (!userID) {
-        publicNote.title = this.title
-        publicNote.content = this.content
+        publicNote.title = thisObj.title
+        publicNote.content = thisObj.content
         return publicNote
     }
 
-    const userData = this.users.get(userID)
+    const userData = thisObj.users.get(userID)
 
     if (!userData) throw new Error()
     const permissionsHeldByUser = getPermissionsFromRoles('note', userData.roles)
 
     const canViewNote = permissionsHeldByUser.includes(Permission.NOTE_VIEW)
     if (canViewNote) {
-        publicNote.title = this.title
-        publicNote.content = this.content
+        publicNote.title = thisObj.title
+        publicNote.content = thisObj.content
         publicNote.archived = userData.archived
         publicNote.color = userData.color
         publicNote.fixed = userData.fixed
         publicNote.tags = userData.tags
         publicNote.comments = {
-            enabled: this.comments.enabled,
-            items: this.comments.items.map((c: any) => c.getPublicInfo())
+            enabled: thisObj.comments.enabled,
+            items: thisObj.comments.items.map(c => c.getPublicInfo())
         }
-        publicNote.attachments = this.attachments.map((a: any) => a.getPublicInfo())
-        publicNote.drawings = this.drawings.map((d: any) => d.getPublicInfo())
-        if (!this.notepadID) {
-            publicNote.collaborators = Array.from(this.users.values())
-                .filter((val: any) => !val.roles.includes(Role.OWNER))
-                .map((val: any) => ({ subject: val.subject, roles: val.roles }))
-            publicNote.share = this.share
+        publicNote.attachments = thisObj.attachments.map(a => a.getPublicInfo())
+        publicNote.drawings = thisObj.drawings.map(d => d.getPublicInfo())
+        if (!thisObj.notepadID) {
+            publicNote.collaborators = Array.from(thisObj.users.values())
+                .filter(val => !val.roles.includes(Role.OWNER))
+                .map(val => ({ subject: val.subject, roles: val.roles }))
+            publicNote.share = thisObj.share
         }
     }
     return Object.freeze(publicNote)

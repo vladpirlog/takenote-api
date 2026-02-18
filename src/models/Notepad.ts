@@ -55,34 +55,36 @@ const NotepadSchema = new Schema<INotepadSchema>(
 NotepadSchema.methods.getPublicInfo = function (
     userID?: IUserSchema['id']
 ) {
+    const thisObj = this as INotepadSchema
+
     const ownerData = Array
-        .from(this.users.values())
-        .find((val: any) => val.roles.includes(Role.OWNER)) as any
+        .from(thisObj.users.values())
+        .find(val => val.roles.includes(Role.OWNER))
     if (!ownerData) throw new Error('Notepad has no owner.')
 
     const publicNotepad: PublicNotepadInfo = {
-        id: this.id,
-        createdAt: this.createdAt,
-        updatedAt: this.updatedAt,
+        id: thisObj.id,
+        createdAt: thisObj.createdAt,
+        updatedAt: thisObj.updatedAt,
         owner: ownerData.subject
     }
 
     if (!userID) {
-        publicNotepad.title = this.title
+        publicNotepad.title = thisObj.title
         return publicNotepad
     }
 
-    const userData = this.users.get(userID)
+    const userData = thisObj.users.get(userID)
     if (!userData) throw new Error()
 
     const permissionsHeldByUser = getPermissionsFromRoles('notepad', userData.roles)
 
     if (permissionsHeldByUser.includes(Permission.NOTEPAD_VIEW)) {
-        publicNotepad.title = this.title
-        publicNotepad.share = this.share
-        publicNotepad.collaborators = Array.from(this.users.values())
-            .filter((val: any) => !val.roles.includes(Role.OWNER))
-            .map((val: any) => ({ subject: val.subject, roles: val.roles }))
+        publicNotepad.title = thisObj.title
+        publicNotepad.share = thisObj.share
+        publicNotepad.collaborators = Array.from(thisObj.users.values())
+            .filter(val => !val.roles.includes(Role.OWNER))
+            .map(val => ({ subject: val.subject, roles: val.roles }))
     }
     return Object.freeze(publicNotepad)
 }

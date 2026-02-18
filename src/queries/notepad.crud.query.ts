@@ -23,9 +23,9 @@ const getAll = async (
     collaborations: boolean = true,
     includeNotes: boolean = true
 ): Promise<NotepadAndNotes[]> => {
-    const matchQuery: any = { [`users.${userID}.subject.id`]: userID }
+    const matchQuery = { [`users.${userID}.subject.id`]: userID }
     if (!collaborations) matchQuery[`users.${userID}.roles`] = Role.OWNER
-    const aggregationPipeline: any[] = [{ $match: matchQuery }]
+    const aggregationPipeline: mongoose.PipelineStage[] = [{ $match: matchQuery }]
 
     if (includeNotes) {
         aggregationPipeline.push({

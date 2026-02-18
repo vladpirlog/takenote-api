@@ -1,7 +1,7 @@
 import constants from '../config/constants.config'
 import querystring from 'querystring'
 import axios from 'axios'
-import OAuth from '../types/OAuth'
+import OAuth, { EndpointData, TokenData, UserData } from '../types/OAuth'
 
 const getEndpoints = async (): Promise<OAuth.EndpointData> => {
     try {
@@ -11,7 +11,7 @@ const getEndpoints = async (): Promise<OAuth.EndpointData> => {
             token: res.data.token_endpoint,
             userInfo: res.data.userinfo_endpoint
         }
-    } catch (err: any) { return err.data.error }
+    } catch (err) { return (err as { data: { error: EndpointData } }).data.error }
 }
 
 const getTokensWithAuthorizationCode = async (
@@ -33,7 +33,7 @@ const getTokensWithAuthorizationCode = async (
             accessToken: res.data.access_token,
             refreshToken: res.data.refresh_token
         }
-    } catch (err: any) { return err.data.error }
+    } catch (err) { return (err as { data: { error: TokenData } }).data.error }
 }
 
 const getUserDataWithAccessToken = async (
@@ -49,7 +49,7 @@ const getUserDataWithAccessToken = async (
         return {
             email: res.data.email
         }
-    } catch (err: any) { return err.data.error }
+    } catch (err) { return (err as { data: { error: UserData } }).data.error }
 }
 
 export default { getEndpoints, getTokensWithAuthorizationCode, getUserDataWithAccessToken }

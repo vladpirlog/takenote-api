@@ -17,7 +17,7 @@ import hpp from 'hpp'
 import moesifLoggingMiddleware from './config/moesif.config'
 import session from 'express-session'
 import { RedisClient } from './config/RedisClient'
-const cloudinary = require('cloudinary').v2
+import { v2 as cloudinary } from 'cloudinary'
 
 const app: Application = express()
 app.set('env', constants.nodeEnv)

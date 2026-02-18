@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import Color from '../enums/Color.enum'
 import { DrawingBackgroundPattern, DrawingBrushType } from '../enums/Drawing.enum'
 import { Role } from '../enums/Role.enum'

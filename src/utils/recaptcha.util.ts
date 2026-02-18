@@ -11,7 +11,7 @@ const verify = async (code: string, ip?: string): Promise<boolean> => {
         })
         const res = await axios.post(constants.authentication.recaptcha.verificationEndpoint, body)
         return res.data.success
-    } catch (err) { return false }
+    } catch { return false }
 }
 
 export default { verify }

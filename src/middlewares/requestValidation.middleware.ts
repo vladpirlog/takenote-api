@@ -180,7 +180,7 @@ export const validateBody = (type: keyof typeof bodySchemas, rejectMessage?: str
         try {
             await bodySchemas[type].validateAsync(req.body)
             return next()
-        } catch (err) {
+        } catch {
             return createResponse(res, 422, rejectMessage)
         }
     }
@@ -197,7 +197,7 @@ export const validateQuery = (type: keyof typeof querySchemas, rejectMessage?: s
         try {
             await querySchemas[type].validateAsync(req.query)
             return next()
-        } catch (err) {
+        } catch {
             return createResponse(res, 422, rejectMessage)
         }
     }

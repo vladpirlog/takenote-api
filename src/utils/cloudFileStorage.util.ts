@@ -1,7 +1,7 @@
 import constants from '../config/constants.config'
 import { INoteSchema } from '../types/Note'
 import { Storage } from '@google-cloud/storage'
-const cloudinary = require('cloudinary').v2
+import { v2 as cloudinary } from 'cloudinary'
 
 const uploadFileToGoogleCloudStorage = async (
     filePath: string,
@@ -62,7 +62,7 @@ const deleteFileFromGoogleCloudStorage = async (filePath: string) => {
             .file(filePath)
             .delete()
         return true
-    } catch (err) { return false }
+    } catch { return false }
 }
 
 const deleteFileFromCloudinary = async (
@@ -75,7 +75,7 @@ const deleteFileFromCloudinary = async (
             invalidate: true
         })
         return result.result === 'ok'
-    } catch (err) { return false }
+    } catch { return false }
 }
 
 /**
@@ -103,7 +103,7 @@ const deleteFolderFromGoogleCloudStorage = async (noteID: INoteSchema['id']) => 
             .bucket(constants.storage.google.bucketName)
             .deleteFiles({ prefix: `${noteID}/` })
         return true
-    } catch (err) { return false }
+    } catch { return false }
 }
 
 const deleteFolderFromCloudinary = async (noteID: INoteSchema['id']) => {
@@ -116,7 +116,7 @@ const deleteFolderFromCloudinary = async (noteID: INoteSchema['id']) => {
         })
         await cloudinary.api.delete_folder(noteID)
         return true
-    } catch (err) { return false }
+    } catch { return false }
 }
 
 /**
