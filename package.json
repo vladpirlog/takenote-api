@@ -14,7 +14,7 @@
     "scripts": {
         "prebuild": "rimraf dist",
         "build": "tsc -p .",
-        "lint": "eslint \"{src,test}/**/*.ts\" --fix",
+        "lint": "eslint src/**/*.ts test/**/*.ts --fix",
         "start": "node ./dist/bin/www.js",
         "stop": "rimraf dist",
         "start:dev": "tsc -w -p . & nodemon ./dist/bin/www.js",
